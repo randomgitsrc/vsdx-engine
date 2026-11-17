@@ -193,9 +193,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 二十二项缺陷的修法（与 audit 一一对应）
+## 4. 二十三项缺陷的修法（与 audit 一一对应）
 
-> **本节已按 M5 补齐，并按三轮审查与复核增至 22 项。**
+> **本节已按 M5 补齐，并按三轮审查与复核增至 23 项。**
 > 其中缺陷 18/19 由第三轮审查发现，缺陷 20 由该轮 E-3 指出。 原表只有 9 行；
 > 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
 > 均已并入 audit 与本节。
@@ -226,20 +226,21 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 20 | **文字裁切不计入硬约束** | `text.overflow-*` 升级为 error（score 归零） | **T6b** |
 | 21 | **非法枚举静默回退并谎报** | 统一 `TryParse` 语义：失败记录原值进 `unmet`，再回退 | **T2f** |
 | 22 | **`LocalRelayout` 不检查越界碰撞** | 重排后对全部页面节点做碰撞检查；重叠则回退并报告 | **T5b** |
+| 23 | **默认路径不写字体，混排无保障**（任务书 §5.2 要求） | 默认字族来自 TypeScale 同源值；混排可分离 latin/cjk；无法解析进 `unmet` | **T1c** |
 
 **映射关系（已按审查 M5 更正，不再声称"一一对应"）：**
 
 **映射关系（脚本核验，非人工估算）：**
 
 ```
-§4 缺陷行数        : 22
-§4 任务引用数      : 22
-§4 不同任务数      : 21   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
-§9 任务行数        : 23   ← 21 + T8 + T9（两个跨任务门禁）
+§4 缺陷行数        : 23
+§4 任务引用数      : 23
+§4 不同任务数      : 22   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
+§9 任务行数        : 24   ← 22 + T8 + T9（两个跨任务门禁）
 ```
 
-- **22 项缺陷 → 22 个任务引用**：每行都有明确任务
-- **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 21 个
+- **23 项缺陷 → 23 个任务引用**：每行都有明确任务
+- **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 22 个
 - **§9 多出 2 个**：`T8`（三套产物 + 目视）与 `T9`（全量回归）不对应单一缺陷，
   是**跨任务的验收门禁**
 
@@ -326,7 +327,26 @@ Reader 无法通过 `shape.TextStyle.FontFamily` 取回。
 | `ExplicitFontSizeBeatsTypeScale` | 显式字号优先 |
 | `MinReadableClampsAndReports` | 低于下限被提升**且**进 unmet（修死代码） |
 
-### 6.2 覆盖范围
+### 6.2 覆盖范围（逐项对应任务书 §5.2 的 10 项要求）
+
+> 任务书 §5.2 列出 10 项必须覆盖的样式解析场景。此前本计划只覆盖了 9 项，
+> **遗漏"中英文混排"**（缺陷 23）。下表逐项对应。
+
+| §5.2 要求 | 本计划对应 | 任务 |
+| --- | --- | --- |
+| Palette 默认样式 | ✅ `StyleResolver` 第 1 层 | T1 |
+| RoleColors 覆盖 | ✅ 第 2 层 | T1 / T2b |
+| 对象显式样式覆盖 | ✅ 第 3 层 | T1 |
+| 文本角色字号 | ✅ TypeScale + BaseSize 缩放 | T1 |
+| 容器标题 | ✅ `RegionTitle` 档 + 移除硬编码色 | T3 |
+| Edge 标签 | ✅ `EdgeLabel` 档 + Writer | T2 |
+| TextBlock | ✅ 含字色/字体层级修正 | T2e |
+| 背景色 | ✅ `VisioBackgroundBridge` | T10 |
+| 多页面 | ✅ 逐页应用 | T7 |
+| **中英文混排** | ⚠️ **此前遗漏，现补** | **T1c** |
+
+**10 项全部有对应任务。** 此前"中英文混排"完全未提及——
+这不是表述问题：默认路径根本不写字体（缺陷 23 实测），混排从未被处理过。
 
 | 测试 | 断言 |
 | --- | --- |
@@ -500,6 +520,7 @@ character.Add(new XElement(VisioNs + "Row", new XAttribute("IX", "0"), ...));  /
 **不是架构问题，是位置问题**——这也解释了为什么三轮审查才找到：
 代码"看起来"在设置字体，字段名也对，只有对照 Node 的 XML 才看出层级不同。
 | T6b | 文字裁切计入硬约束 | `baseSize=24` 时 `hardConstraintsPassed=false`、score=0 |
+| T1c | 默认字体 + 中英混排（§5.2） | 不传 spec 时 `FaceNames` 非空；中文/混排/英文三类节点渲染无方框、无字重跳变 |
 | T5b | `LocalRelayout` 越界碰撞检查 | `containerLayouts` 施加后 `node.overlap` 必须为 0，或该次重排被回退并进 `unmet` |
 | T2f | 枚举 `TryParse` + 未识别值报告 | `containerLayouts:"kaboom"` → `unmet` 含 `input.unknown-enum`；`applied` 不得声称执行了 `kaboom` |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
