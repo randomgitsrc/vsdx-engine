@@ -838,7 +838,7 @@ page.Size W/H 互换                  ✅
 | `Page.TextBlocks` | `Page.TextBlocks[].Bounds` | 标题位置不转，跑到页面外 |
 | `Page.Paths` | `Page.Paths[].Bounds` | 分隔线位置与宽高不转 |
 | **`FreePath.Geometry` 内部坐标** | `PathRow.Cells["X"/"Y"]` | **路径形状本身不转**——框转了、线没转 |
-| `Node.Angle` / `FreePath.Angle` | 旋转角 | 角度未镜像，图形朝向错误 |
+| `Node.Angle` / `FreePath.Angle` | 旋转角 | 见下方**变换规则**——不能简单"镜像" |
 | `Edge.FromPoint` / `ToPoint` | 自由端点 | 端点留在原坐标 |
 | `Edge.Waypoints` | 折点列表 | 当前是**清空**而非转置。**按 D1 裁定，`manual` 下不转置，故此项目前无需实现**（见 §11.2） |
 | **`Edge.FromPort` / `ToPort`** | 端口语义 | `left` ↔ `bottom` 的语义随轴变，必须重映射 |
@@ -923,6 +923,51 @@ foreach (var edge in page.Edges)
 /// <summary>Mirrors every spatial value on the page across the X=Y diagonal.</summary>
 public static void Transpose(Page page);
 ```
+
+### 11.5b `Angle` 的变换规则（不是"镜像"这么简单）
+
+**推导（已核算）：** 转置是沿 `y = x` 的反射。一个角度为 θ 的向量
+`(cos θ, sin θ)` 反射后变成 `(sin θ, cos θ)`，其新角度为
+`atan2(cos θ, sin θ) = 90° − θ`。
+
+```
+θ =  0° -> 90°      θ = 30° -> 60°
+θ = 45° -> 45°      θ = 90° ->  0°
+```
+
+**因此规则是：**
+
+```csharp
+newAngle = Normalize(90.0 - oldAngle);   // 不是复制，也不是取负
+```
+
+**三种错误写法及后果：**
+
+| 写法 | 后果 |
+| --- | --- |
+| 保持原值 | 30° 的横杆转置后应竖起来，实际仍横着 |
+| 取负 `-θ` | 变成 -30°，方向反了 |
+| `θ + 90` | 多了 90° 而非"关于 45° 对称" |
+
+**幂等性验证：** `90 − (90 − θ) = θ`，与位置交换一起构成两次转置复原。
+这可以作为断言 8（"转置两次回到原状态"）的一条具体检查。
+
+**`Angle` 确实会落盘**（已实测更正）：
+
+```csharp
+// OfficeImoDocumentWriter.cs:284
+if (node.Angle is double angle) shape.Angle = angle;
+
+// OfficeImoDocumentReader.cs:576（回读）
+Angle = Math.Abs(shape.Angle) > 1e-9 ? shape.Angle : null,
+```
+
+我最初写"从未被写入"是错的——只 grep 了 Read 路径就下了结论，
+又一次把单侧观察当成双向事实（同类错误在 `U="IN"` 那次也犯过）。
+
+**因此 T0 必须真正实现 `newAngle = 90 - oldAngle`，并加验收断言**：
+- 一个 `Angle = 30°` 的节点，转置后回读应为 `60°`
+- 转置两次回读应回到 `30°`
 
 ### 11.6 验收
 
