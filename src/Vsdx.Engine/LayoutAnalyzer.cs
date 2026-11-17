@@ -264,6 +264,51 @@ public static class LayoutAnalyzer
             }
         }
 
+        // ---- 7a1. Fan-out density -------------------------------------------
+        // Many connectors leaving one shape is a structural fact about the diagram, not a defect
+        // in itself: a gateway serving seven services is a legitimate topology. But past a
+        // threshold the reader cannot trace individual edges, and the router has no shared
+        // corridor concept, so the result degrades even when every edge is individually legal.
+        // Reporting it lets the caller decide (split the view, group services) instead of the
+        // engine silently producing an untraceable graph.
+        foreach (var fan in page.Edges
+                     .Where(e => e.From is not null && e.To is not null)
+                     .GroupBy(e => e.From!, StringComparer.Ordinal)
+                     .Where(g => g.Count() > options.MaxFanOut))
+        {
+            report.Add(new LayoutIssue
+            {
+                Code = "edge.fan-out",
+                Severity = "warning",
+                Page = page.Name,
+                Targets = new[] { fan.Key },
+                Message = $"节点 '{fan.Key}' 发出 {fan.Count()} 条连线，超过可读上限 {options.MaxFanOut}",
+                SoftWeight = 6,
+                RootCause = "单一节点扇出过多，布线器无共享干线概念，形成长距离平行走廊",
+                RecommendedFix = "按调用分组拆图，或在源与目标之间插入聚合节点",
+                SuggestedLevel = FixLevel.FullRedraw
+            });
+        }
+
+        foreach (var fan in page.Edges
+                     .Where(e => e.From is not null && e.To is not null)
+                     .GroupBy(e => e.To!, StringComparer.Ordinal)
+                     .Where(g => g.Count() > options.MaxFanOut))
+        {
+            report.Add(new LayoutIssue
+            {
+                Code = "edge.fan-in",
+                Severity = "warning",
+                Page = page.Name,
+                Targets = new[] { fan.Key },
+                Message = $"节点 '{fan.Key}' 接收 {fan.Count()} 条连线，超过可读上限 {options.MaxFanOut}",
+                SoftWeight = 6,
+                RootCause = "单一节点汇聚过多入边",
+                RecommendedFix = "引入消息总线或中间层收敛连接",
+                SuggestedLevel = FixLevel.FullRedraw
+            });
+        }
+
         // ---- 7a2. Connectors that cut diagonally through a band --------------
         // A connector legitimately enters and leaves containers (that is how cross-region
         // relations are drawn). What reads as sloppy is a *diagonal* cut across a band, because
@@ -916,6 +961,11 @@ public sealed class LayoutAnalyzerOptions
     /// the deliverable is mostly blank page.
     /// </summary>
     public double SeverelyUnderusedRatio { get; init; } = 0.15;
+
+    /// <summary>
+    /// Connectors sharing one endpoint beyond this count stop being individually traceable.
+    /// </summary>
+    public int MaxFanOut { get; init; } = 5;
 }
 
 /// <summary>
