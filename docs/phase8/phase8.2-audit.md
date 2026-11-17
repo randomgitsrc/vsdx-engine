@@ -213,6 +213,33 @@ text.overflow-horizontal: 'a' 最长行约 5.09" 宽，实际 2.00"
 或字号改变后重新跑一次尺寸推导。Phase 8.2 §3.1 的统一解析若在布局前完成，
 此问题自然消失——**这也是为什么解析器必须前置，而不只是"把 palette 接上"**。
 
+### 2.2d 【P2】`roleColors` 无 `default` 回退，拼错角色静默失效
+
+**实测**（IR 中一个节点角色拼成 `databse`）：
+
+```json
+"roleColors": { "service": "#FF0000", "default": "#00FF00" }
+```
+
+```
+a (service)  -> #FF0000   ✅
+b (databse)  -> #FFFFFF   ← 既没用 default，也没报告
+unmet: []
+```
+
+**两个问题叠加：**
+
+1. **`default` 键被忽略**——Schema 允许任意键名，代码用 `TryGetValue(role)` 精确匹配，
+   从不查 `default`。调用方写了回退色，以为是兜底，实际无效。
+2. **角色拼写错误无任何提示**——`databse` 不匹配任何角色，节点保持默认白色，
+   且不进 `unmetConstraints`。
+
+**后果：** 一个字母的拼写错误会导致整类节点失去配色，而调用方拿到的结果是
+`status=succeeded`。
+
+**修法：** 解析器应支持 `default` 回退，并对"IR 中出现但 roleColors 未覆盖的角色"
+在 `unmetConstraints` 里报告一次（按角色去重，避免刷屏）。
+
 ### 2.3 【P1】容器颜色硬编码，绕过 Theme
 
 ```csharp
@@ -527,6 +554,7 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 9 | `typography.min_size` 死代码 | P2 | ❌ 初稿误判为存在 |
 | 10 | `BaseSize` 抹平字体层级 | **P1** | ❌ **遗漏** |
 | 11 | 字号在布局后应用 → 文字溢出 | **P1** | ❌ **遗漏** |
+| 12 | `roleColors` 无 default 回退 | P2 | ❌ **遗漏** |
 
-**11 项缺陷中，初稿漏了 5 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
+**12 项缺陷中，初稿漏了 6 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
