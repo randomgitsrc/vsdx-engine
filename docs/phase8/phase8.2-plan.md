@@ -161,6 +161,117 @@ record Palette(
 | `technical` | 深色低饱和，适合工程图 |
 | `muted` | 低对比柔和，适合印刷 |
 
+#### 逐项对应任务书 §4 的十条架构约束
+
+> 这十条是**禁令**，不是要求。计划必须证明不违反，而非"有对应任务"。
+
+| # | 约束 | 本计划是否违反 | 依据 |
+| --- | --- | --- | --- |
+| 1 | 不新增 LLM | ✅ 不违反 | 不引入任何模型调用 |
+| 2 | 不新增 GUI | ✅ 不违反 | 仍是 CLI + 库 |
+| 3 | 不引入 Visio 作为运行时依赖 | ✅ 不违反 | 无新依赖；`FontResolver` 读系统字体文件，非 Visio |
+| 4 | 不为视觉系统**重写** Writer / Reader | ⚠️ **需说明** | 见下 |
+| 5 | 不进行无依据的大规模模型重构 | ✅ 不违反 | 保留四层结构，只加 `StyleResolver` |
+| 6 | 不把不同图形家族强制套用同一布局/视觉模板 | ✅ 不违反 | palette 只给颜色，布局仍按 `kind` 选策略 |
+| 7 | 不以固定风格包替代通用视觉参数系统 | ✅ 不违反 | palette 是参数集，非模板（见 §3.2 第 7 条的类型结构证明） |
+| 8 | 不破坏现有增量编辑与保真能力 | ⚠️ **需验证** | 见下 |
+| 9 | 不改变 IR / DesignSpec 兼容性，除非必要且经版本评估 | ⚠️ **有三处变更** | 见下 |
+| 10 | 不允许静默丢弃输入、约束或视觉要求 | ✅ 本计划核心目标 | 缺陷 17/21/22 就是修这个 |
+
+**第 4 条：是否算"重写"？**
+
+改动范围：`OfficeImoDocumentWriter` 一处（页面背景）、`Reader` 两处
+（背景回读、Edge 字体回读）、`VisioTextBlockBridge` 两行（字色/字体层级）。
+**这是补缺失的注册与赋值，不是重写读写架构。**
+判据：所有既有往返测试与保真守卫必须全过——若需要改它们的断言才算重写，那就不做。
+
+**第 8 条：如何验证不破坏保真？**
+
+实施每步后重跑 `FidelityCorpusTests`（6 类外部包）与 `FidelityGuardTests`（9 项）。
+任一失败即回退该步。
+
+**第 9 条：三处兼容性变更需版本评估**
+
+| 变更 | 性质 | 评估结论 |
+| --- | --- | --- |
+| `Direction` 生效 | 修复已承诺但未实现的功能 | 不改协议字段，只改执行——**不需版本变更** |
+| `mode=fixed` 语义修正 | 修复字段语义矛盾 | 同上 |
+| `Canvas.Unit` 换算 | 修复不换算 | 同上 |
+
+**三处都不改 IR/DesignSpec 的字段或结构**，只改其行为。因此协议版本保持 1.0。
+但**行为变化须在发布说明披露**（已在 packet §五列出）。
+
+#### 逐项对应任务书 §3.4 的八条角色样式要求
+
+> 这一节同样**一条都没有显式对应**。
+
+| §3.4 要求 | 本计划对应 | 任务 |
+| --- | --- | --- |
+| 数据库 / 服务 / 网关等语义节点有视觉角色 | `RoleFills` 按 `Node.Type` 取色 | T1 |
+| 普通节点与外部系统可区分 | `external` 角色独立配色 | T1 |
+| 区域与容器有角色 | `ContainerFills` 序列 + 容器标题字号 | T1 / T3 |
+| 主连线与辅助连线可区分 | `EdgeStroke` + `LinePattern`（虚线表示辅助关系） | T1 |
+| 标签 / 标题 / 注释有各自角色 | `TypeScale` 档位 + TextBlock role | T1 / T2e |
+| 同一类语义对象在相同 Theme 下视觉一致 | 解析器按 `Node.Type` 统一取色，**不按位置或顺序** | T1 |
+| 不同角色产生有意义的视觉区分 | 四套 palette 各自定义角色色；PNG 目视验收 | T8 |
+| **不要把角色色简单实现为遍历 Node 后设 Fill** | **解析器统一处理 Node/Group/Edge/TextBlock，不是散落的循环** | T1 |
+
+**最后一条是明确的实现约束**：任务书原文"不要把角色色简单地实现为遍历 Node
+后设置 Fill 的局部代码"——这正是当前 `DesignSpec.cs:228` 的做法
+（`foreach (var node in page.Nodes)`）。统一解析器就是对此的直接回应。
+
+**如何在验收中证明"不是局部循环"：** 同一角色在 Node、Group 标题、Edge 标签、
+TextBlock 四处都取到**同一个** palette 值。若只是遍历 Node，其余三处取不到。
+
+#### 逐项对应任务书 §3.3 的七条字体层级要求
+
+> 这一节此前**一条都没有显式对应**。缺陷里有相关内容，
+> 但无映射表则无法确认覆盖。
+
+| §3.3 要求 | 本计划对应 | 任务 |
+| --- | --- | --- |
+| 1. 层级可表达 | `TypeScale` 六档 + role→档位映射（§2.3 表） | T1 |
+| 2. 默认值合理 | `TypeScaleDefaults` 单一权威；`BaseSize` 缩放保留比例 | T1 |
+| 3. 对象可显式覆盖 | 解析器第 3 层（`ObjectStyle.FontSize` 优先） | T1 |
+| 4. 最小可读字号有效 | `MinReadableSize` 夹紧**且报告**（修死代码） | T6 |
+| 5. 中英文混排可用 | 默认字族 + 混排可分离 latin/cjk | **T1c** |
+| 6. **Renderer 实际渲染与 VSDX 一致** | 渲染器读 VSDX 字体名（**缺陷 18**，当前不读） | **T2d** |
+| 7. **不因页面拥挤而无限缩小文字** | 字号下限 8pt；密度过高应报告而非缩字 | T6 |
+
+**第 6 条是当前最严重的未达成项**：三种字体（含不存在的）渲染结果 MD5 相同。
+**第 7 条**要求"不能偷偷缩小字号以制造通过"——`MinReadableSize` 夹紧必须报告，
+否则就是变相缩字。
+
+#### 逐项对应任务书 §3.2 的七条 Palette 要求
+
+| §3.2 要求 | 本计划对应 | 状态 |
+| --- | --- | --- |
+| 1. 不同 Palette 产生真实可观察差异 | 三套 spec × 四类图的 PNG 对比 | T8 |
+| 2. 不只是修改页面背景 | palette 覆盖角色色/容器色/边框/文字，**背景只是其中一项** | T1 |
+| 3. 覆盖角色色、容器色、边框色、文本色与必要辅助色 | `Palette` record 的六个字段（含 `ContainerFills` 序列） | T1 |
+| 4. `RoleColors` 可对基础 Palette 做角色级覆盖 | 解析器第 2 层 | T1 |
+| 5. 对象显式样式优先级更高 | 解析器第 3 层 | T1 |
+| 6. 未知 Palette 进 `UnmetConstraints` | `theme.palette-unknown` | T1 |
+| 7. **不得把 Palette 写成完整、固定的图形模板** | **palette 结构里没有布局/形状/字号字段——只有颜色** | T1 |
+
+**第 7 条是硬约束，需要显式设计保证：**
+
+```csharp
+public sealed record Palette(
+    string Background,                              // 页面底
+    IReadOnlyDictionary<string, string> RoleFills,  // 角色填充
+    IReadOnlyList<string> ContainerFills,           // 容器填充（序列，按序轮转）
+    IReadOnlyList<string> ContainerStrokes,
+    IReadOnlyList<string> ContainerTexts,
+    string EdgeStroke,                              // 连线
+    string EdgeLabelText,                           // 连线标签
+    string TextPrimary, string TextSecondary);      // 文字
+```
+
+**这个 record 里没有任何**：布局策略、形状选择、字号、间距、位置。
+所以 palette **无法**变成模板——它只能改颜色。
+这不是靠约定，是靠类型结构强制。
+
 **容器色必须是序列，不能是单值**（审查 E-11）：当前 `bandFills` 是 5 个颜色的数组，
 按容器序号轮转，因此同层容器彼此不同色。若 Palette 只提供单个
 `ContainerFill`，T3 移除数组后**同层容器会全部同色**——
