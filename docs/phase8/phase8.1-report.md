@@ -17,7 +17,7 @@
 | D. TextBlock | ✅ | `TextBlockTests`（14） |
 | E. IR 多页协议 | ✅ | `MultiPageTests`（10） |
 | F. 纵向切片 + L1–L3 | ✅ | `examples/phase8/slice.*` |
-| G. L4 Visio 原生验证 | ⬜ **待环境** | 无 Windows + Visio |
+| G. L4 Visio 原生验证 | ⬜ **阻塞** | 环境探测完成：WSL interop 可用，但**未安装 Visio**（仅 WPS）。见 `l4-verification-status.md` |
 
 **测试：** 297 → **333**（+36）
 **基准：** 18/18 硬约束通过
@@ -99,7 +99,10 @@ Visio 的 `Character` 单元格 `Size` 是**英寸长度**，`U="PT"` 记录创�
 
 ## 5. 明确未做
 
-- **L4 Visio 原生验证**：无环境，未声称
+- **L4 Visio 原生验证**：已探测环境——WSL 互操作可用，Windows 二进制可执行，
+  但 `HKLM` 注册表仅有 WPS Office，**无 Microsoft Visio**。
+  已写好 8 项验证清单与可用的 PowerShell COM 方案，待环境就绪即可执行。
+  **未用 WPS 替代**（那是另一个第三方渲染器，属 L3）。
 - **图片/SVG 工程化**：属 8.3；本轮只完成格式实验（8.0）
 - **Stencil 接入**：属 8.3
 - **`check-fidelity` 完整版**：8.1 只做了最小结构对比（A2），完整工具在 8.5
