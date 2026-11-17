@@ -193,9 +193,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 二十项缺陷的修法（与 audit 一一对应）
+## 4. 二十一项缺陷的修法（与 audit 一一对应）
 
-> **本节已按 M5 补齐，并按三轮审查增至 20 项。**
+> **本节已按 M5 补齐，并按三轮审查增至 21 项。**
 > 其中缺陷 18/19 由第三轮审查发现，缺陷 20 由该轮 E-3 指出。 原表只有 9 行；
 > 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
 > 均已并入 audit 与本节。
@@ -220,24 +220,25 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 14 | **`swimlane` 协议不可达**（P1） | `DiagramIr.cs:282` 保留 `lane`，不改写为 `container`（M3） | **T0b** |
 | 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
 | 16 | **IR `order` 被忽略致流程倒置**（P0） | 转换器消费 `Order`；布局优先用显式 order，其次 `MeanY`，最后声明序 | **T1b** |
-| 17 | **缺"无法表达/渲染必须报告"机制** | 定义渲染器支持白名单；写入后抽样回读；白名单外进 `unmet` | **T2c** |
+| 17 | **样式静默丢失 + `lossless` 谎报**（P0） | `Opacity`/`Shadow`/`Radius`/`LineJoin` 四字段无消费者；要么执行、要么进 `unmet`；`lossless` 不得在丢失时报告 | **T2c** |
 | 18 | **Renderer 不消费 `FontFamily`**（P0） | `FontResolver` 读 VSDX 字体名；找不到时降级并报告。**若不做，白名单必须把 font-family 标为"仅 VSDX 有效、预览不体现"** | **T2d** |
 | 19 | **TextBlock `Color`/`Font` 层级错**（P0） | 移入 `Character/Row`，与 Node 一致；验证回读 | **T2e** |
 | 20 | **文字裁切不计入硬约束** | `text.overflow-*` 升级为 error（score 归零） | **T6b** |
+| 21 | **非法枚举静默回退并谎报** | 统一 `TryParse` 语义：失败记录原值进 `unmet`，再回退 | **T2f** |
 
 **映射关系（已按审查 M5 更正，不再声称"一一对应"）：**
 
 **映射关系（脚本核验，非人工估算）：**
 
 ```
-§4 缺陷行数        : 20
-§4 任务引用数      : 20
-§4 不同任务数      : 19   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
-§9 任务行数        : 21   ← 19 + T8 + T9（两个跨任务门禁）
+§4 缺陷行数        : 21
+§4 任务引用数      : 21
+§4 不同任务数      : 20   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
+§9 任务行数        : 22   ← 20 + T8 + T9（两个跨任务门禁）
 ```
 
-- **20 项缺陷 → 20 个任务引用**：每行都有明确任务
-- **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 19 个
+- **21 项缺陷 → 21 个任务引用**：每行都有明确任务
+- **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 20 个
 - **§9 多出 2 个**：`T8`（三套产物 + 目视）与 `T9`（全量回归）不对应单一缺陷，
   是**跨任务的验收门禁**
 
@@ -453,10 +454,11 @@ text: '企业分析平台'            ✅
 | T1b | 容器顺序：消费 IR `order`（**T8 的前置**） | `flow.ir.json` 中 `intake` 的 Y 最大（最上）；缺失 order 时退回 `MeanY`，再缺失用声明序 |
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
 | T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
-| T2c | 样式可渲染性报告（任务书 §3.5） | 白名单外样式（如 `shadow`）→ `unmet` 含 `style.renderer-unsupported`；写入后抽样回读断言单元格存在 |
+| T2c | 样式可渲染性报告（任务书 §3.5） | **四个死字段**（`opacity`/`shadow`/`radius`/`lineJoin`）要么执行、要么进 `unmet`；**有丢失时 `compatibility` 不得为 `lossless`** |
 | T2d | Renderer 消费 FontFamily | 换字体 → PNG **必须不同**（当前 MD5 相同）；找不到字体时降级并进 `unmet` |
 | T2e | TextBlock 字色/字体层级 | `color:#FF0000` 与 `font:Verdana` 回读非 null；三色三字体产出 PNG 互不相同 |
 | T6b | 文字裁切计入硬约束 | `baseSize=24` 时 `hardConstraintsPassed=false`、score=0 |
+| T2f | 枚举 `TryParse` + 未识别值报告 | `containerLayouts:"kaboom"` → `unmet` 含 `input.unknown-enum`；`applied` 不得声称执行了 `kaboom` |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
 | T4 | 修 `Canvas.Unit`（**两处**：Writer + DesignSpecApplier） | `create` 与 `execute` 的 cm/mm 换算一致；标签与数值一致；`update` 不再二次换算 |
 | T5 | 修 `containerLayouts` 报告 | manual 下进 unmet |

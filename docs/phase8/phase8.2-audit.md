@@ -420,6 +420,40 @@ IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
 
 **这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
 
+### 2.17 【P1】非法枚举值被静默替换为默认值，且报告"已执行"
+
+**实测：**
+
+```console
+$ --spec '{"containerLayouts":{"back":"kaboom"}}'
+  status: succeeded
+  applied: ['container back relaid as kaboom']    ← 声称按 kaboom 做了
+  unmet: []
+```
+
+**`kaboom` 不是任何已知策略。** `DiagramLayoutEngine.Parse()` 的 `_ =>` 分支
+回退到 `Layered`，然后 `applied` 把原始字符串原样回显。
+
+**同类问题（审查 E-4 列出，我已验证 `containerLayouts` 一项）：**
+
+| 输入 | 实际行为 | 报告 |
+| --- | --- | --- |
+| `containerLayouts: "kaboom"` | 回退 Layered | `applied: relaid as kaboom` ❌ |
+| `layout: "kaboom"` | 回退 Layered | `applied: layout=Layered`（不报错） |
+| `anchor.mode: "relative"` | 等同 fixed | 不报告 |
+| `FromPort`/`ToPort` | 部分使用，回读 null | 不报告 |
+| `ConstraintSpec.Target` | 只回显 | 不报告作用域 |
+
+**共同模式：枚举解析用"默认回退"而非"拒绝"。**
+
+回退本身不是错——错在**回退后不说明**。调用方传了 `kaboom`，
+系统应当说"未知策略，已回退为 Layered"，而不是声称执行了 `kaboom`。
+
+**修法：** 所有枚举解析统一为 `TryParse` 语义——失败时记录原值进
+`unmetConstraints`（`input.unknown-enum`），再执行回退。
+
+---
+
 ### 2.15 【P0】Renderer 完全不消费 `FontFamily`
 
 **逐像素实测**（同一 IR，仅换字体）：
@@ -493,13 +527,42 @@ Reader 只读 `shape.TextStyle`（`OfficeImoDocumentReader.cs:602-625`），
 
 ---
 
-### 2.13 【P1】缺失"无法表达或渲染的样式必须报告"机制
+### 2.13 【P0】样式静默丢失，且 `lossless` 主动掩盖
 
 任务书 §3.5 明文要求：
 
 > **无法表达或渲染的样式必须报告。**
 
-**实测：当前完全没有该机制。**
+**实测：比"没有机制"更糟——有机制，但它报告了错误的结论。**
+
+`StyleStyle` 有四个字段**从未被任何代码消费**：
+
+```console
+$ grep -rn "Opacity|Shadow|Radius|LineJoin" src/Vsdx.Model/DiagramModel.cs
+300:    public double? Opacity { get; set; }
+301:    public bool? Shadow { get; set; }
+302:    public double? Radius { get; set; }
+303:    public string? LineJoin { get; set; }
+
+$ grep -rn "Opacity|Shadow|Radius|LineJoin" src/Vsdx.Protocol/*.cs src/Vsdx.Adapters/*.cs
+（无结果）
+```
+
+**写入后全部丢失，而兼容性报告说没丢：**
+
+```
+$ create --input a.json （style 含 opacity:0.5, shadow:true, radius:0.3, lineJoin:round）
+  compatibility: lossless          ← 主动声称无损
+
+$ export-model
+  opacity  : None
+  shadow   : None
+  radius   : None
+  lineJoin : None
+```
+
+**`lossless` 是主动的虚假声明**，不只是沉默。这比"没有报告机制"严重一个量级：
+调用方看到 `lossless: True` 会认为这四个样式已经生效。
 
 给一个 TextBlock 设置 `italic: true, color: "#FF0000", fontSize: 14`：
 
@@ -895,10 +958,11 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 14 | `swimlane` 经协议不可达 | P1 | ❌ **遗漏** |
 | 15 | 装饰元素独立夹紧致间距塌陷 | P1 | ❌ **遗漏**（Phase 8.1 遗留） |
 | 16 | IR 容器 `order` 被忽略致流程倒置 | **P0** | ❌ **遗漏** |
-| 17 | 缺"无法表达/渲染必须报告"机制 | P1 | ❌ **遗漏**（任务书 §3.5 明确要求） |
+| 17 | **样式静默丢失 + `lossless` 谎报** | **P0**（原判 P1，已升级） | ❌ **遗漏**（任务书 §3.5 明确要求） |
 | 18 | **Renderer 不消费 FontFamily** | **P0** | ❌ **遗漏**（三轮审查才发现） |
 | 19 | **TextBlock Color/Font 层级错** | **P0** | ❌ **遗漏**（两轮审查均未发现） |
 | 20 | **文字裁切不计入硬约束** | P1 | ❌ **遗漏**（致任务书 §5.3 不可证伪） |
+| 21 | **非法枚举静默回退并谎报已执行** | P1 | ❌ **遗漏**（审查 E-4） |
 
-**20 项缺陷中，初稿漏了 14 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
+**21 项缺陷中，初稿漏了 15 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
