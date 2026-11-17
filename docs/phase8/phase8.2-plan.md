@@ -801,6 +801,23 @@ character.Row.Cell("Color").Value = style.TextColor;
 位置和注册**都是必要条件**，缺一不可。已在 audit 同步更正。
 
 | T6b | 文字裁切计入硬约束 | `baseSize=24` 时 `hardConstraintsPassed=false`、score=0 |
+
+**T6b 的影响面已实测（实施前必查）：**
+
+| 检查 | 结果 |
+| --- | --- |
+| 18 个基准在默认参数下有多少 overflow | **0 / 18** |
+| `baseSize=24` 时 overflow 数 | **12**，当前 severity=`warning`，`hardConstraintsPassed=true` |
+| 升级为 `error` 后 | `hardConstraintsPassed=false` → `Score` 自动返回 **0** |
+
+**结论：升级不会打断任何现有基准**（它们本就没有 overflow），
+因此任务书 §5.4「不破坏原有硬约束」仍然成立。
+
+**改动点仅两处**（`LayoutAnalyzer.cs:90` 与 `:101` 的 `Severity = "warning"`），
+`Score` 无需改动——它在 `HardConstraintsPassed` 为假时已直接返回 0。
+
+**验收可证伪：** 同一 IR + `baseSize=24`，修前 `hard=true/score=76`，
+修后必须 `hard=false/score=0`；而默认参数的 18 个基准必须保持 `hard=true`。
 | T2g | 语义角色往返（§5.4） | `execute → export → update → export` 四步后，每节点的 `type` 与 `fill` 均与第一步一致 |
 | T1d | 对比度校验（§5.3） | 浅底浅字（1.05:1）→ `text.low-contrast`；深底近黑（1.1:1）→ 同样报告；显式 textColor 不得绕过 |
 | T1c | 默认字体 + 中英混排（§5.2） | 不传 spec 时 `FaceNames` 非空；中文/混排/英文三类节点渲染无方框、无字重跳变 |
