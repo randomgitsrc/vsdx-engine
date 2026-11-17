@@ -1,0 +1,63 @@
+{
+  "id": "fault-long-text",
+  "name": "故障：长文字",
+  "type": "architecture",
+  "pageSize": {
+    "width": 12,
+    "height": 8,
+    "unit": "inches"
+  },
+  "pages": [
+    {
+      "id": "p",
+      "name": "Fault",
+      "size": {
+        "width": 12,
+        "height": 8,
+        "unit": "inches"
+      },
+      "groups": [],
+      "edges": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "a",
+          "type": "component",
+          "text": "这是一个非常长的节点标题用于测试文字溢出",
+          "shape": "rounded",
+          "bounds": {
+            "x": 3.0,
+            "y": 5.0,
+            "w": 1.5,
+            "h": 0.5
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "b",
+          "name": "b",
+          "type": "component",
+          "text": "An extremely long English caption that will not fit",
+          "shape": "rounded",
+          "bounds": {
+            "x": 7.0,
+            "y": 5.0,
+            "w": 1.5,
+            "h": 0.5
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        }
+      ]
+    }
+  ]
+}

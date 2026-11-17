@@ -1,0 +1,187 @@
+{
+  "id": "hybrid-simple",
+  "name": "混合架构（简单）",
+  "type": "architecture",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 12,
+    "height": 12,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "混合架构（简单）",
+      "size": {
+        "width": 12,
+        "height": 12,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_front",
+          "name": "前端  Frontend",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_back",
+          "name": "后端  Backend",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_infra",
+          "name": "基础设施  Infrastructure",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "name": "web",
+          "type": "component",
+          "text": "Web",
+          "shape": "rounded",
+          "bounds": {
+            "x": 3.4,
+            "y": 9.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_front"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "type": "component",
+          "text": "API",
+          "shape": "rounded",
+          "bounds": {
+            "x": 6.6,
+            "y": 9.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_back"
+        },
+        {
+          "id": "db",
+          "name": "db",
+          "type": "component",
+          "text": "DB",
+          "shape": "process",
+          "bounds": {
+            "x": 6.6,
+            "y": 6.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_infra"
+        },
+        {
+          "id": "cache",
+          "name": "cache",
+          "type": "component",
+          "text": "Cache",
+          "shape": "circle",
+          "bounds": {
+            "x": 9.4,
+            "y": 6.4,
+            "w": 1.1,
+            "h": 1.1
+          },
+          "style": {
+            "fill": "#C00000",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_infra"
+        }
+      ],
+      "edges": [
+        {
+          "id": "h1",
+          "from": "web",
+          "to": "api",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "REST"
+        },
+        {
+          "id": "h2",
+          "from": "api",
+          "to": "db",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "SQL"
+        },
+        {
+          "id": "h3",
+          "from": "api",
+          "to": "cache",
+          "kind": "straight",
+          "lineColor": "#7F0000",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "cache"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,314 @@
+{
+  "id": "micro-medium",
+  "name": "微服务拓扑（medium）",
+  "type": "microservices",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 16.8,
+    "height": 12.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "微服务拓扑（medium）",
+      "size": {
+        "width": 16.8,
+        "height": 12.5,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_core",
+          "name": "核心服务  Core Services",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_plat",
+          "name": "平台设施  Platform",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "svc0",
+          "name": "svc0",
+          "type": "component",
+          "text": "订单服务\nOrder",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 6.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "svc1",
+          "name": "svc1",
+          "type": "component",
+          "text": "支付服务\nPayment",
+          "shape": "rounded",
+          "bounds": {
+            "x": 5.5,
+            "y": 6.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "svc2",
+          "name": "svc2",
+          "type": "component",
+          "text": "库存服务\nInventory",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.4,
+            "y": 6.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "svc3",
+          "name": "svc3",
+          "type": "component",
+          "text": "用户服务\nUser",
+          "shape": "rounded",
+          "bounds": {
+            "x": 11.299999999999999,
+            "y": 6.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#7030A0",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "svc4",
+          "name": "svc4",
+          "type": "component",
+          "text": "通知服务\nNotify",
+          "shape": "rounded",
+          "bounds": {
+            "x": 14.2,
+            "y": 6.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#F2B705",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "gw",
+          "name": "gw",
+          "type": "component",
+          "text": "API 网关",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 8.4,
+            "y": 9.4,
+            "w": 2.4,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#F2B705",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_plat"
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "type": "component",
+          "text": "事件总线",
+          "shape": "parallelogram",
+          "bounds": {
+            "x": 8.4,
+            "y": 3.2,
+            "w": 2.4,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#FFC000",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_plat"
+        }
+      ],
+      "edges": [
+        {
+          "id": "c0",
+          "from": "gw",
+          "to": "svc0",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "REST"
+        },
+        {
+          "id": "c1",
+          "from": "gw",
+          "to": "svc1",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "c2",
+          "from": "gw",
+          "to": "svc2",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "c3",
+          "from": "gw",
+          "to": "svc3",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "c4",
+          "from": "gw",
+          "to": "svc4",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "s0",
+          "from": "svc0",
+          "to": "svc1",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "event",
+          "linePattern": 2
+        },
+        {
+          "id": "s1",
+          "from": "svc1",
+          "to": "svc2",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "event",
+          "linePattern": 2
+        },
+        {
+          "id": "s2",
+          "from": "svc2",
+          "to": "svc3",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "event",
+          "linePattern": 2
+        },
+        {
+          "id": "s3",
+          "from": "svc3",
+          "to": "svc4",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "event",
+          "linePattern": 2
+        },
+        {
+          "id": "b0",
+          "from": "svc0",
+          "to": "bus",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "publish"
+        },
+        {
+          "id": "b1",
+          "from": "svc4",
+          "to": "bus",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "consume",
+          "linePattern": 2
+        }
+      ]
+    }
+  ]
+}

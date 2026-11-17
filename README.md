@@ -146,6 +146,7 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 | `validate --input out.vsdx [--json]` | ZIP / XML / OPC / Visio 语义校验 |
 | `check-layout --input out.vsdx [--json]` | 硬/软约束分离：重叠、容器相压、穿线、绕行比、行对齐、尺寸突变 |
 | `batch --op <create\|render\|validate\|export-model> --input-dir <dir> --out-dir <dir>` | 批量处理，单项失败不中断 |
+| `repair --input out.vsdx [--max-rounds n]` | 有界改进循环：计划 → 尝试 → 接受或回滚 → 升级 → 止损 |
 | `diff --before a.vsdx --after b.vsdx [--json]` | 两版本结构对比 |
 | `version --json` | 工具 / 后端 / 模型版本 |
 
@@ -178,6 +179,8 @@ vsdx-tool batch --op validate --input out/ --json
 - 由 VSDX 渲染 SVG / PNG，含中文（自动挑选 CJK 字体），支持多页面、自定义 DPI、背景、
   透明背景、字体替代
 - 自动布局：分层 / 流程 / 树形 / 网格四种策略，`auto` 按图形类型选择
+- 文字驱动几何：字号层级（含可读性下限）、按标签推导节点/容器/页面尺寸
+- 有界自动修复：快照、影响分析、三级修复决策、失败回滚、策略去重与止损
 - 布局质量检查，**硬约束与软约束分离**：
   - 硬（不过即不可交付，分数强制为 0）：节点重叠、连线穿节点、容器相压、节点逃出容器
   - 软（影响专业度）：连线绕行比、行错位、同行尺寸突变、色带间距、间距过密、文字溢出、连线交叉
@@ -236,6 +239,7 @@ agent-vsdx/
 ├── skill/SKILL.md          Agent Skill：图形设计、布局、迭代流程
 ├── schemas/                JSON Schema
 ├── examples/               示例模型（架构 / 流程 / 网络）
+├── benchmarks/             基准语料（6 族 × 3 档 + 8 个故障注入）
 ├── demo/                   两轮验收产物
 ├── tools/                  示例生成脚本
 └── docs/                   安装、架构、验证、API、依赖、限制、测试报告

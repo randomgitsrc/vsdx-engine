@@ -1,0 +1,120 @@
+{
+  "id": "fault-crossing",
+  "name": "故障：连线交叉",
+  "type": "architecture",
+  "pageSize": {
+    "width": 12,
+    "height": 9,
+    "unit": "inches"
+  },
+  "pages": [
+    {
+      "id": "p",
+      "name": "Fault",
+      "size": {
+        "width": 12,
+        "height": 9,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "tl",
+          "name": "tl",
+          "type": "component",
+          "text": "左上",
+          "shape": "rounded",
+          "bounds": {
+            "x": 3.0,
+            "y": 7.0,
+            "w": 1.8,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "tr",
+          "name": "tr",
+          "type": "component",
+          "text": "右上",
+          "shape": "rounded",
+          "bounds": {
+            "x": 9.0,
+            "y": 7.0,
+            "w": 1.8,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#5B9BD5",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "bl",
+          "name": "bl",
+          "type": "component",
+          "text": "左下",
+          "shape": "rounded",
+          "bounds": {
+            "x": 3.0,
+            "y": 3.0,
+            "w": 1.8,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "br",
+          "name": "br",
+          "type": "component",
+          "text": "右下",
+          "shape": "rounded",
+          "bounds": {
+            "x": 9.0,
+            "y": 3.0,
+            "w": 1.8,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "x1",
+          "from": "tl",
+          "to": "br",
+          "kind": "straight",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "x2",
+          "from": "tr",
+          "to": "bl",
+          "kind": "straight",
+          "lineColor": "#C00000",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        }
+      ]
+    }
+  ]
+}

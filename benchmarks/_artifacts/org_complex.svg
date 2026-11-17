@@ -1,0 +1,137 @@
+<svg width="2067" height="1028" viewBox="0 0 2066.4 1027.2" role="img" aria-label="组织结构（复杂）" xmlns="http://www.w3.org/2000/svg">
+  <g data-officeimo-visio-page="组织结构（复杂）">
+    <g data-visio-shape-id="grp_dept" data-visio-nameu="Container">
+      <path d="M 52.8 1003.2 L 2013.6 1003.2 L 2013.6 824.64 L 52.8 824.64 Z" data-officeimo-preserved-geometry="true" fill="#EAF3FB" stroke="#9DC3E6" stroke-width="1.344" />
+      <text x="62.4" y="836.48" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#1F4E79" font-weight="700">
+        <tspan x="62.4" dy="0">部门  Departments</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="grp_exec" data-visio-nameu="Container">
+      <path d="M 52.8 778.8 L 244.8 778.8 L 244.8 597.84 L 52.8 597.84 Z" data-officeimo-preserved-geometry="true" fill="#FDF2E9" stroke="#F4B183" stroke-width="1.344" />
+      <text x="62.4" y="609.68" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#833C0B" font-weight="700">
+        <tspan x="62.4" dy="0">决策层  Executive</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="ceo" data-visio-nameu="Rectangle">
+      <path d="M 81.6 750 L 216 750 L 216 670.8 L 81.6 670.8 Z" data-officeimo-preserved-geometry="true" fill="#C55A11" stroke="#000000" stroke-width="1.333" />
+      <text x="148.8" y="700.133" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="148.8" dy="0">CEO</tspan>
+        <tspan x="148.8" dy="17.6">首席执行官</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="cto" data-visio-nameu="Rectangle">
+      <path d="M 81.6 974.4 L 206.4 974.4 L 206.4 897.6 L 81.6 897.6 Z" data-officeimo-preserved-geometry="true" fill="#2E75B6" stroke="#000000" stroke-width="1.333" />
+      <text x="144" y="926.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="144" dy="0">CTO</tspan>
+        <tspan x="144" dy="16">技术</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="cfo" data-visio-nameu="Rectangle">
+      <path d="M 259.2 974.4 L 384 974.4 L 384 897.6 L 259.2 897.6 Z" data-officeimo-preserved-geometry="true" fill="#2E75B6" stroke="#000000" stroke-width="1.333" />
+      <text x="321.6" y="926.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="321.6" dy="0">CFO</tspan>
+        <tspan x="321.6" dy="16">财务</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="coo" data-visio-nameu="Rectangle">
+      <path d="M 436.8 974.4 L 561.6 974.4 L 561.6 897.6 L 436.8 897.6 Z" data-officeimo-preserved-geometry="true" fill="#2E75B6" stroke="#000000" stroke-width="1.333" />
+      <text x="499.2" y="926.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="499.2" dy="0">COO</tspan>
+        <tspan x="499.2" dy="16">运营</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="chro" data-visio-nameu="Rectangle">
+      <path d="M 614.4 974.4 L 739.2 974.4 L 739.2 897.6 L 614.4 897.6 Z" data-officeimo-preserved-geometry="true" fill="#2E75B6" stroke="#000000" stroke-width="1.333" />
+      <text x="676.8" y="926.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="676.8" dy="0">CHRO</tspan>
+        <tspan x="676.8" dy="16">人力</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="dev" data-visio-nameu="Rectangle">
+      <path d="M 792 966 L 916.8 966 L 916.8 906 L 792 906 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="854.4" y="934.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="854.4" dy="0">研发部</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="qa" data-visio-nameu="Rectangle">
+      <path d="M 969.6 966 L 1094.4 966 L 1094.4 906 L 969.6 906 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="1032" y="934.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1032" dy="0">质量部</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="fin" data-visio-nameu="Rectangle">
+      <path d="M 1147.2 966 L 1272 966 L 1272 906 L 1147.2 906 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="1209.6" y="934.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1209.6" dy="0">财务部</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="ops" data-visio-nameu="Rectangle">
+      <path d="M 1324.8 966 L 1449.6 966 L 1449.6 906 L 1324.8 906 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="1387.2" y="934.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1387.2" dy="0">运营部</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="hr" data-visio-nameu="Rectangle">
+      <path d="M 1501.2 966 L 1628.4 966 L 1628.4 906 L 1501.2 906 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="1564.8" y="934.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1564.8" dy="0">人力资源部</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="plat" data-visio-nameu="Rectangle">
+      <path d="M 1682.4 966 L 1807.2 966 L 1807.2 906 L 1682.4 906 Z" data-officeimo-preserved-geometry="true" fill="#A9D18E" stroke="#000000" stroke-width="1.333" />
+      <text x="1744.8" y="934.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#243B14" font-weight="700">
+        <tspan x="1744.8" dy="0">平台组</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="biz" data-visio-nameu="Rectangle">
+      <path d="M 1860 966 L 1984.8 966 L 1984.8 906 L 1860 906 Z" data-officeimo-preserved-geometry="true" fill="#A9D18E" stroke="#000000" stroke-width="1.333" />
+      <text x="1922.4" y="934.667" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#243B14" font-weight="700">
+        <tspan x="1922.4" dy="0">业务组</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="o1">
+      <path d="M 148.8 750 L 144 897.6" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 144 897.6 L 140.765 890.283 L 147.704 890.509 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o2">
+      <path d="M 148.8 750 L 321.6 897.6" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 321.6 897.6 L 313.865 895.558 L 318.374 890.279 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o3">
+      <path d="M 216 710.4 L 436.8 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 436.8 936 L 429.278 933.277 L 434.239 928.421 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o4">
+      <path d="M 216 710.4 L 240.96 1008 L 589.44 1008 L 614.4 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 614.4 936 L 615.319 943.947 L 608.76 941.673 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o5">
+      <path d="M 206.4 936 L 231.36 1008 L 767.04 1008 L 792 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 792 936 L 792.919 943.947 L 786.36 941.673 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o6">
+      <path d="M 206.4 936 L 231.36 1008 L 944.64 1008 L 969.6 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 969.6 936 L 970.519 943.947 L 963.96 941.673 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o7">
+      <path d="M 384 936 L 408.96 1008 L 1122.24 1008 L 1147.2 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1147.2 936 L 1148.119 943.947 L 1141.56 941.673 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o8">
+      <path d="M 561.6 936 L 586.56 1008 L 1299.84 1008 L 1324.8 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1324.8 936 L 1325.719 943.947 L 1319.16 941.673 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o9">
+      <path d="M 739.2 936 L 764.16 1008 L 1476.24 1008 L 1501.2 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1501.2 936 L 1502.119 943.947 L 1495.56 941.673 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o10">
+      <path d="M 916.8 936 L 941.76 998.4 L 1657.44 998.4 L 1682.4 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1682.4 936 L 1682.946 943.981 L 1676.5 941.403 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="o11">
+      <path d="M 916.8 936 L 941.76 998.4 L 1835.04 998.4 L 1860 936" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1860 936 L 1860.546 943.981 L 1854.1 941.403 Z" fill="#507E32" stroke="none" />
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,519 @@
+{
+  "id": "arch-complex",
+  "name": "分层架构（复杂）",
+  "type": "architecture",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 16,
+    "height": 13,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "分层架构（复杂）",
+      "size": {
+        "width": 16,
+        "height": 13,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_acc",
+          "name": "接入层  Access",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_svc",
+          "name": "服务层  Service",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_dat",
+          "name": "数据层  Data",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "name": "web",
+          "type": "component",
+          "text": "Web 门户\nReact SPA",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 9.6,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_acc"
+        },
+        {
+          "id": "mobile",
+          "name": "mobile",
+          "type": "component",
+          "text": "移动端\niOS / Android",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 8.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_acc"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "type": "component",
+          "text": "API 网关\nKong",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 5.6,
+            "y": 9.6,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#F2B705",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_acc"
+        },
+        {
+          "id": "auth",
+          "name": "auth",
+          "type": "component",
+          "text": "认证服务\nOAuth2 / JWT",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.6,
+            "y": 9.6,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#5B9BD5",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_acc"
+        },
+        {
+          "id": "cdn",
+          "name": "cdn",
+          "type": "component",
+          "text": "CDN",
+          "shape": "circle",
+          "bounds": {
+            "x": 11.2,
+            "y": 9.6,
+            "w": 1.1,
+            "h": 1.1
+          },
+          "style": {
+            "fill": "#8FAADC",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_acc"
+        },
+        {
+          "id": "ingest",
+          "name": "ingest",
+          "type": "component",
+          "text": "数据接入服务\nIngest Service",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 6.3,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_svc"
+        },
+        {
+          "id": "order",
+          "name": "order",
+          "type": "component",
+          "text": "订单服务\nOrder Service",
+          "shape": "rounded",
+          "bounds": {
+            "x": 5.6,
+            "y": 6.3,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_svc"
+        },
+        {
+          "id": "report",
+          "name": "report",
+          "type": "component",
+          "text": "报表引擎\nReport Engine",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.6,
+            "y": 6.3,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_svc"
+        },
+        {
+          "id": "sched",
+          "name": "sched",
+          "type": "component",
+          "text": "任务调度\nScheduler",
+          "shape": "process",
+          "bounds": {
+            "x": 11.2,
+            "y": 6.3,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#A9D18E",
+            "textColor": "#243B14",
+            "fontSize": 11,
+            "bold": false
+          },
+          "groupId": "grp_svc"
+        },
+        {
+          "id": "bus",
+          "name": "bus",
+          "type": "component",
+          "text": "事件总线\nKafka",
+          "shape": "parallelogram",
+          "bounds": {
+            "x": 13.8,
+            "y": 6.3,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#FFC000",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_svc"
+        },
+        {
+          "id": "pg",
+          "name": "pg",
+          "type": "component",
+          "text": "PostgreSQL\n主数据仓库",
+          "shape": "process",
+          "bounds": {
+            "x": 2.6,
+            "y": 3.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_dat"
+        },
+        {
+          "id": "redis",
+          "name": "redis",
+          "type": "component",
+          "text": "Redis\n缓存",
+          "shape": "circle",
+          "bounds": {
+            "x": 5.6,
+            "y": 3.0,
+            "w": 1.1,
+            "h": 1.1
+          },
+          "style": {
+            "fill": "#C00000",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dat"
+        },
+        {
+          "id": "audit",
+          "name": "audit",
+          "type": "component",
+          "text": "审计存储\nAppend-only",
+          "shape": "data",
+          "bounds": {
+            "x": 8.6,
+            "y": 3.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#ED7D31",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_dat"
+        },
+        {
+          "id": "lake",
+          "name": "lake",
+          "type": "component",
+          "text": "数据湖\nS3 / Parquet",
+          "shape": "parallelogram",
+          "bounds": {
+            "x": 11.2,
+            "y": 3.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#ED7D31",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_dat"
+        },
+        {
+          "id": "prom",
+          "name": "prom",
+          "type": "component",
+          "text": "监控告警\nPrometheus",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 13.8,
+            "y": 3.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#7030A0",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dat"
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "web",
+          "to": "api",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "HTTPS"
+        },
+        {
+          "id": "e2",
+          "from": "mobile",
+          "to": "api",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "gRPC"
+        },
+        {
+          "id": "e3",
+          "from": "api",
+          "to": "auth",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "verify token"
+        },
+        {
+          "id": "e4",
+          "from": "auth",
+          "to": "cdn",
+          "kind": "straight",
+          "lineColor": "#999999",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "session",
+          "linePattern": 2
+        },
+        {
+          "id": "e5",
+          "from": "api",
+          "to": "ingest",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "write API"
+        },
+        {
+          "id": "e6",
+          "from": "ingest",
+          "to": "order",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "dataset"
+        },
+        {
+          "id": "e7",
+          "from": "order",
+          "to": "report",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "aggregate"
+        },
+        {
+          "id": "e8",
+          "from": "report",
+          "to": "sched",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "schedule"
+        },
+        {
+          "id": "e9",
+          "from": "sched",
+          "to": "bus",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "publish"
+        },
+        {
+          "id": "e10",
+          "from": "order",
+          "to": "pg",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "SQL"
+        },
+        {
+          "id": "e11",
+          "from": "order",
+          "to": "redis",
+          "kind": "straight",
+          "lineColor": "#7F0000",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "cache"
+        },
+        {
+          "id": "e12",
+          "from": "report",
+          "to": "audit",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "archive"
+        },
+        {
+          "id": "e13",
+          "from": "sched",
+          "to": "lake",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "Parquet"
+        },
+        {
+          "id": "e14",
+          "from": "bus",
+          "to": "prom",
+          "kind": "straight",
+          "lineColor": "#7030A0",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "metrics",
+          "linePattern": 2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "id": "flow-simple",
+  "name": "业务流程（简单）",
+  "type": "workflow",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 12,
+    "height": 11.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "业务流程（简单）",
+      "size": {
+        "width": 12,
+        "height": 11.5,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_in",
+          "name": "受理  Intake",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_rev",
+          "name": "审核  Review",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_ful",
+          "name": "履约  Fulfilment",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "start",
+          "name": "start",
+          "type": "component",
+          "text": "提交\nStart",
+          "shape": "circle",
+          "bounds": {
+            "x": 3.0,
+            "y": 9.4,
+            "w": 1.0,
+            "h": 1.0
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 9,
+            "bold": true
+          },
+          "groupId": "grp_in"
+        },
+        {
+          "id": "check",
+          "name": "check",
+          "type": "component",
+          "text": "校验\nCheck",
+          "shape": "decision",
+          "bounds": {
+            "x": 6.2,
+            "y": 9.4,
+            "w": 2.0,
+            "h": 1.2
+          },
+          "style": {
+            "fill": "#F2B705",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_rev"
+        },
+        {
+          "id": "ok",
+          "name": "ok",
+          "type": "component",
+          "text": "完成\nDone",
+          "shape": "circle",
+          "bounds": {
+            "x": 9.6,
+            "y": 9.4,
+            "w": 1.0,
+            "h": 1.0
+          },
+          "style": {
+            "fill": "#375623",
+            "textColor": "#FFFFFF",
+            "fontSize": 9,
+            "bold": true
+          },
+          "groupId": "grp_ful"
+        },
+        {
+          "id": "bad",
+          "name": "bad",
+          "type": "component",
+          "text": "拒绝\nReject",
+          "shape": "rounded",
+          "bounds": {
+            "x": 6.2,
+            "y": 6.4,
+            "w": 2.0,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#C00000",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_rev"
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "start",
+          "to": "check",
+          "kind": "straight",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e2",
+          "from": "check",
+          "to": "ok",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "通过"
+        },
+        {
+          "id": "e3",
+          "from": "check",
+          "to": "bad",
+          "kind": "rightAngle",
+          "lineColor": "#C00000",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "不通过"
+        }
+      ]
+    }
+  ]
+}

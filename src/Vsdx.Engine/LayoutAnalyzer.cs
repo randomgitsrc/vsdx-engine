@@ -61,13 +61,18 @@ public static class LayoutAnalyzer
                     node.Bounds.X + node.Bounds.W / 2 > pw + 0.01 ||
                     node.Bounds.Y + node.Bounds.H / 2 > ph + 0.01)
                 {
+                    // Content beyond the page edge is invisible in the deliverable, so this is
+                    // a hard failure rather than a style note.
                     report.Add(new LayoutIssue
                     {
                         Code = "node.out-of-page",
-                        Severity = "warning",
+                        Severity = "error",
                         Page = page.Name,
                         Targets = new[] { node.Id },
-                        Message = $"节点 '{node.Id}' 超出页面边界 ({pw}x{ph})"
+                        Message = $"节点 '{node.Id}' 超出页面边界 ({pw}x{ph})",
+                        RootCause = "节点坐标或页面尺寸不匹配，内容被画布裁切",
+                        RecommendedFix = "扩大页面（--fit-page）或缩小/移动节点",
+                        SuggestedLevel = FixLevel.RegionRelayout
                     });
                 }
             }
@@ -400,7 +405,7 @@ public static class LayoutAnalyzer
         // rowTolerance is deliberately wider than AlignTolerance: nodes further apart than
         // that are still *meant* to be one row (they are simply misaligned), and we want to
         // report the misalignment rather than treat them as unrelated rows.
-        double rowTolerance = Math.Max(options.AlignTolerance * 4, 0.45);
+        double rowTolerance = Math.Max(options.AlignTolerance * 3, 0.30);
         var sorted = nodes.OrderByDescending(n => n.Bounds.Y).ToList();
         var rows = new List<List<Node>>();
         foreach (var node in sorted)

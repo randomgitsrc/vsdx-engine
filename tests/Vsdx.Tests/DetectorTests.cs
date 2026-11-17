@@ -141,7 +141,7 @@ public sealed class DetectorTests
             Nodes =
             {
                 new Node { Id = "a", Bounds = new Bounds(2, 6.0, 2, 0.9) },
-                new Node { Id = "b", Bounds = new Bounds(6, 6.4, 2, 0.9) }   // 0.4" off the row
+                new Node { Id = "b", Bounds = new Bounds(6, 6.2, 2, 0.9) }   // 0.2" off the row
             }
         };
 
@@ -241,7 +241,7 @@ public sealed class DetectorTests
             Nodes =
             {
                 new Node { Id = "a", Bounds = new Bounds(2, 6.0, 2, 0.9) },
-                new Node { Id = "b", Bounds = new Bounds(6, 6.3, 2, 0.9) }   // soft: misaligned
+                new Node { Id = "b", Bounds = new Bounds(6, 6.2, 2, 0.9) }   // soft: misaligned
             }
         };
 

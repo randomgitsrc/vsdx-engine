@@ -1,0 +1,176 @@
+<svg width="1582" height="864" viewBox="0 0 1581.6 864" role="img" aria-label="业务流程（复杂）" xmlns="http://www.w3.org/2000/svg">
+  <g data-officeimo-visio-page="业务流程（复杂）">
+    <g data-visio-shape-id="grp_ful" data-visio-nameu="Container">
+      <path d="M 52.8 841.2 L 756 841.2 L 756 660.24 L 52.8 660.24 Z" data-officeimo-preserved-geometry="true" fill="#EDF7ED" stroke="#A9D08E" stroke-width="1.344" />
+      <text x="62.4" y="672.08" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#375623" font-weight="700">
+        <tspan x="62.4" dy="0">履约  Fulfilment</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="grp_rev" data-visio-nameu="Container">
+      <path d="M 52.8 613.2 L 1006.8 613.2 L 1006.8 432.24 L 52.8 432.24 Z" data-officeimo-preserved-geometry="true" fill="#FDF2E9" stroke="#F4B183" stroke-width="1.344" />
+      <text x="62.4" y="444.08" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#833C0B" font-weight="700">
+        <tspan x="62.4" dy="0">审核  Review</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="grp_in" data-visio-nameu="Container">
+      <path d="M 81.6 387.6 L 415.2 387.6 L 415.2 206.64 L 81.6 206.64 Z" data-officeimo-preserved-geometry="true" fill="#EAF3FB" stroke="#9DC3E6" stroke-width="1.344" />
+      <text x="91.2" y="218.48" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#1F4E79" font-weight="700">
+        <tspan x="91.2" dy="0">受理  Intake</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="start" data-visio-nameu="Circle">
+      <path d="M 182.4 319.2 L 181.173 309.883 L 177.577 301.2 L 171.856 293.744 L 164.4 288.023 L 155.717 284.427 L 146.4 283.2 L 137.083 284.427 L 128.4 288.023 L 120.944 293.744 L 115.223 301.2 L 111.627 309.883 L 110.4 319.2 L 111.627 328.517 L 115.223 337.2 L 120.944 344.656 L 128.4 350.377 L 137.083 353.973 L 146.4 355.2 L 155.717 353.973 L 164.4 350.377 L 171.856 344.656 L 177.577 337.2 L 181.173 328.517 Z" data-officeimo-preserved-geometry="true" fill="#2E75B6" stroke="#000000" stroke-width="1.333" />
+      <text x="146.4" y="303.6" font-family="Microsoft YaHei" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="146.4" dy="0">订单提交</tspan>
+        <tspan x="146.4" dy="14.4">Order</tspan>
+        <tspan x="146.4" dy="14.4">placed</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="valid" data-visio-nameu="Process">
+      <path d="M 261.6 358.8 L 386.4 358.8 L 386.4 279.6 L 261.6 279.6 Z" data-officeimo-preserved-geometry="true" fill="#5B9BD5" stroke="#000000" stroke-width="1.333" />
+      <text x="324" y="308.933" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="324" dy="0">校验订单</tspan>
+        <tspan x="324" dy="17.6">Validate</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="risk" data-visio-nameu="Decision">
+      <path d="M 148.8 584.4 L 216 544.8 L 148.8 505.2 L 81.6 544.8 Z" data-officeimo-preserved-geometry="true" fill="#7030A0" stroke="#000000" stroke-width="1.333" />
+      <text x="148.8" y="534.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="148.8" dy="0">风控评估</tspan>
+        <tspan x="148.8" dy="17.6">Risk check</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="stock" data-visio-nameu="Decision">
+      <path d="M 340.8 584.4 L 411.6 544.8 L 340.8 505.2 L 270 544.8 Z" data-officeimo-preserved-geometry="true" fill="#F2B705" stroke="#000000" stroke-width="1.333" />
+      <text x="340.8" y="534.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#3F2E00" font-weight="700">
+        <tspan x="340.8" dy="0">库存检查</tspan>
+        <tspan x="340.8" dy="17.6">Stock check</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="pay" data-visio-nameu="Rectangle">
+      <path d="M 463.2 584.4 L 588 584.4 L 588 505.2 L 463.2 505.2 Z" data-officeimo-preserved-geometry="true" fill="#F2B705" stroke="#000000" stroke-width="1.333" />
+      <text x="525.6" y="534.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#3F2E00" font-weight="700">
+        <tspan x="525.6" dy="0">支付授权</tspan>
+        <tspan x="525.6" dy="17.6">Authorise</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="reject" data-visio-nameu="Rectangle">
+      <path d="M 640.8 584.4 L 765.6 584.4 L 765.6 505.2 L 640.8 505.2 Z" data-officeimo-preserved-geometry="true" fill="#C00000" stroke="#000000" stroke-width="1.333" />
+      <text x="703.2" y="534.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="703.2" dy="0">拒绝订单</tspan>
+        <tspan x="703.2" dy="17.6">Reject</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="manual" data-visio-nameu="Rectangle">
+      <path d="M 817.2 584.4 L 978 584.4 L 978 505.2 L 817.2 505.2 Z" data-officeimo-preserved-geometry="true" fill="#ED7D31" stroke="#000000" stroke-width="1.333" />
+      <text x="897.6" y="534.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="897.6" dy="0">人工复核</tspan>
+        <tspan x="897.6" dy="17.6">Manual review</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="pick" data-visio-nameu="Rectangle">
+      <path d="M 81.6 812.4 L 220.8 812.4 L 220.8 733.2 L 81.6 733.2 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="151.2" y="762.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="151.2" dy="0">拣货包装</tspan>
+        <tspan x="151.2" dy="17.6">Pick &amp; pack</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="ship" data-visio-nameu="Process">
+      <path d="M 273.6 812.4 L 398.4 812.4 L 398.4 733.2 L 273.6 733.2 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="336" y="762.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="336" dy="0">发货</tspan>
+        <tspan x="336" dy="17.6">Ship</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="notify" data-visio-nameu="Rectangle">
+      <path d="M 451.2 812.4 L 576 812.4 L 576 733.2 L 451.2 733.2 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#000000" stroke-width="1.333" />
+      <text x="513.6" y="762.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="513.6" dy="0">通知客户</tspan>
+        <tspan x="513.6" dy="17.6">Notify</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="done" data-visio-nameu="Circle">
+      <path d="M 727.2 772.8 L 725.973 763.483 L 722.377 754.8 L 716.656 747.344 L 709.2 741.623 L 700.517 738.027 L 691.2 736.8 L 681.883 738.027 L 673.2 741.623 L 665.744 747.344 L 660.023 754.8 L 656.427 763.483 L 655.2 772.8 L 656.427 782.117 L 660.023 790.8 L 665.744 798.256 L 673.2 803.977 L 681.883 807.573 L 691.2 808.8 L 700.517 807.573 L 709.2 803.977 L 716.656 798.256 L 722.377 790.8 L 725.973 782.117 Z" data-officeimo-preserved-geometry="true" fill="#375623" stroke="#000000" stroke-width="1.333" />
+      <text x="691.2" y="764.4" font-family="Microsoft YaHei" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="691.2" dy="0">完成</tspan>
+        <tspan x="691.2" dy="14.4">Done</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e1">
+      <path d="M 182.4 319.2 L 261.6 319.2" fill="none" stroke="#2E75B6" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 261.6 319.2 L 254.392 322.671 L 254.392 315.729 Z" fill="#2E75B6" stroke="none" />
+    </g>
+    <g data-visio-connector-id="e2">
+      <path d="M 324 358.8 L 148.8 505.2" fill="none" stroke="#2E75B6" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 148.8 505.2 L 152.105 497.915 L 156.557 503.242 Z" fill="#2E75B6" stroke="none" />
+    </g>
+    <g data-visio-connector-id="e3">
+      <path d="M 216 544.8 L 270 544.8" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 270 544.8 L 262.792 548.271 L 262.792 541.329 Z" fill="#507E32" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="228.48" y="526" width="29.04" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="243" y="534" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="243" dy="0">通过</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e4">
+      <path d="M 216 544.8 L 240.96 619.2 L 615.84 619.2 L 640.8 544.8" fill="none" stroke="#C00000" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 640.8 544.8 L 641.798 552.737 L 635.217 550.529 Z" fill="#C00000" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="408.12" y="600.4" width="40.56" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="428.4" y="608.4" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="428.4" dy="0">高风险</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e5">
+      <path d="M 411.6 544.8 L 463.2 544.8" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 463.2 544.8 L 455.992 548.271 L 455.992 541.329 Z" fill="#507E32" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="422.88" y="526" width="29.04" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="437.4" y="534" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="437.4" dy="0">有货</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e6">
+      <path d="M 411.6 544.8 L 436.56 619.2 L 792.24 619.2 L 817.2 544.8" fill="none" stroke="#ED7D31" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 817.2 544.8 L 818.198 552.737 L 811.617 550.529 Z" fill="#ED7D31" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="599.88" y="600.4" width="29.04" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="614.4" y="608.4" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="614.4" dy="0">缺货</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e7">
+      <path d="M 817.2 544.8 L 792.24 619.2 L 612.96 619.2 L 588 544.8" fill="none" stroke="#ED7D31" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 588 544.8 L 593.583 550.529 L 587.002 552.737 Z" fill="#ED7D31" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="676.56" y="600.4" width="52.08" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="702.6" y="608.4" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="702.6" dy="0">补货完成</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e8">
+      <path d="M 463.2 544.8 L 438.24 470.4 L 245.76 470.4 L 220.8 772.8" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 220.8 772.8 L 217.934 765.331 L 224.852 765.902 Z" fill="#507E32" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="224.144" y="467.782" width="40.56" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="244.424" y="475.782" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="244.424" dy="0">已授权</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e9">
+      <path d="M 220.8 772.8 L 273.6 772.8" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 273.6 772.8 L 266.392 776.271 L 266.392 769.329 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="e10">
+      <path d="M 398.4 772.8 L 451.2 772.8" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 451.2 772.8 L 443.992 776.271 L 443.992 769.329 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="e11">
+      <path d="M 576 772.8 L 655.2 772.8" fill="none" stroke="#507E32" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 655.2 772.8 L 647.992 776.271 L 647.992 769.329 Z" fill="#507E32" stroke="none" />
+    </g>
+    <g data-visio-connector-id="e12">
+      <path d="M 703.2 584.4 L 703.2 840 L 691.2 840 L 691.2 736.8" fill="none" stroke="#999999" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4.608 2.304" />
+      <path data-officeimo-connector-arrow="end" d="M 691.2 736.8 L 694.671 744.008 L 687.729 744.008 Z" fill="#999999" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="688.68" y="751" width="29.04" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="703.2" y="759" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="703.2" dy="0">取消</tspan>
+      </text>
+    </g>
+  </g>
+</svg>

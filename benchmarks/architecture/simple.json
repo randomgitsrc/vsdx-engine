@@ -1,0 +1,187 @@
+{
+  "id": "arch-simple",
+  "name": "分层架构（简单）",
+  "type": "architecture",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 11,
+    "height": 12,
+    "unit": "inches"
+  },
+  "orientation": "portrait",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "分层架构（简单）",
+      "size": {
+        "width": 11,
+        "height": 12,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_acc",
+          "name": "接入层  Access",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_svc",
+          "name": "服务层  Service",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_dat",
+          "name": "数据层  Data",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "name": "web",
+          "type": "component",
+          "text": "Web 门户\nWeb",
+          "shape": "rounded",
+          "bounds": {
+            "x": 3.0,
+            "y": 9.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_acc"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "type": "component",
+          "text": "API 网关",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 6.0,
+            "y": 9.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#F2B705",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_acc"
+        },
+        {
+          "id": "svc",
+          "name": "svc",
+          "type": "component",
+          "text": "订单服务\nOrder",
+          "shape": "rounded",
+          "bounds": {
+            "x": 4.5,
+            "y": 6.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_svc"
+        },
+        {
+          "id": "db",
+          "name": "db",
+          "type": "component",
+          "text": "PostgreSQL",
+          "shape": "process",
+          "bounds": {
+            "x": 4.5,
+            "y": 3.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_dat"
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "web",
+          "to": "api",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "HTTPS"
+        },
+        {
+          "id": "e2",
+          "from": "api",
+          "to": "svc",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "REST"
+        },
+        {
+          "id": "e3",
+          "from": "svc",
+          "to": "db",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "SQL"
+        }
+      ]
+    }
+  ]
+}

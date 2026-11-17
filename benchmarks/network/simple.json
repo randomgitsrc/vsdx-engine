@@ -1,0 +1,187 @@
+{
+  "id": "net-simple",
+  "name": "网络拓扑（简单）",
+  "type": "network",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 11,
+    "height": 12,
+    "unit": "inches"
+  },
+  "orientation": "portrait",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "网络拓扑（简单）",
+      "size": {
+        "width": 11,
+        "height": 12,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_edge",
+          "name": "边缘区  Edge",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_core",
+          "name": "核心区  Core",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_sec",
+          "name": "安全域  Security",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#F2E9F7",
+            "stroke": "#C5A3D9",
+            "textColor": "#4B1F6F",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "net",
+          "name": "net",
+          "type": "component",
+          "text": "互联网",
+          "shape": "cloud",
+          "bounds": {
+            "x": 3.0,
+            "y": 9.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#D3D3D3",
+            "textColor": "#111111",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_edge"
+        },
+        {
+          "id": "fw",
+          "name": "fw",
+          "type": "component",
+          "text": "防火墙",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 6.4,
+            "y": 9.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C00000",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_edge"
+        },
+        {
+          "id": "sw",
+          "name": "sw",
+          "type": "component",
+          "text": "交换机",
+          "shape": "process",
+          "bounds": {
+            "x": 4.6,
+            "y": 6.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "app",
+          "name": "app",
+          "type": "component",
+          "text": "应用服务器",
+          "shape": "rounded",
+          "bounds": {
+            "x": 4.6,
+            "y": 3.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        }
+      ],
+      "edges": [
+        {
+          "id": "n1",
+          "from": "net",
+          "to": "fw",
+          "kind": "straight",
+          "lineColor": "#808080",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "WAN"
+        },
+        {
+          "id": "n2",
+          "from": "fw",
+          "to": "sw",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "trunk"
+        },
+        {
+          "id": "n3",
+          "from": "sw",
+          "to": "app",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "VLAN 10"
+        }
+      ]
+    }
+  ]
+}

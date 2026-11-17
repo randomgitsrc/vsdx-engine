@@ -1,0 +1,470 @@
+{
+  "id": "hybrid-complex",
+  "name": "混合架构（复杂）",
+  "type": "architecture",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 17.5,
+    "height": 13.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "混合架构（复杂）",
+      "size": {
+        "width": 17.5,
+        "height": 13.5,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_front",
+          "name": "前端  Frontend",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_back",
+          "name": "后端  Backend",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_infra",
+          "name": "基础设施  Infrastructure",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "name": "web",
+          "type": "component",
+          "text": "Web 门户\nReact",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 10.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_front"
+        },
+        {
+          "id": "mobile",
+          "name": "mobile",
+          "type": "component",
+          "text": "移动端\niOS/Android",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 8.6,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_front"
+        },
+        {
+          "id": "admin",
+          "name": "admin",
+          "type": "component",
+          "text": "管理后台\nAdmin",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 7.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_front"
+        },
+        {
+          "id": "api",
+          "name": "api",
+          "type": "component",
+          "text": "API 网关\nKong",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 5.8,
+            "y": 10.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#F2B705",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_back"
+        },
+        {
+          "id": "auth",
+          "name": "auth",
+          "type": "component",
+          "text": "认证服务",
+          "shape": "rounded",
+          "bounds": {
+            "x": 9.0,
+            "y": 10.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#5B9BD5",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_back"
+        },
+        {
+          "id": "order",
+          "name": "order",
+          "type": "component",
+          "text": "订单服务",
+          "shape": "rounded",
+          "bounds": {
+            "x": 5.8,
+            "y": 7.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_back"
+        },
+        {
+          "id": "report",
+          "name": "report",
+          "type": "component",
+          "text": "报表服务",
+          "shape": "rounded",
+          "bounds": {
+            "x": 9.0,
+            "y": 7.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_back"
+        },
+        {
+          "id": "worker",
+          "name": "worker",
+          "type": "component",
+          "text": "异步 Worker",
+          "shape": "process",
+          "bounds": {
+            "x": 12.2,
+            "y": 7.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#A9D18E",
+            "textColor": "#243B14",
+            "fontSize": 11,
+            "bold": false
+          },
+          "groupId": "grp_back"
+        },
+        {
+          "id": "pg",
+          "name": "pg",
+          "type": "component",
+          "text": "PostgreSQL\n主库",
+          "shape": "process",
+          "bounds": {
+            "x": 2.6,
+            "y": 3.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_infra"
+        },
+        {
+          "id": "redis",
+          "name": "redis",
+          "type": "component",
+          "text": "Redis\n缓存",
+          "shape": "circle",
+          "bounds": {
+            "x": 5.4,
+            "y": 3.4,
+            "w": 1.1,
+            "h": 1.1
+          },
+          "style": {
+            "fill": "#C00000",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_infra"
+        },
+        {
+          "id": "mq",
+          "name": "mq",
+          "type": "component",
+          "text": "Kafka\n事件总线",
+          "shape": "parallelogram",
+          "bounds": {
+            "x": 8.6,
+            "y": 3.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#FFC000",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_infra"
+        },
+        {
+          "id": "lake",
+          "name": "lake",
+          "type": "component",
+          "text": "数据湖\nS3",
+          "shape": "parallelogram",
+          "bounds": {
+            "x": 11.8,
+            "y": 3.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#ED7D31",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_infra"
+        },
+        {
+          "id": "mon",
+          "name": "mon",
+          "type": "component",
+          "text": "监控\nGrafana",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 14.6,
+            "y": 3.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#7030A0",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_infra"
+        }
+      ],
+      "edges": [
+        {
+          "id": "h1",
+          "from": "web",
+          "to": "api",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "HTTPS"
+        },
+        {
+          "id": "h2",
+          "from": "mobile",
+          "to": "api",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "gRPC"
+        },
+        {
+          "id": "h3",
+          "from": "admin",
+          "to": "api",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "HTTPS"
+        },
+        {
+          "id": "h4",
+          "from": "api",
+          "to": "auth",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "verify"
+        },
+        {
+          "id": "h5",
+          "from": "api",
+          "to": "order",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "REST"
+        },
+        {
+          "id": "h6",
+          "from": "api",
+          "to": "report",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "REST"
+        },
+        {
+          "id": "h7",
+          "from": "order",
+          "to": "pg",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "SQL"
+        },
+        {
+          "id": "h8",
+          "from": "order",
+          "to": "redis",
+          "kind": "straight",
+          "lineColor": "#7F0000",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "cache"
+        },
+        {
+          "id": "h9",
+          "from": "order",
+          "to": "mq",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "publish"
+        },
+        {
+          "id": "h10",
+          "from": "mq",
+          "to": "worker",
+          "kind": "straight",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "consume",
+          "linePattern": 2
+        },
+        {
+          "id": "h11",
+          "from": "worker",
+          "to": "lake",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "Parquet"
+        },
+        {
+          "id": "h12",
+          "from": "report",
+          "to": "lake",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "read",
+          "linePattern": 2
+        },
+        {
+          "id": "h13",
+          "from": "mq",
+          "to": "mon",
+          "kind": "straight",
+          "lineColor": "#7030A0",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "metrics",
+          "linePattern": 2
+        }
+      ]
+    }
+  ]
+}

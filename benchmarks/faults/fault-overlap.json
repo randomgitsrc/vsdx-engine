@@ -1,0 +1,82 @@
+{
+  "id": "fault-overlap",
+  "name": "故障：节点重叠",
+  "type": "architecture",
+  "pageSize": {
+    "width": 12,
+    "height": 8,
+    "unit": "inches"
+  },
+  "pages": [
+    {
+      "id": "p",
+      "name": "Fault",
+      "size": {
+        "width": 12,
+        "height": 8,
+        "unit": "inches"
+      },
+      "groups": [],
+      "edges": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "a",
+          "type": "component",
+          "text": "节点 A",
+          "shape": "rounded",
+          "bounds": {
+            "x": 4.0,
+            "y": 5.0,
+            "w": 2.0,
+            "h": 1.0
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "b",
+          "name": "b",
+          "type": "component",
+          "text": "节点 B",
+          "shape": "rounded",
+          "bounds": {
+            "x": 4.6,
+            "y": 5.0,
+            "w": 2.0,
+            "h": 1.0
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "c",
+          "name": "c",
+          "type": "component",
+          "text": "节点 C",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.0,
+            "y": 5.0,
+            "w": 2.0,
+            "h": 1.0
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        }
+      ]
+    }
+  ]
+}

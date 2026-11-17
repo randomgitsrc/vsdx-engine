@@ -1,0 +1,402 @@
+{
+  "id": "org-complex",
+  "name": "组织结构（复杂）",
+  "type": "org",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 16,
+    "height": 13,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "组织结构（复杂）",
+      "size": {
+        "width": 16,
+        "height": 13,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_exec",
+          "name": "决策层  Executive",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_dept",
+          "name": "部门  Departments",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "ceo",
+          "name": "ceo",
+          "type": "component",
+          "text": "CEO\n首席执行官",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.0,
+            "y": 9.8,
+            "w": 2.4,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_exec"
+        },
+        {
+          "id": "cto",
+          "name": "cto",
+          "type": "component",
+          "text": "CTO\n技术",
+          "shape": "rounded",
+          "bounds": {
+            "x": 3.2,
+            "y": 7.0,
+            "w": 2.0,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "cfo",
+          "name": "cfo",
+          "type": "component",
+          "text": "CFO\n财务",
+          "shape": "rounded",
+          "bounds": {
+            "x": 5.8,
+            "y": 7.0,
+            "w": 2.0,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "coo",
+          "name": "coo",
+          "type": "component",
+          "text": "COO\n运营",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.4,
+            "y": 7.0,
+            "w": 2.0,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "chro",
+          "name": "chro",
+          "type": "component",
+          "text": "CHRO\n人力",
+          "shape": "rounded",
+          "bounds": {
+            "x": 11.0,
+            "y": 7.0,
+            "w": 2.0,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "dev",
+          "name": "dev",
+          "type": "component",
+          "text": "研发部",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.0,
+            "y": 4.0,
+            "w": 1.9,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "qa",
+          "name": "qa",
+          "type": "component",
+          "text": "质量部",
+          "shape": "rounded",
+          "bounds": {
+            "x": 4.4,
+            "y": 4.0,
+            "w": 1.9,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "fin",
+          "name": "fin",
+          "type": "component",
+          "text": "财务部",
+          "shape": "rounded",
+          "bounds": {
+            "x": 6.8,
+            "y": 4.0,
+            "w": 1.9,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "ops",
+          "name": "ops",
+          "type": "component",
+          "text": "运营部",
+          "shape": "rounded",
+          "bounds": {
+            "x": 9.2,
+            "y": 4.0,
+            "w": 1.9,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "hr",
+          "name": "hr",
+          "type": "component",
+          "text": "人力资源部",
+          "shape": "rounded",
+          "bounds": {
+            "x": 11.6,
+            "y": 4.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "plat",
+          "name": "plat",
+          "type": "component",
+          "text": "平台组",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.0,
+            "y": 1.6,
+            "w": 1.9,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#A9D18E",
+            "textColor": "#243B14",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        },
+        {
+          "id": "biz",
+          "name": "biz",
+          "type": "component",
+          "text": "业务组",
+          "shape": "rounded",
+          "bounds": {
+            "x": 4.4,
+            "y": 1.6,
+            "w": 1.9,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#A9D18E",
+            "textColor": "#243B14",
+            "fontSize": 10,
+            "bold": true
+          },
+          "groupId": "grp_dept"
+        }
+      ],
+      "edges": [
+        {
+          "id": "o1",
+          "from": "ceo",
+          "to": "cto",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o2",
+          "from": "ceo",
+          "to": "cfo",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o3",
+          "from": "ceo",
+          "to": "coo",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o4",
+          "from": "ceo",
+          "to": "chro",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o5",
+          "from": "cto",
+          "to": "dev",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o6",
+          "from": "cto",
+          "to": "qa",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o7",
+          "from": "cfo",
+          "to": "fin",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o8",
+          "from": "coo",
+          "to": "ops",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o9",
+          "from": "chro",
+          "to": "hr",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o10",
+          "from": "dev",
+          "to": "plat",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "o11",
+          "from": "dev",
+          "to": "biz",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        }
+      ]
+    }
+  ]
+}

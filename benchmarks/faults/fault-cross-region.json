@@ -1,0 +1,112 @@
+{
+  "id": "fault-cross-region",
+  "name": "故障：跨区穿线",
+  "type": "architecture",
+  "pageSize": {
+    "width": 14,
+    "height": 9,
+    "unit": "inches"
+  },
+  "pages": [
+    {
+      "id": "p",
+      "name": "Fault",
+      "size": {
+        "width": 14,
+        "height": 9,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "l",
+          "name": "l",
+          "type": "component",
+          "text": "起点",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.0,
+            "y": 5.0,
+            "w": 1.6,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "m1",
+          "name": "m1",
+          "type": "component",
+          "text": "障碍 1",
+          "shape": "rounded",
+          "bounds": {
+            "x": 5.0,
+            "y": 5.0,
+            "w": 1.6,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#808080",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "m2",
+          "name": "m2",
+          "type": "component",
+          "text": "障碍 2",
+          "shape": "rounded",
+          "bounds": {
+            "x": 7.5,
+            "y": 5.0,
+            "w": 1.6,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#808080",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        },
+        {
+          "id": "r",
+          "name": "r",
+          "type": "component",
+          "text": "终点",
+          "shape": "rounded",
+          "bounds": {
+            "x": 11.0,
+            "y": 5.0,
+            "w": 1.6,
+            "h": 0.8
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "x1",
+          "from": "l",
+          "to": "r",
+          "kind": "straight",
+          "lineColor": "#C00000",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "穿过"
+        }
+      ]
+    }
+  ]
+}

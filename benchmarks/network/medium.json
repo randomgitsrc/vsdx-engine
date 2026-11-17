@@ -1,0 +1,376 @@
+{
+  "id": "net-medium",
+  "name": "网络拓扑（中等）",
+  "type": "network",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 14.5,
+    "height": 12.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "网络拓扑（中等）",
+      "size": {
+        "width": 14.5,
+        "height": 12.5,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_edge",
+          "name": "边缘区  Edge",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_core",
+          "name": "核心区  Core",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_sec",
+          "name": "安全域  Security",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#F2E9F7",
+            "stroke": "#C5A3D9",
+            "textColor": "#4B1F6F",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "net",
+          "name": "net",
+          "type": "component",
+          "text": "互联网",
+          "shape": "cloud",
+          "bounds": {
+            "x": 2.6,
+            "y": 9.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#D3D3D3",
+            "textColor": "#111111",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_edge"
+        },
+        {
+          "id": "fw",
+          "name": "fw",
+          "type": "component",
+          "text": "防火墙",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 5.8,
+            "y": 9.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C00000",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_edge"
+        },
+        {
+          "id": "lb",
+          "name": "lb",
+          "type": "component",
+          "text": "负载均衡",
+          "shape": "process",
+          "bounds": {
+            "x": 9.0,
+            "y": 9.4,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#ED7D31",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_edge"
+        },
+        {
+          "id": "dmz",
+          "name": "dmz",
+          "type": "component",
+          "text": "DMZ 交换机",
+          "shape": "process",
+          "bounds": {
+            "x": 2.6,
+            "y": 6.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#5B9BD5",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "core",
+          "name": "core",
+          "type": "component",
+          "text": "核心交换机",
+          "shape": "process",
+          "bounds": {
+            "x": 5.8,
+            "y": 6.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "appsw",
+          "name": "appsw",
+          "type": "component",
+          "text": "应用区交换机",
+          "shape": "process",
+          "bounds": {
+            "x": 9.0,
+            "y": 6.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#5B9BD5",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "ids",
+          "name": "ids",
+          "type": "component",
+          "text": "入侵检测",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 12.2,
+            "y": 6.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#7030A0",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_sec"
+        },
+        {
+          "id": "a1",
+          "name": "a1",
+          "type": "component",
+          "text": "应用服务器 A",
+          "shape": "rounded",
+          "bounds": {
+            "x": 3.0,
+            "y": 3.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "a2",
+          "name": "a2",
+          "type": "component",
+          "text": "应用服务器 B",
+          "shape": "rounded",
+          "bounds": {
+            "x": 6.4,
+            "y": 3.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        },
+        {
+          "id": "db",
+          "name": "db",
+          "type": "component",
+          "text": "数据库集群",
+          "shape": "process",
+          "bounds": {
+            "x": 9.8,
+            "y": 3.2,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#C55A11",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "grp_core"
+        }
+      ],
+      "edges": [
+        {
+          "id": "n1",
+          "from": "net",
+          "to": "fw",
+          "kind": "straight",
+          "lineColor": "#808080",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "WAN"
+        },
+        {
+          "id": "n2",
+          "from": "fw",
+          "to": "lb",
+          "kind": "straight",
+          "lineColor": "#C00000",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "DMZ"
+        },
+        {
+          "id": "n3",
+          "from": "lb",
+          "to": "appsw",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "10G"
+        },
+        {
+          "id": "n4",
+          "from": "fw",
+          "to": "core",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "trunk"
+        },
+        {
+          "id": "n5",
+          "from": "core",
+          "to": "dmz",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "n6",
+          "from": "core",
+          "to": "appsw",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "n7",
+          "from": "appsw",
+          "to": "ids",
+          "kind": "straight",
+          "lineColor": "#7030A0",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "镜像",
+          "linePattern": 2
+        },
+        {
+          "id": "n8",
+          "from": "dmz",
+          "to": "a1",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "VLAN 20"
+        },
+        {
+          "id": "n9",
+          "from": "core",
+          "to": "a2",
+          "kind": "straight",
+          "lineColor": "#507E32",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "VLAN 21"
+        },
+        {
+          "id": "n10",
+          "from": "appsw",
+          "to": "db",
+          "kind": "straight",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle",
+          "label": "VLAN 30"
+        }
+      ]
+    }
+  ]
+}

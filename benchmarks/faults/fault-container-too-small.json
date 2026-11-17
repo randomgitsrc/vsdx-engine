@@ -1,0 +1,84 @@
+{
+  "id": "fault-container-too-small",
+  "name": "故障：容器过小",
+  "type": "architecture",
+  "pageSize": {
+    "width": 12,
+    "height": 8,
+    "unit": "inches"
+  },
+  "pages": [
+    {
+      "id": "p",
+      "name": "Fault",
+      "size": {
+        "width": 12,
+        "height": 8,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "g",
+          "name": "小容器",
+          "kind": "container",
+          "autoSize": false,
+          "bounds": {
+            "x": 5.0,
+            "y": 5.0,
+            "w": 2.0,
+            "h": 1.0
+          },
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "a",
+          "type": "component",
+          "text": "远在左",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.5,
+            "y": 5.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "g"
+        },
+        {
+          "id": "b",
+          "name": "b",
+          "type": "component",
+          "text": "远在右",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.5,
+            "y": 5.0,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "style": {
+            "fill": "#70AD47",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "groupId": "g"
+        }
+      ],
+      "edges": []
+    }
+  ]
+}
