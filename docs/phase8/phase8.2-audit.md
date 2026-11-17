@@ -726,8 +726,27 @@ Reader 只读 `shape.TextStyle`（`OfficeImoDocumentReader.cs:602-625`），
 **修法：** `VisioTextBlockBridge` 的 `Color`/`Font` 移入 `Character/Row`，
 与 Node 保持一致。改动很小（几行），但必须验证回读。
 
-**这也修正了 D-4 的诊断：** 原以为只是"FaceNames 未注册"，
-实际是**层级错了**——注册与否是次要的，位置不对则一切都读不到。
+**D-4 的诊断需要两次修正，两次都不完整：**
+
+| 版本 | 判断 | 问题 |
+| --- | --- | --- |
+| 第一版 | "FaceNames 未注册" | 只说了一半 |
+| 第二版（本段原文） | "层级错了，注册与否是次要的" | **说反了**——注册同样必要 |
+
+**实测（三个变体，`validate` 均通过）：**
+
+| 变体 | font | textColor | fontSize |
+| --- | --- | --- | --- |
+| 现状 | `None` | `None` | 18 ✅ |
+| 只移入 `Character/Row` | `None` | `None` | **`None`** ❌ |
+| 移入 + 注册 `FaceNames` | `Verdana` | `#FF0000` | 18 ✅ |
+
+**只移动会让结果比现状更差**——连原本正确的 `fontSize` 也丢失。
+
+原因：`Character/Row` 的 `Font` 单元格存**字体索引**（指向 `FaceNames` 数组），
+不是名字字符串。写 `V="Verdana"` 解析失败，整个 `Character` 段失效。
+
+**结论：位置与注册都是必要条件，缺一不可，且必须在同一提交内完成。**
 
 ---
 

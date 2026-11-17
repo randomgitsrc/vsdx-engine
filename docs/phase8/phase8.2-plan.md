@@ -349,13 +349,13 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 §4 缺陷行数        : 25
 §4 任务引用数      : 25
 §4 不同任务数      : 24   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
-§9 任务行数        : 26   ← 24 + T8 + T9（两个跨任务门禁）
+§9 任务行数        : 27   ← 24 + T8 + T9 + T2h（两个验收门禁 + 闸门实现）
 ```
 
 - **25 项缺陷 → 25 个任务引用**：每行都有明确任务
 - **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 24 个
-- **§9 多出 2 个**：`T8`（三套产物 + 目视）与 `T9`（全量回归）不对应单一缺陷，
-  是**跨任务的验收门禁**
+- **§9 多出 3 个**：`T8`（三套产物 + 目视）、`T9`（全量回归）是**跨任务的验收门禁**；
+  `T2h`（协议闸门实现）横跨缺陷 1/17/21 三类，不归属单一缺陷
 
 > **三轮反复纠正的记录：** 我先写"17⇄17⇄17 一一对应"（假），
 > 再写"17:17:18，只解释 T9"（漏 T8），现在才用脚本数清。
@@ -388,10 +388,12 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `src/Vsdx.Protocol/ProtocolRunner.cs` | **需改动**：spec 路径补 `DiagramSizer.Apply`（T0.5，M1 核心） | 中 |
 | `src/Vsdx.Engine/LayoutStrategies.cs` | **需改动**：`Transpose(Page)` 公共化 + 各引擎消费 `Direction`（T0）；移除逐个 clamp 改整组偏移（T8a） | 中 |
 | `src/Vsdx.Engine/LayoutAnalyzer.cs` | **需改动**：`text.overflow-*` 升级为 error（T6b） | 小 |
-| `src/Vsdx.Engine/TypeScaleDefaults.cs` | **新增**（放 `Vsdx.Model`）：字号档位唯一权威（M11） | 小 |
+| `src/Vsdx.Model/TypeScaleDefaults.cs` | **新增**：字号档位唯一权威（M11）。放 `Vsdx.Model` 因 `Adapters` 不能引用 `Engine` | 小 |
 | `src/Vsdx.Adapters/VisioBackgroundBridge.cs` | **新增**：写 `pages.xml` 的 `PageSheet`（T10） | 小 |
-| `src/Vsdx.Protocol/DiagramIrConverter.cs` | **需改动**：消费 `IrContainer.Order`（T1b） | 小 |
-| `src/Vsdx.Renderer/FontResolver.cs` | **需改动**：读 VSDX 的 `FontFamily` 而非仅推断 CJK（T2d，缺陷 18） | **中** |
+| `src/Vsdx.Protocol/DiagramIr.cs` | **需改动**：`DiagramIrConverter` 类在此文件内（`:232`），消费 `IrContainer.Order`（T1b）。**注意：没有 `DiagramIrConverter.cs` 这个文件** | 小 |
+| `src/Vsdx.Renderer/OfficeImoVsdxRenderer.cs` | **需改动**：把 VSDX 字体名传给 `Resolve`（T2d 的实际改动点，`:37`） | **中** |
+| `src/Vsdx.Renderer/FontResolver.cs` | **需改动**：新增按 family name 解析字体文件（读 TTF name 表，T2d） | **中** |
+| `src/Vsdx.Engine/LocalRelayout.cs` | **需改动**：重排后碰撞检查（T5b，缺陷 22） | 小 |
 | `src/Vsdx.Protocol/JsonGate.cs` | **新增**：闸门 0/1/2/3 的统一实现（Schema 校验 + 未知成员 + 枚举白名单） | 中 |
 | `src/Vsdx.Adapters/OfficeImoDocumentReader.cs` | **读回页面背景** + **读回 Edge 标签字体 / TextBlock 字体**（M4） | **中** |
 | `schemas/phase7/design-spec.schema.json` | 枚举 4 个 palette 名 | 低 |
@@ -642,17 +644,26 @@ text: '企业分析平台'            ✅
 | --- | --- |
 | 未声明 `theme` 的旧 spec | 行为**不变**（解析器在无 palette 时返回当前默认值） |
 | 已声明 `roleColors` 的旧 spec | 效果不变（新路径给出相同结果），需回归验证 |
-| `Canvas.Unit` | **行为改变**：以前写错标签，现在换算正确。属修 bug，需在报告说明 |
+| **`Direction`** | **行为改变**：以前完全不生效，修好后 `topToBottom` 会真的转置 |
+| **`mode=fixed`** | **行为改变**：以前被静默缩放/放大，修好后得到请求尺寸或明确报告 |
+| **`Canvas.Unit`** | **行为改变**：以前 `create` 不换算，修好后换算正确 |
 | `ObjectMapping` | 单页保持裸 id，兼容 |
 | 协议版本 | 不变（1.0）——只加执行，不加字段 |
 
-**两处破坏性变更：`Canvas.Unit` 与 `Direction`。**
+**三处破坏性变更，全部是修 bug：**
 
-`Direction` 之前完全不生效，修好后**旧 spec 若声明了 `topToBottom`，产出会真的转置**——
-这是修 bug，但会改变既有产物外观，必须明说并在报告中列出。
+| # | 变更 | 修前 | 修后 |
+| --- | --- | --- | --- |
+| 1 | `Direction` | 声明 `topToBottom` 无效果 | 真的转置 |
+| 2 | `mode=fixed` | 被静默缩放（20×14→4.00×3.45）或放大 | 得到请求尺寸，或进 `unmet` |
+| 3 | `Canvas.Unit` | `create` 路径不换算（10cm 写成 10in） | 换算正确 |
 
-**`Canvas.Unit`**： 现状是"标签写 cm、数值仍按英寸"，
-修正后数值会变。这是修 bug，但必须明说。
+**三者都不改 IR/DesignSpec 的字段或结构，只改行为**，故协议版本保持 1.0。
+但**行为变化须在发布说明披露**。
+
+> **本节已第三次被审查点名**（r2 M12 → r3 C3 → r4 C3）：行号在变，
+> 「两处」那句话一字未改，且 §7 表只有 2 行。
+> 根因是我每次只改正文不改表格，或反之。现已同步为**表 5 行 + 正文三处 + 显式清单**。
 
 ---
 
@@ -673,7 +684,7 @@ text: '企业分析平台'            ✅
 | # | 子任务 | 验收 |
 | --- | --- | --- |
 | T0 | 修 `Direction` | 四策略 × 两方向，`xspread`/`yspread` 必须互换；转置覆盖 §11.1 全部空间数据 |
-| T0.5 | **spec 路径补 `DiagramSizer.Apply`** | 同字号下带 spec 与不带 spec 框体一致；`baseSize` 9→24 框体随之增大；`text.overflow-*` 为 0 |
+| T0.5 | **spec 路径补 `DiagramSizer.Apply`** | **同一字号 + 同一画布**下带 spec 与不带 spec 框体一致（差 < 0.05"）；`baseSize` 9→24 框体随之增大；`text.overflow-*` 为 0 |
 | T0b | `DiagramIr` 保留 `lane` | 声明 lane 的 IR → `applied` 含 `layout=Swimlane` **且几何与 layered 不同** |
 | T4b | `mode=fixed` 语义（**双向**） | 请求 20×14（内容少，会缩）→ 实得 20×14 或 `unmet`；请求 8×6（内容多，会涨）→ 实得 8×6 或 `unmet` |
 | T1 | `StyleResolver` + 4 套 palette | 单元测试证明三层优先级；palette 只有颜色字段 |
@@ -745,27 +756,45 @@ TTF/OTF 的 `name` 表是**公开二进制格式**（tag + 偏移 + 长度），
 全部失败时降级并进 `unmet`（`style.font-unresolved`）。
 | T2e | TextBlock 字色/字体层级 | `color:#FF0000` 与 `font:Verdana` 回读非 null；三色三字体产出 PNG 互不相同 |
 
-**T2e 的修法只有两行移动**（已核实代码位置）：
+**T2e 的正确修法：移动 + 注册，两步必须同提交**（审查 r4 §C.3 纠正了我原方案）
+
+> **原方案是错的。** 我写的是"把 `Color`/`Font` 两行移入 `Character/Row` 即可"。
+> 实测证明**只移动会让结果比现状更差**。
+
+**单变量对照（三个变体，`validate` 均通过）：**
+
+| 变体 | font | textColor | fontSize |
+| --- | --- | --- | --- |
+| 现状（shape 级裸 cell） | `None` | `None` | 18 ✅ |
+| **只移入 `Character/Row`** | **`None`** | **`None`** | **`None`** ❌ |
+| **移入 + 注册 `FaceNames`** | **`Verdana`** | **`#FF0000`** | **18** ✅ |
+
+**只移动会连原本正常的 `fontSize` 一起丢掉。**
+
+原因：`Character/Row` 的 `Font` 单元格存的是**字体索引**（指向 `FaceNames` 数组），
+不是字体名字符串。写 `V="Verdana"` 时解析失败，导致整个 `Character` 段失效——
+包括本已正确的 `Size`。
+
+**因此 T2e 必须是一个提交内的两步：**
 
 ```csharp
-// VisioTextBlockBridge.BuildShape 现状
-if (style?.TextColor is not null) AddCell(shape, "Color", style.TextColor);  // ❌ shape 级
-if (style?.Font      is not null) AddCell(shape, "Font",  style.Font);       // ❌ shape 级
+// 1. 注册字体，拿到索引
+int fontIndex = EnsureFaceName(document, style.Font);   // 写入 <FaceNames>
 
-var character = new XElement(VisioNs + "Section", new XAttribute("N", "Character"));
-character.Add(new XElement(VisioNs + "Row", new XAttribute("IX", "0"), ...));  // ← 段已建好
+// 2. 用索引写入 Character/Row（不是字符串）
+character.Row.Cell("Font").Value = fontIndex;
+character.Row.Cell("Color").Value = style.TextColor;
 ```
 
-**把前两行改为加入 `character` 的 `Row` 内部即可**，与 Node 的写法一致
-（Node 的 `<Row><Cell N="Font" .../></Row>` 已验证可回读）。
+**`audit` §2.16 那句"注册与否是次要的，位置不对则一切都读不到"应改为：**
+位置和注册**都是必要条件**，缺一不可。已在 audit 同步更正。
 
-**不是架构问题，是位置问题**——这也解释了为什么三轮审查才找到：
-代码"看起来"在设置字体，字段名也对，只有对照 Node 的 XML 才看出层级不同。
 | T6b | 文字裁切计入硬约束 | `baseSize=24` 时 `hardConstraintsPassed=false`、score=0 |
 | T2g | 语义角色往返（§5.4） | `execute → export → update → export` 四步后，每节点的 `type` 与 `fill` 均与第一步一致 |
 | T1d | 对比度校验（§5.3） | 浅底浅字（1.05:1）→ `text.low-contrast`；深底近黑（1.1:1）→ 同样报告；显式 textColor 不得绕过 |
 | T1c | 默认字体 + 中英混排（§5.2） | 不传 spec 时 `FaceNames` 非空；中文/混排/英文三类节点渲染无方框、无字重跳变 |
 | T5b | `LocalRelayout` 越界碰撞检查 | `containerLayouts` 施加后 `node.overlap` 必须为 0，或该次重排被回退并进 `unmet` |
+| T2h | 协议闸门（0/1/3）+ `JsonGate` | Schema 校验生效；`typografy` 拼错 → `UnrecognizedInputs`；`metadata.*` 进 `unmet` |
 | T2f | 枚举 `TryParse` + 未识别值报告 | `containerLayouts:"kaboom"` → `unmet` 含 `input.unknown-enum`；`applied` 不得声称执行了 `kaboom` |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
 | T4 | 修 `Canvas.Unit`（**两处**：Writer + DesignSpecApplier） | `create` 与 `execute` 的 cm/mm 换算一致；标签与数值一致；`update` 不再二次换算 |
@@ -994,10 +1023,14 @@ if (spec is not null)
 | 2 | `baseSize` 9→24，框体尺寸必须随之增大 |
 | 3 | 增大后 `text.overflow-*` 计数为零 |
 | 4 | spec 路径的 `stagesCompleted` 必须含尺寸推导阶段 |
-| 5 | 修后带 spec 与不带 spec 的节点宽差 < 0.05" |
+| 5 | **同一字号、同一画布尺寸下**，修后带 spec 与不带 spec 的节点宽差 < 0.05"（与断言 1 同一前提） |
 
 第 1 条与第 5 条是审查新增的**对照式断言**——只有它们能证明"阶段真的装回去了"，
 单纯断言"框变大了"无法区分"装回阶段"与"把 2.0 改成 5.0"。
+
+**三条（断言 1、断言 5、T0.5 行）都必须带"同一画布"前提。**
+审查 C5 指出此前只有断言 1 有，另两处没有——而 `TypeScale.ForCanvas` 按页面尺寸推导，
+画布不同则该对照必然失败。**这三处现已统一。**
 
 ---
 
@@ -1140,7 +1173,7 @@ $ export-model →
 
 ### 15.2 机制性修法（三条闸门）
 
-**闸门 1：未知成员检测**
+**闸门 1：未知成员检测** — **任务 T2h**（与闸门 0/3 同一实现类 `JsonGate`）
 
 `JsonSerializerOptions` 增加 `UnmappedMemberHandling.Disallow`（或自定义 converter
 收集未知键），反序列化后：
@@ -1155,7 +1188,7 @@ public sealed class IrParseResult
 
 未知成员进 `ExecutionResult.UnrecognizedInputs`。
 
-**闸门 2：枚举白名单**
+**闸门 2：枚举白名单** — **任务 T2f**（与缺陷 21 同一修法）
 
 所有字符串枚举字段（`layout` / `direction` / `palette` / `role` / `kind` /
 `canvas.mode` / `unit` / `align` / `row.type`）统一校验：
@@ -1167,7 +1200,7 @@ if (!Allowed.Contains(value))
 
 **禁止静默回退。** 当前 `Parse("kaboom")` 返回 Layered 且不报告——必须改。
 
-**闸门 0：先加载 JSON Schema**（审查 E-4 指出，此前完全没有）
+**闸门 0：先加载 JSON Schema**（审查 E-4 指出，此前完全没有）— **任务 T2h**
 
 `execute` 当前**根本不校验 Schema**——闸门 1 在重造 Schema 已有的约束。
 `schemas/phase7/*.schema.json` 已存在且写明 `enum`/`required`，但无人使用。
@@ -1189,7 +1222,7 @@ var schemaErrors = JsonSchemaValidator.Validate(json, "design-spec.schema.json")
 | `FromPort` / `ToPort` | 路由用了，回读 null | 要么执行、要么报告 |
 | `ConstraintSpec.Target` | 只回显，不限作用域 | `input.not-executed` |
 
-**闸门 3：未消费字段登记**
+**闸门 3：未消费字段登记** — **任务 T2h**
 
 对"协议接受但**本阶段之后**仍不执行"的字段，显式登记并在 `unmetConstraints` 报告一次。
 
