@@ -210,6 +210,18 @@ $ execute --spec '{"typography":{"baseSize":24}}' --json
 这使任务书 §5.3 的验收项"**不发生文本裁切**"**无法证伪**——
 无论裁切多少，`hardConstraintsPassed` 都是 `true`。
 
+**两个入口的判据一致**（审查 E-3 曾疑为不一致，实测排除）：
+
+```console
+$ check-layout o.vsdx
+  score=96/100
+  text.overflow-horizontal (1)
+    [warning] ...                    ← 是 warning，不是 error
+```
+
+**`execute` 与 `check-layout` 都一致地把它当 warning。** 问题不在两者分歧，
+而在于**两者共同把"文字被裁切"判为可交付**。
+
 **修法（T6b）：** 文字裁切应计入硬约束。
 任务书 §5.3 把它列在"验收要求"里，与"文字可读""对比度合理"并列，
 而这些是不可让步的交付底线，不是风格偏好。
