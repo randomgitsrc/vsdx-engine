@@ -265,4 +265,76 @@ public sealed class TextBlockTests
         Assert.Equal(4, page.TextBlocks.Count);
         Assert.Single(page.Paths);
     }
+
+    // ------------------------------------------------------------------
+    // F: text must participate in page fitting. Without this the title is
+    // cropped straight off the deliverable.
+    // ------------------------------------------------------------------
+
+    [Fact]
+    public void FitPageIncludesTextBlocks()
+    {
+        var dir = TestData.NewTempDir("tb-fit");
+        var diagram = WithText();
+        // Push a block well below every node so it only stays in frame if measured.
+        diagram.Pages[0].TextBlocks.Add(new TextBlock
+        {
+            Id = "footer", Text = "Footer far below",
+            Bounds = new Bounds(5.5, 0.2, 6, 0.3)
+        });
+
+        var path = Path.Combine(dir, "t.vsdx");
+        new VsdxEngine().Create(diagram, path,
+            new WriteOptions { Layout = "manual", FitPage = true, Recenter = true });
+
+        var page = new VsdxEngine().Read(path).Diagram.Pages[0];
+        var footer = page.TextBlocks.Single(t => t.Id == "footer");
+
+        Assert.True(footer.Bounds.Y - footer.Bounds.H / 2 >= 0,
+            $"footer at y={footer.Bounds.Y:F2} is outside the {page.Size!.Height:F2}\" page");
+        Assert.True(page.Size.Height >= footer.Bounds.Y + footer.Bounds.H / 2 - 0.01);
+    }
+
+    [Fact]
+    public void RecenterMovesTextBlocks()
+    {
+        var dir = TestData.NewTempDir("tb-recenter");
+        var diagram = WithText();
+        // Everything sits far from the origin; recentre must move text along with nodes.
+        foreach (var node in diagram.Pages[0].Nodes)
+        {
+            node.Bounds.X += 40;
+            node.Bounds.Y += 30;
+        }
+        foreach (var block in diagram.Pages[0].TextBlocks)
+        {
+            block.Bounds.X += 40;
+            block.Bounds.Y += 30;
+        }
+
+        var path = Path.Combine(dir, "t.vsdx");
+        new VsdxEngine().Create(diagram, path,
+            new WriteOptions { Layout = "manual", Recenter = true });
+
+        var page = new VsdxEngine().Read(path).Diagram.Pages[0];
+        var title = page.TextBlocks.Single(t => t.Id == "title");
+
+        // Without text-aware recentring the title would still be near x=45.
+        Assert.True(title.Bounds.X < 20,
+            $"title still at x={title.Bounds.X:F1}; recentre ignored text blocks");
+    }
+
+    [Fact]
+    public void UtilisationCountsTextAndContainers()
+    {
+        var dir = TestData.NewTempDir("tb-util");
+        var path = Path.Combine(dir, "t.vsdx");
+        new VsdxEngine().Create(WithText(), path);
+
+        var report = LayoutAnalyzer.Analyze(new VsdxEngine().Read(path).Diagram);
+        double ratio = report.PageUtilisation.Values.First();
+
+        // Text spans most of the page, so utilisation must reflect that rather than node-only.
+        Assert.True(ratio > 0.25, $"utilisation {ratio:P0} ignores the text blocks");
+    }
 }

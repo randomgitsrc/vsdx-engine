@@ -125,9 +125,9 @@ public static class DiagramSizer
         // Derive missing container bounds first so a standalone FitPage call is not blind.
         DiagramLayout.Apply(new Diagram { Pages = { page } });
 
-        var elements = new List<Bounds>();
-        elements.AddRange(page.Nodes.Select(n => n.Bounds));
-        elements.AddRange(page.Groups.Where(g => g.Bounds is not null).Select(g => g.Bounds!));
+        // Text blocks and free paths are part of the drawing: fitting the page without them
+        // crops the title and legend straight off the deliverable.
+        var elements = ContentBounds(page);
 
         if (elements.Count == 0) return new PageFit(false, 0, 0, 0, 0);
 
@@ -186,9 +186,7 @@ public static class DiagramSizer
     /// </summary>
     public static (double dx, double dy) Recenter(Page page, double margin = PageMargin)
     {
-        var elements = new List<Bounds>();
-        elements.AddRange(page.Nodes.Select(n => n.Bounds));
-        elements.AddRange(page.Groups.Where(g => g.Bounds is not null).Select(g => g.Bounds!));
+        var elements = ContentBounds(page);
         if (elements.Count == 0) return (0, 0);
 
         double minX = elements.Min(b => b.X - b.W / 2);
@@ -202,6 +200,17 @@ public static class DiagramSizer
         {
             node.Bounds.X = Round(node.Bounds.X + dx);
             node.Bounds.Y = Round(node.Bounds.Y + dy);
+        }
+        // Text and paths must move with everything else, or centring shears the figure.
+        foreach (var text in page.TextBlocks)
+        {
+            text.Bounds.X = Round(text.Bounds.X + dx);
+            text.Bounds.Y = Round(text.Bounds.Y + dy);
+        }
+        foreach (var path in page.Paths)
+        {
+            path.Bounds.X = Round(path.Bounds.X + dx);
+            path.Bounds.Y = Round(path.Bounds.Y + dy);
         }
         foreach (var group in page.Groups.Where(g => g.Bounds is not null))
         {
@@ -218,6 +227,21 @@ public static class DiagramSizer
         }
 
         return (dx, dy);
+    }
+
+    /// <summary>
+    /// Every visible bounding box on the page: nodes, containers, standalone text and paths.
+    /// Extent calculations must use this rather than <c>page.Nodes</c>, otherwise fitting or
+    /// centring silently crops the parts that are not nodes.
+    /// </summary>
+    private static List<Bounds> ContentBounds(Page page)
+    {
+        var elements = new List<Bounds>();
+        elements.AddRange(page.Nodes.Select(n => n.Bounds));
+        elements.AddRange(page.Groups.Where(g => g.Bounds is not null).Select(g => g.Bounds!));
+        elements.AddRange(page.TextBlocks.Select(t => t.Bounds));
+        elements.AddRange(page.Paths.Select(p => p.Bounds));
+        return elements;
     }
 
     private static double Round(double v) => Math.Round(v * 40) / 40.0;   // 0.025" grid

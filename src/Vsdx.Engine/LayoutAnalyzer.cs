@@ -365,10 +365,35 @@ public static class LayoutAnalyzer
         // ---- 9. Page utilisation ---------------------------------------------
         if (pw > 0 && ph > 0)
         {
+            // Measure the span of *everything drawn*, not the span of nodes.
+            //
+            // Using only nodes was wrong in both directions: a title at the top and a legend at
+            // the bottom are real content, and ignoring them reported a well-filled page as
+            // under-used. Conversely, measuring the union including decorative text made a
+            // page with a wide banner look full when the drawing itself was tiny.
+            //
+            // The honest measure is the bounding span of the drawing, which is what a reader
+            // perceives as "how much of the page is used".
             double minX = nodes.Min(n => n.Bounds.X - n.Bounds.W / 2);
             double maxX = nodes.Max(n => n.Bounds.X + n.Bounds.W / 2);
             double minY = nodes.Min(n => n.Bounds.Y - n.Bounds.H / 2);
             double maxY = nodes.Max(n => n.Bounds.Y + n.Bounds.H / 2);
+
+            foreach (var group in page.Groups.Where(g => g.Bounds is not null))
+            {
+                minX = Math.Min(minX, group.Bounds!.X - group.Bounds.W / 2);
+                maxX = Math.Max(maxX, group.Bounds.X + group.Bounds.W / 2);
+                minY = Math.Min(minY, group.Bounds.Y - group.Bounds.H / 2);
+                maxY = Math.Max(maxY, group.Bounds.Y + group.Bounds.H / 2);
+            }
+
+            foreach (var text in page.TextBlocks)
+            {
+                minX = Math.Min(minX, text.Bounds.X - text.Bounds.W / 2);
+                maxX = Math.Max(maxX, text.Bounds.X + text.Bounds.W / 2);
+                minY = Math.Min(minY, text.Bounds.Y - text.Bounds.H / 2);
+                maxY = Math.Max(maxY, text.Bounds.Y + text.Bounds.H / 2);
+            }
 
             double contentArea = (maxX - minX) * (maxY - minY);
             double pageArea = pw * ph;

@@ -1,0 +1,62 @@
+{
+  "id": "slice",
+  "name": "纵向切片：系统全景",
+  "type": "architecture",
+  "pageSize": { "width": 14, "height": 10.5, "unit": "inches" },
+  "pages": [{
+    "id": "p1",
+    "name": "系统全景 System Overview",
+    "size": { "width": 14, "height": 10.5, "unit": "inches" },
+    "groups": [
+      { "id": "g_acc", "name": "接入层 Access", "kind": "container", "autoSize": true,
+        "style": { "fill": "#EAF3FB", "stroke": "#9DC3E6", "bold": true, "hAlign": "left" } },
+      { "id": "g_svc", "name": "服务层 Service", "kind": "container", "autoSize": true,
+        "style": { "fill": "#EDF7ED", "stroke": "#A9D08E", "bold": true, "hAlign": "left" } },
+      { "id": "g_dat", "name": "数据层 Data", "kind": "container", "autoSize": true,
+        "style": { "fill": "#FDF2E9", "stroke": "#F4B183", "bold": true, "hAlign": "left" } }
+    ],
+    "nodes": [
+      { "id": "web", "text": "Web 门户", "shape": "Rectangle", "groupId": "g_acc",
+        "bounds": { "x": 3.0, "y": 8.6, "w": 2.0, "h": 0.9 },
+        "style": { "fill": "#2E75B6", "textColor": "#FFFFFF" } },
+      { "id": "gw", "text": "API 网关", "shape": "Hexagon", "groupId": "g_acc",
+        "bounds": { "x": 6.2, "y": 8.6, "w": 2.2, "h": 0.9 },
+        "style": { "fill": "#F2B705", "textColor": "#3F2E00" } },
+      { "id": "order", "text": "订单服务", "shape": "Rectangle", "groupId": "g_svc",
+        "bounds": { "x": 4.4, "y": 5.8, "w": 2.2, "h": 0.9 },
+        "style": { "fill": "#70AD47", "textColor": "#FFFFFF" } },
+      { "id": "db", "text": "PostgreSQL", "shape": "Process", "groupId": "g_dat",
+        "bounds": { "x": 4.4, "y": 3.0, "w": 2.2, "h": 0.9 },
+        "style": { "fill": "#C55A11", "textColor": "#FFFFFF" } }
+    ],
+    "edges": [
+      { "id": "e1", "from": "web", "to": "gw", "kind": "straight", "label": "HTTPS" },
+      { "id": "e2", "from": "gw", "to": "order", "kind": "straight", "label": "REST" },
+      { "id": "e3", "from": "order", "to": "db", "kind": "straight", "label": "SQL" }
+    ],
+    "textBlocks": [
+      { "id": "title", "text": "系统全景图", "role": "title",
+        "bounds": { "x": 7.0, "y": 9.9, "w": 8.0, "h": 0.6 }, "align": "center",
+        "style": { "bold": true, "textColor": "#1F4E79" } },
+      { "id": "subtitle", "text": "System Overview Slice", "role": "subtitle",
+        "bounds": { "x": 7.0, "y": 9.4, "w": 8.0, "h": 0.4 }, "align": "center",
+        "style": { "textColor": "#595959" } },
+      { "id": "legend", "text": "蓝色 = 接入   绿色 = 服务   橙色 = 数据", "role": "legend",
+        "bounds": { "x": 7.0, "y": 1.5, "w": 8.0, "h": 0.35 }, "align": "center" },
+      { "id": "note", "text": "注：网关负责鉴权与限流", "role": "note",
+        "bounds": { "x": 2.4, "y": 0.9, "w": 4.0, "h": 0.3 }, "align": "left",
+        "style": { "italic": true, "textColor": "#808080" } }
+    ],
+    "paths": [
+      { "id": "divider", "name": "分隔线",
+        "bounds": { "x": 7.0, "y": 7.3, "w": 11.0, "h": 0.05 },
+        "style": { "stroke": "#BFBFBF", "strokeWidth": 0.015 },
+        "geometry": [{ "index": 0,
+          "sectionCells": { "NoFill": "1", "NoLine": "0" },
+          "rows": [
+            { "type": "MoveTo", "cells": { "X": "0", "Y": "0" } },
+            { "type": "LineTo", "cells": { "X": "11", "Y": "0" } }
+          ] }] }
+    ]
+  }]
+}
