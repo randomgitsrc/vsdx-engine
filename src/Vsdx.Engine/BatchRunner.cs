@@ -14,96 +14,111 @@ public sealed class BatchRunner
     public BatchRunner(VsdxEngine? engine = null) => _engine = engine ?? new VsdxEngine();
 
     /// <summary>Creates one VSDX per JSON model.</summary>
-    public BatchResult CreateMany(IEnumerable<(string modelPath, string outputPath)> items, WriteOptions? options = null)
-        => Run("create", items.Select(i => (i.modelPath, i.outputPath, (Func<string, string, BatchItem>)(
-            (input, output) =>
+    public BatchResult CreateMany(
+        IEnumerable<(string modelPath, string outputPath)> items,
+        WriteOptions? options = null)
+    {
+        var work = items.Select(i => new BatchWork(i.modelPath, i.outputPath, (input, output) =>
+        {
+            var r = _engine.Create(input, output, options);
+            return new BatchItem
             {
-                var r = _engine.Create(input, output, options);
-                return new BatchItem
-                {
-                    Input = input,
-                    Output = r.OutputPath,
-                    Ok = !r.Compatibility.Errors.Any(),
-                    Detail = $"shapes={r.ShapesWritten} connectors={r.ConnectorsWritten}",
-                    Issues = r.Compatibility.Issues.Count
-                };
-            }))));
+                Input = input,
+                Output = r.OutputPath,
+                Ok = !r.Compatibility.Errors.Any(),
+                Detail = $"shapes={r.ShapesWritten} connectors={r.ConnectorsWritten}",
+                Issues = r.Compatibility.Issues.Count
+            };
+        }));
+
+        return Run("create", work);
+    }
 
     /// <summary>Renders one or more pages of each input to the given format.</summary>
-    public BatchResult RenderMany(IEnumerable<(string inputPath, string outputPath)> items, RenderRequest template)
-        => Run("render", items.Select(i => (i.inputPath, i.outputPath, (Func<string, string, BatchItem>)(
-            (input, output) =>
+    public BatchResult RenderMany(
+        IEnumerable<(string inputPath, string outputPath)> items,
+        RenderRequest template)
+    {
+        var work = items.Select(i => new BatchWork(i.inputPath, i.outputPath, (input, output) =>
+        {
+            var r = _engine.Render(new RenderRequest
             {
-                var r = _engine.Render(new RenderRequest
-                {
-                    InputPath = input,
-                    OutputPath = output,
-                    Format = template.Format,
-                    PageIndex = template.PageIndex,
-                    PageName = template.PageName,
-                    Dpi = template.Dpi,
-                    Background = template.Background,
-                    Transparent = template.Transparent,
-                    FontFile = template.FontFile,
-                    FontFace = template.FontFace,
-                    RenderText = template.RenderText
-                });
-                return new BatchItem
-                {
-                    Input = input,
-                    Output = string.Join(";", r.Pages.Select(p => p.OutputPath)),
-                    Ok = r.Pages.Count > 0 && !r.Compatibility.Errors.Any(),
-                    Detail = $"{r.Pages.Count} page(s)",
-                    Issues = r.Compatibility.Issues.Count
-                };
-            }))));
+                InputPath = input,
+                OutputPath = output,
+                Format = template.Format,
+                PageIndex = template.PageIndex,
+                PageName = template.PageName,
+                Dpi = template.Dpi,
+                Background = template.Background,
+                Transparent = template.Transparent,
+                FontFile = template.FontFile,
+                FontFace = template.FontFace,
+                RenderText = template.RenderText
+            });
+            return new BatchItem
+            {
+                Input = input,
+                Output = string.Join(";", r.Pages.Select(p => p.OutputPath)),
+                Ok = r.Pages.Count > 0 && !r.Compatibility.Errors.Any(),
+                Detail = $"{r.Pages.Count} page(s)",
+                Issues = r.Compatibility.Issues.Count
+            };
+        }));
 
-    /// <summary>Validates many packages.</summary>
+        return Run("render", work);
+    }
+
+    /// <summary>Validates many packages. Writes nothing, so no output path is required.</summary>
     public BatchResult ValidateMany(IEnumerable<string> paths, ValidationOptions? options = null)
-        => Run("validate", paths.Select(p => (p, (string?)null, (Func<string, string, BatchItem>)(
-            (input, _) =>
+    {
+        var work = paths.Select(p => new BatchWork(p, null, (input, _) =>
+        {
+            var r = _engine.Validate(input, options);
+            return new BatchItem
             {
-                var r = _engine.Validate(input, options);
-                return new BatchItem
-                {
-                    Input = input,
-                    Output = null,
-                    Ok = r.IsValid,
-                    Detail = $"{r.Checks.Count(c => c.Passed)}/{r.Checks.Count} checks",
-                    Issues = r.Errors.Count
-                };
-            }))));
+                Input = input,
+                Output = null,
+                Ok = r.IsValid,
+                Detail = $"{r.Checks.Count(c => c.Passed)}/{r.Checks.Count} checks",
+                Issues = r.Errors.Count
+            };
+        }));
+
+        return Run("validate", work);
+    }
 
     /// <summary>Exports many packages to JSON models.</summary>
     public BatchResult ExportMany(IEnumerable<(string inputPath, string outputPath)> items)
-        => Run("export-model", items.Select(i => (i.inputPath, i.outputPath, (Func<string, string, BatchItem>)(
-            (input, output) =>
+    {
+        var work = items.Select(i => new BatchWork(i.inputPath, i.outputPath, (input, output) =>
+        {
+            var r = _engine.ExportModel(input, output);
+            return new BatchItem
             {
-                var r = _engine.ExportModel(input, output);
-                return new BatchItem
-                {
-                    Input = input,
-                    Output = output,
-                    Ok = true,
-                    Detail = $"nodes={r.Diagram.Pages.Sum(p => p.Nodes.Count)} edges={r.Diagram.Pages.Sum(p => p.Edges.Count)}",
-                    Issues = r.Compatibility.Issues.Count
-                };
-            }))));
+                Input = input,
+                Output = output,
+                Ok = true,
+                Detail = $"nodes={r.Diagram.Pages.Sum(p => p.Nodes.Count)} edges={r.Diagram.Pages.Sum(p => p.Edges.Count)}",
+                Issues = r.Compatibility.Issues.Count
+            };
+        }));
 
-    private static BatchResult Run(
-        string operation,
-        IEnumerable<(string input, string? output, Func<string, string, BatchItem> action)> items)
+        return Run("export-model", work);
+    }
+
+    private static BatchResult Run(string operation, IEnumerable<BatchWork> work)
     {
         var result = new BatchResult { Operation = operation };
 
-        foreach (var (input, output, action) in items)
+        foreach (var item in work)
         {
             result.Total++;
             try
             {
-                var item = action(input, output ?? "");
-                result.Items.Add(item);
-                if (item.Ok) result.Succeeded++;
+                var outcome = item.Action(item.Input, item.Output ?? "");
+                outcome.Output ??= item.Output;
+                result.Items.Add(outcome);
+                if (outcome.Ok) result.Succeeded++;
                 else result.Failed++;
             }
             catch (Exception ex)
@@ -111,8 +126,8 @@ public sealed class BatchRunner
                 result.Failed++;
                 result.Items.Add(new BatchItem
                 {
-                    Input = input,
-                    Output = output,
+                    Input = item.Input,
+                    Output = item.Output,
                     Ok = false,
                     Error = $"{ex.GetType().Name}: {ex.Message}"
                 });
@@ -121,6 +136,9 @@ public sealed class BatchRunner
 
         return result;
     }
+
+    /// <summary>One unit of batch work: input path, optional output path, and the action.</summary>
+    private sealed record BatchWork(string Input, string? Output, Func<string, string, BatchItem> Action);
 }
 
 public sealed class BatchResult

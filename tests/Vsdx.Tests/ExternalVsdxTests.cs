@@ -23,7 +23,7 @@ public sealed class ExternalVsdxTests
 
         var page = read.Diagram.Pages[0];
         Assert.Equal(3, page.Nodes.Count);
-        Assert.Equal(1, page.Edges.Count);
+        Assert.Single(page.Edges);
         Assert.Contains(page.Nodes, n => n.Text == "外部系统");
         Assert.Contains(page.Nodes, n => n.Text == "Legacy CRM");
     }

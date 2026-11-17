@@ -38,7 +38,6 @@ public sealed class FontResolver
     };
 
     private readonly List<string> _searchPaths = new();
-    private readonly List<string> _resolved = new();
 
     public FontResolver(IEnumerable<string>? extraSearchPaths = null)
     {
@@ -51,8 +50,8 @@ public sealed class FontResolver
     /// <summary>The font file chosen for the last render, if any.</summary>
     public string? LastResolved { get; private set; }
 
-    /// <summary>All candidate files that existed, in resolution order.</summary>
-    public IReadOnlyList<string> Candidates { get; }
+    /// <summary>Font files that were available, in resolution order.</summary>
+    public IReadOnlyList<string> Candidates => _searchPaths.Where(File.Exists).ToList();
 
     /// <summary>
     /// Picks a font file. When <paramref name="requiresCjk"/> is true, prefers CJK-capable
