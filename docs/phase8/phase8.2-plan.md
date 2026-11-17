@@ -193,9 +193,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 二十一项缺陷的修法（与 audit 一一对应）
+## 4. 二十二项缺陷的修法（与 audit 一一对应）
 
-> **本节已按 M5 补齐，并按三轮审查增至 21 项。**
+> **本节已按 M5 补齐，并按三轮审查与复核增至 22 项。**
 > 其中缺陷 18/19 由第三轮审查发现，缺陷 20 由该轮 E-3 指出。 原表只有 9 行；
 > 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
 > 均已并入 audit 与本节。
@@ -225,20 +225,21 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 19 | **TextBlock `Color`/`Font` 层级错**（P0） | 移入 `Character/Row`，与 Node 一致；验证回读 | **T2e** |
 | 20 | **文字裁切不计入硬约束** | `text.overflow-*` 升级为 error（score 归零） | **T6b** |
 | 21 | **非法枚举静默回退并谎报** | 统一 `TryParse` 语义：失败记录原值进 `unmet`，再回退 | **T2f** |
+| 22 | **`LocalRelayout` 不检查越界碰撞** | 重排后对全部页面节点做碰撞检查；重叠则回退并报告 | **T5b** |
 
 **映射关系（已按审查 M5 更正，不再声称"一一对应"）：**
 
 **映射关系（脚本核验，非人工估算）：**
 
 ```
-§4 缺陷行数        : 21
-§4 任务引用数      : 21
-§4 不同任务数      : 20   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
-§9 任务行数        : 22   ← 20 + T8 + T9（两个跨任务门禁）
+§4 缺陷行数        : 22
+§4 任务引用数      : 22
+§4 不同任务数      : 21   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
+§9 任务行数        : 23   ← 21 + T8 + T9（两个跨任务门禁）
 ```
 
-- **21 项缺陷 → 21 个任务引用**：每行都有明确任务
-- **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 20 个
+- **22 项缺陷 → 22 个任务引用**：每行都有明确任务
+- **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 21 个
 - **§9 多出 2 个**：`T8`（三套产物 + 目视）与 `T9`（全量回归）不对应单一缺陷，
   是**跨任务的验收门禁**
 
@@ -499,6 +500,7 @@ character.Add(new XElement(VisioNs + "Row", new XAttribute("IX", "0"), ...));  /
 **不是架构问题，是位置问题**——这也解释了为什么三轮审查才找到：
 代码"看起来"在设置字体，字段名也对，只有对照 Node 的 XML 才看出层级不同。
 | T6b | 文字裁切计入硬约束 | `baseSize=24` 时 `hardConstraintsPassed=false`、score=0 |
+| T5b | `LocalRelayout` 越界碰撞检查 | `containerLayouts` 施加后 `node.overlap` 必须为 0，或该次重排被回退并进 `unmet` |
 | T2f | 枚举 `TryParse` + 未识别值报告 | `containerLayouts:"kaboom"` → `unmet` 含 `input.unknown-enum`；`applied` 不得声称执行了 `kaboom` |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
 | T4 | 修 `Canvas.Unit`（**两处**：Writer + DesignSpecApplier） | `create` 与 `execute` 的 cm/mm 换算一致；标签与数值一致；`update` 不再二次换算 |

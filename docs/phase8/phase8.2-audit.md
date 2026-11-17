@@ -432,6 +432,49 @@ IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
 
 **这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
 
+### 2.18 【P1】`LocalRelayout` 只验证"没动别人"，不验证"没撞别人"
+
+**实测**（`overview.ir.json` + `containerLayouts:{"back":"grid"}`）：
+
+```console
+$ execute --json
+  status: partial
+  hard: False
+  score: 0
+  codes: [edge.crossing, node.overlap, page.margins, row.misaligned, spacing.too-tight]
+```
+
+**`node.overlap` 硬失败。** 而 `appliedDesignNotes` 仍写
+`container back relaid as grid`——报告"重排成功"。
+
+**根因（`LocalRelayout.cs`）：**
+
+```csharp
+// 它验证的是"容器外节点没被移动"
+foreach (var (id, before) in untouched) { ... IsolationBroken = true ... }
+// 但从不检查"重排后的成员是否与那些节点重叠"
+// grep -c "Overlaps|overlap" LocalRelayout.cs  →  0
+```
+
+**这是一个方向性遗漏：**
+
+| 检查项 | 现状 |
+| --- | --- |
+| 容器外节点是否被移动 | ✅ 有（`IsolationBroken`） |
+| 重排后是否与容器外节点重叠 | ❌ **无** |
+| 重排后容器尺寸是否仍容纳成员 | ⚠️ 仅扩大，不重算位置 |
+
+**后果：** 容器内重排把成员推出原范围 → 撞上邻区 → 硬失败，
+但 `result.Ok == true`，`applied` 报告成功。
+
+**这与缺陷 5（容器色）同类但更隐蔽**：它不改变外观，只让"局部重排"这个
+安全操作变成可能破坏全局的操作。
+
+**修法（T5b）：** `LocalRelayout` 重排后应对**全部页面节点**做碰撞检查
+（不只是 `untouched` 的位移检查），发现重叠则回退该次重排并报告。
+
+---
+
 ### 2.17 【P1】非法枚举值被静默替换为默认值，且报告"已执行"
 
 **实测：**
@@ -976,6 +1019,7 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 19 | **TextBlock Color/Font 层级错** | **P0** | ❌ **遗漏**（两轮审查均未发现） |
 | 20 | **文字裁切不计入硬约束** | P1 | ❌ **遗漏**（致任务书 §5.3 不可证伪） |
 | 21 | **非法枚举静默回退并谎报已执行** | P1 | ❌ **遗漏**（审查 E-4） |
+| 22 | **`LocalRelayout` 不检查越界碰撞** | P1 | ❌ **遗漏**（本轮发现） |
 
-**21 项缺陷中，初稿漏了 15 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
+**22 项缺陷中，初稿漏了 16 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
