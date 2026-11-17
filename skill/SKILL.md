@@ -304,6 +304,53 @@ engine keeps package content the model does not mention and says so in its repor
 
 ---
 
+## 6b. When a fix makes things worse
+
+This is the most common way a diagram degrades. You spot an overlap, nudge a node, a connector
+now crosses something, you nudge again, and after five rounds the figure is worse than when you
+started. The engine has an explicit loop for this — use it instead of patching coordinates by
+hand.
+
+```bash
+vsdx-tool repair --input diagram.vsdx --output fixed.vsdx --json
+```
+
+It plans, attempts, accepts or rolls back, escalates, and stops. Read `attempts` and
+`stopReason` in the JSON, not just the final score.
+
+### Repair level: follow the diagnosis, do not improvise
+
+Every issue carries a `level`. It is the smallest change that can plausibly work:
+
+| Level | Meaning | What you should do |
+| --- | --- | --- |
+| `Local` | one label or one isolated element | adjust that element only |
+| `RegionRelayout` | a container's contents, or two intersecting shapes | re-lay that band as a whole |
+| `FullRedraw` | the layout strategy itself is wrong | regenerate from the model |
+
+**Patching one node when the level says `RegionRelayout` is exactly how the spiral starts.**
+Two intersecting shapes cannot be fixed by moving one of them in isolation — the collision just
+moves somewhere else.
+
+### Three rules the loop enforces
+
+1. **A fix is only kept if it removes an issue and adds no new hard violation.** Moving an
+   overlap elsewhere counts as a regression and is rolled back.
+2. **A strategy that already failed for an issue is never retried.**
+3. **When every level has been tried without improvement, it stops** rather than burning
+   rounds on known failures.
+
+If `stopReason` says every level was tried, the honest response is to tell the user what
+remains — not to keep nudging.
+
+### Deliberately not automatic
+
+`edge.crossing` is a soft quality item. Relayout rarely removes crossings, so the loop will
+report it and stop rather than thrash. Reduce crossings by choosing better column order, or
+accept them and say so.
+
+---
+
 ## 7. Confirm before delivering
 
 ```bash
