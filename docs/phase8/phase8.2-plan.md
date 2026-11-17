@@ -464,7 +464,7 @@ page.Size W/H 互换                  ✅
 | **`FreePath.Geometry` 内部坐标** | `PathRow.Cells["X"/"Y"]` | **路径形状本身不转**——框转了、线没转 |
 | `Node.Angle` / `FreePath.Angle` | 旋转角 | 角度未镜像，图形朝向错误 |
 | `Edge.FromPoint` / `ToPoint` | 自由端点 | 端点留在原坐标 |
-| `Edge.Waypoints` | 折点列表 | 当前是**清空**而非转置 |
+| `Edge.Waypoints` | 折点列表 | 当前是**清空**而非转置。**按 D1 裁定，`manual` 下不转置，故此项目前无需实现**（见 §11.2） |
 | **`Edge.FromPort` / `ToPort`** | 端口语义 | `left` ↔ `bottom` 的语义随轴变，必须重映射 |
 | **`ShapeStyle.PaddingX` / `HeadingHeight` / `PaddingBottom`** | 容器内边距 | X/Y 轴方向不同，转置后应对调 |
 | **`Diagram.PageSize`** | 顶层页面尺寸 | 与 `Page.Size` 是两处，都要换 |
@@ -497,31 +497,23 @@ foreach (var edge in page.Edges)
 | `Layout != manual` | 布局期清空，转置无输入 → **不需要转置** | 节点已移动，旧折点已失效 |
 | `Layout == manual` | **保留并转置** | 作者坐标即意图，manual 不清空 |
 
-**`Direction + manual` 的语义存在两种合理解释，必须由负责人裁决**
-（审查 M8 指出 §11.2 与 §11.4 互相矛盾，两节给出了对立结论）：
+**`Direction + manual` 已由负责人 D1 裁定：方案 A。**
 
-| 方案 | `manual` 下 `direction` 的行为 | 理由 |
-| --- | --- | --- |
-| **A（§11.4 的立场）** | 不生效，进 `unmetConstraints` | manual 的契约是"作者坐标即最终结果" |
-| **B（§11.2 的立场）** | 生效并整体转置，waypoints 逐点跟随 | direction 是独立维度，与是否重排无关 |
+> 负责人原文：「**Manual 模式必须保留用户坐标，不得擅自转置。**」
 
-**在裁决前，本节不给出验收断言。** 原断言 4 已作废。
+| 已裁定的行为 | 说明 |
+| --- | --- |
+| `layout=manual` 时 `direction` **不生效** | manual 的契约是"作者坐标即最终结果" |
+| **必须进 `unmetConstraints`** | 报告 `direction` 未被应用，不得静默忽略 |
 
-**另外 §11.6 的断言 4 与断言 7 互斥**（一个要求 manual 下转置、一个要求不生效），
-同样随本裁决确定后再写。
+因此：
 
-**已知的额外障碍（审查实测）：** `IrEdge` **没有 `Waypoints` 字段**，
-协议层无法携带折点；`DesignSpec.cs:163` 的 manual 分支也不做任何转置。
-因此方案 B 需要先在 `DiagramIr` 加 `Waypoints`，工作量高于方案 A。
+- **不需要**给 `IrEdge` 加 `Waypoints` 字段（方案 B 的需求已作废）
+- `DesignSpec.cs:163` 的 manual 分支保持不转置，只增加一条 `unmet` 记录
+- §11.6 断言 4 与 7 统一为方案 A 的表述
 
-
-现有实现选择清空，理由是"旧 waypoints 描述的是转置前的几何"。
-
-**这在 `CandidateComparison` 场景下可接受**（后续会重新路由），
-**但在 `Direction` 场景下不可接受**：用户显式给出的 waypoints 是设计意图，
-清空等于丢弃输入——违反任务 §4.10"不允许静默丢弃输入"。
-
-**T0 应：** 转置 `labelPosition` 之外的全部坐标点，包括 waypoints 与自由端点。
+**我上一轮把此项列为"待裁决"是错的**——D1 里已经写明，是我没有把它登记为正式裁决。
+见 `phase8.2-owner-rulings.md` 的 D-8 条目。
 
 ### 11.3 几何内部坐标必须镜像
 
@@ -539,8 +531,8 @@ foreach (var edge in page.Edges)
 
 任务要求"Manual 模式必须保留用户坐标"。
 
-**`manual` 下 `Direction` 的行为待裁决**——见 §11.2 的方案 A / B。
-本节原写"不应生效"是方案 A 的立场，不再是既定结论。
+**已裁定（D1）：`manual` 下 `Direction` 不生效，且必须进 `unmetConstraints`。**
+见 §11.2 与 `phase8.2-owner-rulings.md`。
 
 ### 11.5 提取位置
 
@@ -559,12 +551,12 @@ public static void Transpose(Page page);
 | 1 | 四策略 × 两方向：`xspread`/`yspread` 互换 |
 | 2 | TextBlock 位置跟随转置 |
 | 3 | Path Bounds 与**内部 Geometry 坐标**同时转置 |
-| 4 | **随 §11.2 裁决确定**：方案 A 断言 manual 下 direction 不生效且进 unmet；方案 B 断言 waypoints 逐点转置 |
+| 4 | `layout=manual` + `direction=topToBottom` → 坐标**不变**，且 `unmetConstraints` 含 `direction.manual-ignored` |
 | 5 | 自由端点 `FromPoint`/`ToPoint` 转置 |
 | 6 | `Angle` 镜像 |
 | 6b | `Edge.FromPort`/`ToPort` 语义重映射（left↔bottom） |
 | 6c | `Diagram.Orientation` 与 `Diagram.PageSize` 同步转置 |
-| 7 | 同断言 4，随 §11.2 裁决确定（原"Manual 不转置"仅对应方案 A） |
+| 7 | Manual 模式不转置，且 `unmetConstraints` 有记录（与断言 4 同一条） |
 | 8 | 转置两次回到原状态（幂等性反向验证） |
 
 ---
