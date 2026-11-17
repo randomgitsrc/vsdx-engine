@@ -61,6 +61,18 @@
       "items": {
         "$ref": "#/$defs/page"
       }
+    },
+    "textBlocks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/textBlock"
+      }
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/path"
+      }
     }
   },
   "$defs": {
@@ -273,6 +285,190 @@
           "items": {
             "$ref": "#/$defs/container"
           }
+        },
+        "textBlocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/textBlock"
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path"
+          }
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "nodes"
+          ]
+        },
+        {
+          "required": [
+            "textBlocks"
+          ]
+        },
+        {
+          "required": [
+            "paths"
+          ]
+        }
+      ]
+    },
+    "box": {
+      "type": "object",
+      "description": "Rectangle in inches: centre plus size.",
+      "required": [
+        "x",
+        "y"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "textBlock": {
+      "type": "object",
+      "description": "Standalone text: title, subtitle, caption, legend or note. Not a node — it takes no part in layout, so its box is required.",
+      "required": [
+        "id",
+        "text",
+        "box"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "title",
+            "subtitle",
+            "caption",
+            "legend",
+            "note"
+          ]
+        },
+        "box": {
+          "$ref": "#/$defs/box"
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "fontSize": {
+          "type": "number",
+          "minimum": 6,
+          "maximum": 72,
+          "description": "Explicit points. Overrides the role default."
+        },
+        "color": {
+          "type": "string"
+        },
+        "font": {
+          "type": "string"
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "italic": {
+          "type": "boolean"
+        }
+      }
+    },
+    "path": {
+      "type": "object",
+      "description": "A shape whose outline is explicit geometry rather than a built-in master. Rows other than MoveTo/LineTo are carried through verbatim.",
+      "required": [
+        "id",
+        "box",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "box": {
+          "$ref": "#/$defs/box"
+        },
+        "filled": {
+          "type": "boolean"
+        },
+        "stroke": {
+          "type": "string"
+        },
+        "strokeWidth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fill": {
+          "type": "string"
+        },
+        "rows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/pathRow"
+          }
+        }
+      }
+    },
+    "pathRow": {
+      "type": "object",
+      "required": [
+        "type",
+        "cells"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "MoveTo",
+            "LineTo",
+            "ArcTo",
+            "EllipticalArcTo",
+            "SplineKnot",
+            "PolylineTo"
+          ],
+          "description": "The first row must be MoveTo."
+        },
+        "cells": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Cell values by name: X, Y, and A/B/C/D for curves."
         }
       }
     }

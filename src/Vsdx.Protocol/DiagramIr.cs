@@ -38,6 +38,8 @@ public sealed class DiagramIr
     public List<IrNode> Nodes { get; set; } = new();
     public List<IrEdge> Edges { get; set; } = new();
     public List<IrContainer> Containers { get; set; } = new();
+    public List<IrTextBlock> TextBlocks { get; set; } = new();
+    public List<IrPath> Paths { get; set; } = new();
     public IrMetadata Metadata { get; set; } = new();
 }
 
@@ -50,6 +52,85 @@ public sealed class IrPage
     public List<IrNode> Nodes { get; set; } = new();
     public List<IrEdge> Edges { get; set; } = new();
     public List<IrContainer> Containers { get; set; } = new();
+    public List<IrTextBlock> TextBlocks { get; set; } = new();
+    public List<IrPath> Paths { get; set; } = new();
+}
+
+/// <summary>
+/// Standalone text: a title, subtitle, caption, legend or footnote.
+///
+/// These are not nodes. Expressing a title as a zero-edge node would put it in the layout graph
+/// and corrupt every spacing and quality metric, so the protocol keeps them separate.
+/// </summary>
+public sealed class IrTextBlock
+{
+    public string Id { get; set; } = "";
+
+    public string Text { get; set; } = "";
+
+    /// <summary>title | subtitle | caption | legend | note. Drives the default point size.</summary>
+    public string? Role { get; set; }
+
+    /// <summary>
+    /// Required position and box, in inches. Unlike a node, text is not laid out: where it goes is
+    /// a design decision, so the protocol asks for it rather than guessing.
+    /// </summary>
+    public IrBox? Box { get; set; }
+
+    /// <summary>left | center | right.</summary>
+    public string? Align { get; set; }
+
+    /// <summary>Explicit point size. Overrides the role default.</summary>
+    public double? FontSize { get; set; }
+
+    public string? Color { get; set; }
+    public string? Font { get; set; }
+    public bool? Bold { get; set; }
+    public bool? Italic { get; set; }
+}
+
+/// <summary>
+/// A shape whose outline is explicit geometry rather than a built-in master.
+///
+/// Rows are given as path commands. <c>MoveTo</c>/<c>LineTo</c> are interpreted;
+/// <c>ArcTo</c>/<c>SplineKnot</c> and anything else are carried through verbatim, so a curve
+/// survives even though the engine does not compute it.
+/// </summary>
+public sealed class IrPath
+{
+    public string Id { get; set; } = "";
+
+    public string? Name { get; set; }
+
+    /// <summary>Position and box in inches. Geometry coordinates are local to this box.</summary>
+    public IrBox? Box { get; set; }
+
+    /// <summary>Closed by default when the rows end near where they started.</summary>
+    public bool? Filled { get; set; }
+
+    public string? Stroke { get; set; }
+    public double? StrokeWidth { get; set; }
+    public string? Fill { get; set; }
+
+    public List<IrPathRow> Rows { get; set; } = new();
+}
+
+public sealed class IrPathRow
+{
+    /// <summary>MoveTo | LineTo | ArcTo | EllipticalArcTo | SplineKnot | PolylineTo.</summary>
+    public string Type { get; set; } = "LineTo";
+
+    /// <summary>Cell values by name: X, Y (and A, B, C, D for curves).</summary>
+    public Dictionary<string, string> Cells { get; set; } = new();
+}
+
+/// <summary>A rectangle in inches, expressed as position plus size.</summary>
+public sealed class IrBox
+{
+    public double X { get; set; }
+    public double Y { get; set; }
+    public double Width { get; set; } = 2;
+    public double Height { get; set; } = 1;
 }
 
 public sealed class IrNode
@@ -175,7 +256,9 @@ public static class DiagramIrConverter
                     Name = ir.Title ?? "Page-1",
                     Nodes = ir.Nodes,
                     Edges = ir.Edges,
-                    Containers = ir.Containers
+                    Containers = ir.Containers,
+                    TextBlocks = ir.TextBlocks,
+                    Paths = ir.Paths
                 }
             };
 
@@ -245,6 +328,62 @@ public static class DiagramIrConverter
                     FromPort = edge.FromPort,
                     ToPort = edge.ToPort,
                     EndArrow = RelationUsesArrow(edge.Relation) ? "triangle" : "none"
+                });
+            }
+
+            foreach (var text in source.TextBlocks)
+            {
+                page.TextBlocks.Add(new TextBlock
+                {
+                    Id = text.Id,
+                    Text = text.Text,
+                    Role = text.Role,
+                    Align = text.Align,
+                    Bounds = text.Box is null
+                        ? new Bounds(1, 1, 4, 0.5)
+                        : new Bounds(text.Box.X, text.Box.Y, text.Box.Width, text.Box.Height),
+                    Style = new ShapeStyle
+                    {
+                        FontSize = text.FontSize,
+                        TextColor = text.Color,
+                        Font = text.Font,
+                        Bold = text.Bold,
+                        Italic = text.Italic
+                    }
+                });
+            }
+
+            foreach (var path in source.Paths)
+            {
+                var geometry = new PathGeometry { Index = 0 };
+
+                // A path with no fill is a stroke; make that explicit so Visio does not fill it.
+                if (path.Filled is false || (path.Fill is null && path.Stroke is not null))
+                    geometry.SectionCells = new Dictionary<string, string> { ["NoFill"] = "1" };
+
+                foreach (var row in path.Rows)
+                {
+                    geometry.Rows.Add(new PathRow
+                    {
+                        Type = row.Type,
+                        Cells = new Dictionary<string, string>(row.Cells, StringComparer.Ordinal)
+                    });
+                }
+
+                page.Paths.Add(new FreePath
+                {
+                    Id = path.Id,
+                    Name = path.Name ?? path.Id,
+                    Bounds = path.Box is null
+                        ? new Bounds(1, 1, 4, 1)
+                        : new Bounds(path.Box.X, path.Box.Y, path.Box.Width, path.Box.Height),
+                    Style = new ShapeStyle
+                    {
+                        Fill = path.Fill,
+                        Stroke = path.Stroke,
+                        StrokeWidth = path.StrokeWidth
+                    },
+                    Geometry = { geometry }
                 });
             }
         }

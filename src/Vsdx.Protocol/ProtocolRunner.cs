@@ -199,14 +199,14 @@ public static class IrValidator
 
         // Validate each page independently; the shorthand form is one implicit page.
         var pages = ir.Pages.Count > 0
-            ? ir.Pages.Select(p => (p.Id, p.Nodes, p.Edges, p.Containers)).ToList()
-            : new List<(string, List<IrNode>, List<IrEdge>, List<IrContainer>)>
+            ? ir.Pages.Select(p => (p.Id, p.Nodes, p.Edges, p.Containers, p.TextBlocks, p.Paths)).ToList()
+            : new List<(string, List<IrNode>, List<IrEdge>, List<IrContainer>, List<IrTextBlock>, List<IrPath>)>
             {
-                (ir.Id, ir.Nodes, ir.Edges, ir.Containers)
+                (ir.Id, ir.Nodes, ir.Edges, ir.Containers, ir.TextBlocks, ir.Paths)
             };
 
         var pageIds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var (pageId, _, _, _) in pages)
+        foreach (var (pageId, _, _, _, _, _) in pages)
         {
             if (string.IsNullOrWhiteSpace(pageId)) continue;
             if (!pageIds.Add(pageId))
@@ -223,8 +223,8 @@ public static class IrValidator
         if (pages.Sum(p => p.Item2.Count) == 0)
             errors.Add(new ExecutionError { Code = "ir.empty", Message = "IR 不含任何节点" });
 
-        foreach (var (pageId, pageNodes, pageEdges, pageContainers) in pages)
-            ValidatePage(pageId, pageNodes, pageEdges, pageContainers, errors);
+        foreach (var (pageId, pageNodes, pageEdges, pageContainers, pageText, pagePaths) in pages)
+            ValidatePage(pageId, pageNodes, pageEdges, pageContainers, pageText, pagePaths, errors);
 
         return errors;
     }
@@ -232,7 +232,8 @@ public static class IrValidator
     /// <summary>Validates one page's references and hierarchy.</summary>
     private static void ValidatePage(
         string pageId, List<IrNode> irNodes, List<IrEdge> irEdges,
-        List<IrContainer> irContainers, List<ExecutionError> errors)
+        List<IrContainer> irContainers, List<IrTextBlock> irText, List<IrPath> irPaths,
+        List<ExecutionError> errors)
     {
         var nodeIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var node in irNodes)
@@ -328,6 +329,90 @@ public static class IrValidator
                     Code = "ir.edge-to-missing",
                     Message = $"连接 '{edge.Id}' 的终点 '{edge.To}' 不存在",
                     Target = edge.Id
+                });
+            }
+        }
+
+        // Text blocks and paths must have ids and usable geometry, otherwise they are dropped or
+        // written at a nonsense position. Silently accepting them would be the same class of bug
+        // as the dropped fields this validation exists to prevent.
+        var extIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var text in irText)
+        {
+            if (string.IsNullOrWhiteSpace(text.Id))
+            {
+                errors.Add(new ExecutionError { Code = "ir.text-id", Message = "存在缺少 id 的文本块" });
+                continue;
+            }
+            if (!extIds.Add(text.Id))
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.text-id-duplicate",
+                    Message = $"文本块 id 重复：'{text.Id}'", Target = text.Id
+                });
+            }
+            if (string.IsNullOrEmpty(text.Text))
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.text-empty",
+                    Message = $"文本块 '{text.Id}' 没有内容", Target = text.Id
+                });
+            }
+            if (text.Box is null)
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.text-box",
+                    Message = $"文本块 '{text.Id}' 缺少位置（box）；文本不参与自动布局", Target = text.Id
+                });
+            }
+        }
+
+        foreach (var path in irPaths)
+        {
+            if (string.IsNullOrWhiteSpace(path.Id))
+            {
+                errors.Add(new ExecutionError { Code = "ir.path-id", Message = "存在缺少 id 的路径" });
+                continue;
+            }
+            if (!extIds.Add(path.Id))
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.path-id-duplicate",
+                    Message = $"路径 id 重复：'{path.Id}'", Target = path.Id
+                });
+            }
+            if (path.Rows.Count == 0)
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.path-no-rows",
+                    Message = $"路径 '{path.Id}' 没有任何几何行", Target = path.Id
+                });
+            }
+            if (path.Rows.Count > 0 && !string.Equals(path.Rows[0].Type, "MoveTo", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.path-start",
+                    Message = $"路径 '{path.Id}' 的第一行必须是 MoveTo", Target = path.Id
+                });
+            }
+        }
+
+        // Ids are shared: the same id in a node and a text block would collide in z-order.
+        foreach (var id in extIds)
+        {
+            if (nodeIds.Contains(id) || containerIds.Contains(id))
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.id-collision",
+                    Message = $"id '{id}' 同时用于节点/容器与文本块/路径，z-order 无法区分",
+                    Target = id
                 });
             }
         }

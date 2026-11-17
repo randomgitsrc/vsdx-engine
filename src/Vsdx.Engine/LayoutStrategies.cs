@@ -142,10 +142,47 @@ public static class DiagramLayoutEngine
                 edge.Waypoints = null;
 
             var pageOptions = options with { Strategy = strategy };
+
+            // Text blocks and paths are positioned against the page, not against the node graph:
+            // a title belongs at the top of the sheet wherever the services end up. Layout only
+            // moves nodes, so decorations are left where the caller put them — but they must be
+            // clamped into the sheet afterwards, or a title at the author's y=8.5 can end up
+            // outside a page that shrank to 6 inches.
             results.Add(engine.Layout(page, pageOptions));
+            ClampDecorationsToPage(page);
         }
 
         return results.FirstOrDefault() ?? new LayoutResult { Strategy = strategy };
+    }
+
+    /// <summary>
+    /// Keeps standalone text and paths inside the page after layout.
+    ///
+    /// Decorations are deliberately not part of the layout graph: moving a title because a service
+    /// moved would be wrong. But leaving them at coordinates that the page no longer covers makes
+    /// them invisible in the deliverable, which is worse. Nudging them inside is the honest
+    /// middle: position is honoured where possible, corrected only when it would be lost.
+    /// </summary>
+    private static void ClampDecorationsToPage(Page page)
+    {
+        if (page.Size is not { Width: > 0 } size) return;
+
+        const double margin = DiagramSizer.PageMargin;
+
+        static double Clamp(double value, double half, double limit) =>
+            Math.Max(half + margin, Math.Min(value, limit - half - margin));
+
+        foreach (var text in page.TextBlocks)
+        {
+            text.Bounds.X = Math.Round(Clamp(text.Bounds.X, text.Bounds.W / 2, size.Width) * 40) / 40;
+            text.Bounds.Y = Math.Round(Clamp(text.Bounds.Y, text.Bounds.H / 2, size.Height) * 40) / 40;
+        }
+
+        foreach (var path in page.Paths)
+        {
+            path.Bounds.X = Math.Round(Clamp(path.Bounds.X, path.Bounds.W / 2, size.Width) * 40) / 40;
+            path.Bounds.Y = Math.Round(Clamp(path.Bounds.Y, path.Bounds.H / 2, size.Height) * 40) / 40;
+        }
     }
 
     /// <summary>Resolves a strategy name to an engine.</summary>

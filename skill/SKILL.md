@@ -351,6 +351,60 @@ accept them and say so.
 
 ---
 
+## 6c. Titles, legends and custom shapes
+
+A diagram without a title reads as a draft. The engine has three object kinds, and picking the
+wrong one corrupts the layout:
+
+| You want | Use | Why not a node |
+| --- | --- | --- |
+| Chart title, subtitle | `textBlocks` | A node joins the layout graph and drags spacing around |
+| Legend, footnote | `textBlocks` | Same |
+| A rule, separator, drawn curve | `paths` | A node is a box with a label, not an outline |
+
+### Text blocks
+
+```jsonc
+"textBlocks": [
+  { "id": "title", "text": "订单处理平台", "role": "title",
+    "box": { "x": 5.5, "y": 8.6, "width": 6, "height": 0.6 },
+    "align": "center", "bold": true },
+  { "id": "legend", "text": "蓝 = 服务   绿 = 数据", "role": "legend",
+    "box": { "x": 5.5, "y": 1.2, "width": 6, "height": 0.35 },
+    "align": "center" }
+]
+```
+
+`role` sets the size for you — `title` 20pt, `subtitle` 12pt, `legend` 10pt, `note` 8pt.
+`fontSize` overrides it. **`box` is required**: text is not laid out, so where it goes is a
+design decision, not something the engine should guess.
+
+### Paths
+
+```jsonc
+"paths": [
+  { "id": "rule", "box": { "x": 5.5, "y": 7.6, "width": 8, "height": 0.05 },
+    "stroke": "#999999", "strokeWidth": 0.012,
+    "rows": [
+      { "type": "MoveTo", "cells": { "X": "0", "Y": "0" } },
+      { "type": "LineTo", "cells": { "X": "8", "Y": "0" } }
+    ] }
+]
+```
+
+Coordinates are **local to the box**. `MoveTo` must come first. `ArcTo`, `SplineKnot` and any
+other instruction are carried through verbatim — the engine does not compute the curve, but it
+will not drop or straighten it either.
+
+### Two rules worth knowing
+
+- **Decorations are not laid out.** A title stays where you put it even when the services move.
+  After layout they are nudged inside the page if they would otherwise fall off it.
+- **Ids share one namespace** across nodes, containers, text and paths, because z-order is a
+  single list. A duplicate is rejected rather than silently resolved.
+
+---
+
 ## 7. Confirm before delivering
 
 ```bash
