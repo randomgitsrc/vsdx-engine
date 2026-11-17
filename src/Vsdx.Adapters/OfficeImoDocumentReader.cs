@@ -498,8 +498,16 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
 
         model.ShapeOrder = shapeOrder;
 
-        if (model.Nodes.Count == 0 && model.Groups.Count == 0 && page.Shapes.Count > 0)
-            compat.Warn("read.no-nodes", $"Page '{page.Name}' has {page.Shapes.Count} shapes but none mapped to nodes.", page.Name);
+        // Warn only when shapes were genuinely left unmapped. A page of custom geometry or
+        // standalone text has no nodes by design, so reporting "none mapped to nodes" there is a
+        // false alarm that would teach a caller to ignore the warning.
+        int modelled = model.Nodes.Count + model.Paths.Count + model.TextBlocks.Count;
+        if (modelled == 0 && model.Groups.Count == 0 && page.Shapes.Count > 0)
+        {
+            compat.Warn("read.no-nodes",
+                $"Page '{page.Name}' has {page.Shapes.Count} shapes but none mapped to a model object.",
+                page.Name);
+        }
 
         return model;
     }
