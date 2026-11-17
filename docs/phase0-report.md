@@ -789,3 +789,105 @@ workflow     + flow      hard=True
   这是 Phase 4/5 的优化项，不是正确性缺陷。
 
 测试：**146 项通过**（新增 `LayoutTests` 16 项），构建 0 warning。
+
+---
+
+## 十五、Phase 4 实施结果（快照、影响分析与三级修复）
+
+Phase 0 记录：`grep snapshot|rollback` 只命中一个**用于 diff 展示的格式化方法**，
+没有任何可还原的状态。本阶段补上这一层。
+
+### 15.1 三个组件
+
+| 组件 | 职责 |
+| --- | --- |
+| `VersionSnapshot` / `VersionStore` | 深拷贝模型 + 质量报告 + 分数 + 问题代码集，可回滚、可导出 |
+| `ImpactAnalysis` | 计算改动波及范围，输出 `Local` / `RegionRelayout` / `FullRedraw` |
+| `RepairController` | 计划 → 尝试 → 接受/回滚 → 升级 → 止损 |
+
+### 15.2 阻断"越修越乱"的三条规则
+
+任务 §4.1 描述的病灶是**局部修改引发连锁变化且无回滚**。三条机制直接对应：
+
+**规则一：接受必须"有改善且无新增硬伤"。**
+
+```csharp
+if (newHard.Count > 0) return Reject("引入新的硬约束失败");
+if (fewerHard || totalIssuesDecreased || fixedIntendedIssue) return Accept(...);
+return Reject("没有可测的改善");
+```
+
+把重叠从一个位置挪到另一个位置**不算修好**——第二处会触发"引入新的硬约束失败"而被拒绝。
+
+**规则二：同一策略失败后不得重试。**
+
+```csharp
+if (controller.AlreadyTried(plan.IssueCode, strategy)) break;
+```
+
+**规则三：预算耗尽必须升级，而非重复。**
+
+```csharp
+if (failures >= _maxAttemptsPerIssue)
+    baseScope switch { Local => RegionRelayout, RegionRelayout => FullRedraw, _ => FullRedraw };
+```
+
+当**所有级别都试过仍无改善**时直接停止：
+
+> `'edge.crossing' 的所有修复级别均已尝试且未改善，停止而非重复`
+
+这一条来自实测：早期版本会把 6 轮预算全部烧在同一个已知失败的策略上，
+日志里连续出现 5 次 `RolledBack ... (already tried)`——**这正是任务警告的行为**，
+只是后果从"改坏图"变成了"白烧预算"。修掉后一次即停。
+
+### 15.3 修掉的一个判定错误
+
+实测发现 `node.overlap` 原先被标为 `FixLevel.Local`。但**两个相交节点不可能"只动一个"**：
+挪开 A 必然改变 A 与其它节点的关系。改为 `RegionRelayout` 并补上
+`RootCause` / `RecommendedFix`。
+
+这类错误恰好说明为什么需要 `level` 字段——如果只给"哪里重叠"，Agent 极可能去挪一个节点，
+然后触发下一个问题。
+
+### 15.4 实测：修复循环的两种结局
+
+**成功收敛**（故意构造的 3 节点互相重叠 + 2 个容器）：
+
+```
+baseline: score 0,   hard 4, soft 1
+final   : score 96,  hard 0, soft 0
+[Accepted] node.overlap via layout:RegionRelayout — 改善了既有问题且未引入新问题
+stopped: 硬约束与软约束均已通过
+```
+
+一次重排即达标，随即停止。
+
+**拒绝并保持原状**（只有一个软问题、无可用改进）：
+
+```
+baseline: score 96, hard 0, soft 1
+final   : score 96, hard 0, soft 1
+[RolledBack] edge.crossing via layout:RegionRelayout — 没有可测的改善
+stopped: 'edge.crossing' 的所有修复级别均已尝试且未改善，停止而非重复
+```
+
+**基线没有被破坏**——这是关键。旧版本会继续尝试到预算耗尽。
+
+### 15.5 新增 CLI
+
+```bash
+vsdx-tool repair --input diagram.vsdx --output fixed.vsdx \
+  [--max-rounds 6] [--max-attempts-per-issue 2] [--json]
+```
+
+JSON 输出含 `baseline` / `final` / `attempts`（含 rootCause、strategy、expectedGain、
+actualGain、decision）/ `versions` / `stopReason`，可直接作为评审材料。
+
+### 15.6 明确未做
+
+- **没有实现候选方案并行生成与比较**（任务 §4.8）。当前是"单路径 + 确定性重排"，
+  已能收敛；多候选需要在 Phase 5 配合基准案例才有比较价值，否则只是多烧算力。
+- **没有自动修复 `edge.crossing` 这类纯软问题**。重排对交叉往往无效，
+  强行尝试只会消耗预算——实测已被止损规则正确拦下。
+
+测试：**166 项通过**（新增 `RepairTests` 20 项），构建 0 warning。

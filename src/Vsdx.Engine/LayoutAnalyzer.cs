@@ -41,7 +41,12 @@ public static class LayoutAnalyzer
                 Severity = "error",
                 Page = page.Name,
                 Targets = new[] { a.Id, b.Id },
-                Message = $"节点 '{a.Id}' 与 '{b.Id}' 重叠"
+                Message = $"节点 '{a.Id}' 与 '{b.Id}' 重叠",
+                RootCause = "两个节点的包围盒相交，通常是列间距或行距不足",
+                RecommendedFix = "重排所在区域，而不是把其中一个节点随意挪开",
+                // Moving one of two intersecting shapes in isolation almost always creates a new
+                // collision elsewhere, so this is regional by construction.
+                SuggestedLevel = FixLevel.RegionRelayout
             });
         }
 
@@ -117,7 +122,10 @@ public static class LayoutAnalyzer
                         Severity = "error",
                         Page = page.Name,
                         Targets = new[] { edge.Id, node.Id },
-                        Message = $"连线 '{edge.Id}' ({edge.From} → {edge.To}) 穿过无关节点 '{node.Id}'"
+                        Message = $"连线 '{edge.Id}' ({edge.From} → {edge.To}) 穿过无关节点 '{node.Id}'",
+                        RootCause = "两端之间存在未参与该连接的节点，且没有可用通道",
+                        RecommendedFix = "显式给出 waypoints，或重排该区域使通道成立",
+                        SuggestedLevel = FixLevel.RegionRelayout
                     });
                 }
             }

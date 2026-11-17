@@ -62,6 +62,7 @@ public static class Program
             "render" => Render(options, json),
             "validate" => Validate(options, json),
             "diff" => Diff(options, json),
+            "repair" => Repair(options, json),
             "check-layout" => CheckLayout(options, json),
             "batch" => Batch(options, json),
             "version" or "--version" => Version(json),
@@ -504,6 +505,115 @@ public static class Program
         path.EndsWith(".vsdx", StringComparison.OrdinalIgnoreCase) ||
         path.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Runs the bounded improvement loop: plan, attempt, accept or roll back, escalate, stop.
+    /// Reports the attempt history so a rejected fix is visible rather than silently retried.
+    /// </summary>
+    private static int Repair(Args options, bool json)
+    {
+        var input = options.Require("input");
+        var output = options.Get("output") ?? input;
+        int maxRounds = (int)(options.GetDouble("max-rounds") ?? 6);
+        int perIssue = (int)(options.GetDouble("max-attempts-per-issue") ?? 2);
+
+        var engine = new VsdxEngine();
+        var diagram = engine.Read(input).Diagram;
+
+        var controller = new RepairController(perIssue, maxRounds);
+        var baseline = controller.Begin(diagram, "baseline");
+
+        int rounds = 0;
+
+        while (true)
+        {
+            var plan = controller.NextPlan(diagram);
+            if (plan is null) break;
+            rounds++;
+
+            // Apply the smallest fix the diagnosis asks for. Anything above Local regenerates
+            // geometry from the model rather than nudging individual coordinates.
+            var candidate = DiagramJson.Deserialize(DiagramJson.Serialize(diagram));
+            var strategy = $"layout:{plan.SuggestedScope}";
+
+            if (plan.SuggestedScope != RepairScope.Local)
+            {
+                // Never re-run a strategy already known to fail for this issue; stop instead so
+                // the loop does not burn rounds repeating itself.
+                if (controller.AlreadyTried(plan.IssueCode, strategy))
+                {
+                    break;
+                }
+
+                DiagramSizer.Apply(candidate);
+                DiagramLayoutEngine.Apply(candidate, new LayoutOptions(),
+                    DiagramLayoutEngine.SuggestStrategy(candidate));
+                DiagramLayout.Apply(candidate);
+                OrthogonalRouter.Route(candidate);
+                foreach (var page in candidate.Pages)
+                {
+                    DiagramSizer.Recenter(page);
+                    DiagramSizer.FitPage(page, shrink: true);
+                }
+            }
+
+            var attempt = controller.Record(plan, candidate, strategy,
+                $"消除 {plan.IssueCode}");
+
+            if (attempt.Decision == FixDecision.Accepted)
+                diagram = candidate;
+
+            if (rounds >= maxRounds) break;
+        }
+
+        var finalReport = LayoutAnalyzer.Analyze(diagram);
+        var serialized = DiagramJson.Serialize(diagram);
+        DiagramJson.Save(DiagramJson.Deserialize(serialized), output);
+
+        if (json)
+        {
+            Emit(new
+            {
+                ok = finalReport.HardConstraintsPassed,
+                command = "repair",
+                input = Path.GetFullPath(input),
+                output = Path.GetFullPath(output),
+                baseline = new { score = baseline.Score, hard = baseline.HardViolations, soft = baseline.SoftViolations },
+                final = new
+                {
+                    score = finalReport.Score,
+                    hard = finalReport.Errors.Count(),
+                    soft = finalReport.Warnings.Count(),
+                    hardConstraintsPassed = finalReport.HardConstraintsPassed
+                },
+                stopped = controller.Stopped,
+                stopReason = controller.StopReason,
+                rounds,
+                attempts = controller.Attempts.Select(a => new
+                {
+                    a.Problem, a.RootCause, a.Strategy, a.ExpectedGain, a.ActualGain,
+                    decision = a.Decision.ToString(), a.IntroducedNewIssues, a.Note
+                }),
+                versions = controller.Versions.History.Select(v => new
+                {
+                    v.Id, v.Label, v.Score, v.HardViolations, v.SoftViolations, v.Reason
+                })
+            });
+        }
+        else
+        {
+            Console.WriteLine($"repair {Path.GetFileName(input)}");
+            Console.WriteLine($"  baseline: score {baseline.Score}, hard {baseline.HardViolations}, soft {baseline.SoftViolations}");
+            Console.WriteLine($"  final   : score {finalReport.Score}, hard {finalReport.Errors.Count()}, soft {finalReport.Warnings.Count()}");
+            foreach (var a in controller.Attempts)
+                Console.WriteLine($"  [{a.Decision,-10}] {a.Problem} via {a.Strategy}" +
+                                  (a.Note is null ? "" : $" — {a.Note}"));
+            if (controller.StopReason is not null)
+                Console.WriteLine($"  stopped: {controller.StopReason}");
+        }
+
+        return finalReport.HardConstraintsPassed ? 0 : 1;
+    }
+
     private static int CheckLayout(Args options, bool json)
     {
         var input = options.Require("input");
@@ -734,6 +844,10 @@ public static class Help
 
               check-layout  Detect overlap, crossing, overflow and containment defects
                               --input <file.vsdx> [--json]
+
+              repair        Bounded improvement loop: plan, attempt, accept or roll back
+                              --input <file.vsdx> [--output <file.vsdx>]
+                              [--max-rounds <n>] [--max-attempts-per-issue <n>] [--json]
 
               batch         Run one operation across many files
                               --op <create|render|validate|export-model> --out-dir <dir>
