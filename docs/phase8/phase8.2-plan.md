@@ -937,7 +937,18 @@ targetW *= factor; targetH *= factor;
 
 ### 17.2 契约
 
-**唯一换算点：`OfficeImoIncrementalEditor`（已有）。**
+**换算点不止一处——原写"唯一换算点是 `OfficeImoIncrementalEditor`"是错的**
+（审查 M9 指出遗漏，我实测确认）：
+
+| 路径 | 输入 `10×8 cm` | XML `PageWidth` | 是否换算 |
+| --- | --- | --- | --- |
+| `create`（模型→VSDX） | 10 × 8 cm | `10` / `8` | ❌ **不换算**，原样写成英寸 |
+| `update`（走 `IncrementalEditor`） | unit=cm | 3.937 / 3.150 | ✅ 换算 |
+
+所以现状是**两条路径行为不一致**，而不是"已有一处换算、只需避免重复"。
+
+危险在于：`create` 写入 `PageWidth=10` 却在模型里保留 `unit:"cm"`，
+下游若信任该标签，就会把 10 英寸当成 10 厘米。
 
 `DesignSpecApplier` 的职责改为**把 spec 的单位规范化为英寸**后写入
 `page.Size`（且 `Unit` 字段也写 `"inches"`），使下游 `UnitFactor("inches") == 1`。

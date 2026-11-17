@@ -267,10 +267,25 @@ unit=mm     -> page 10.00 x 8.00 in     ← 应为 0.39 x 0.31
 代码只做了 `page.Size.Unit = spec.Canvas.Unit;`（第 256 行），
 **没有任何换算**。`grep "UnitFactor\|2.54\|25.4" DesignSpec.cs` 无结果。
 
-**但"标签写错"的说法不准确**（独立审查 A9/B8 纠正）：
+**但"标签写错"的说法不准确**（审查 A.1#4 / B7 纠正——**不是** A9/B8；
+A9/B8 指的是 `mode=fixed`，我一度引错了条目号）。
 
-Writer 在 `OfficeImoDocumentWriter.cs:50` **硬传 `VisioMeasurementUnit.Inches`**，
-实测解包 XML 后既无 `U="CM"` 也无 `U="IN"`。**单位标签根本没写进文件。**
+Writer 在 `OfficeImoDocumentWriter.cs:50` **硬传 `VisioMeasurementUnit.Inches`**。
+实测解包**两个** part：
+
+```
+visio/pages/page1.xml : U="IN"=False  U="CM"=False
+visio/pages/pages.xml : U="IN"=True   U="CM"=False     ← 在这里
+```
+
+**`U="IN"` 确实写进了文件，只是在 `pages.xml` 而非 `page1.xml`。**
+
+我上一版写成"既无 `U="CM"` 也无 `U="IN"`"，是**只解包一个 part 就下了全包结论**——
+把一次范围过窄的观察当成了全文结论。这与我批评过的"读代码判断能力"是同一类毛病，
+只是换成了"读一个文件判断整个包"。
+
+**准确表述：** Writer 硬传 Inches，故 `pages.xml` 中是 `U="IN"`；
+`spec.Canvas.Unit` 从不影响该值，`10cm` 与 `10in` 产出相同。
 
 因此危险不在"标签与数值不一致"，而在：
 1. `spec.Canvas.Unit` 被**完全忽略**，`10cm` 与 `10in` 产出相同
