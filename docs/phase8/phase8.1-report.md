@@ -117,3 +117,25 @@ Visio 的 `Character` 单元格 `Size` 是**英寸长度**，`U="PT"` 记录创�
 | 路径删除按 `NameU="FreePath"` 判定 | 若外部文件恰有同名形状可能误删（概率极低，且已排除 master/容器） |
 | 文本块强制尺寸 | 长文本不自动换行扩展，超出会溢出框体 |
 | 切片右侧留白 | 由作者给文本块的宽度决定，非布局缺陷 |
+
+---
+
+## 7. 补充验证：混合形状多次往返
+
+P0 修复是否对**混合几何类型**长期成立？单独做了验证。
+
+构造含四种几何形状的图：圆形（25 行）、菱形（5 行）、矩形（5 行）、
+自定义弧线路径（2 行，含 `ArcTo`）。连续执行两代 `update`：
+
+```
+a.vsdx: {'Circle': [25], 'Diamond': [5], 'Rectangle': [5], 'FreePath': [2]}
+b.vsdx: {'Circle': [25], 'Diamond': [5], 'Rectangle': [5], 'FreePath': [2]}
+c.vsdx: {'Circle': [25], 'Diamond': [5], 'Rectangle': [5], 'FreePath': [2]}
+```
+
+**完全稳定，无退化。** 产物：`examples/phase8/mixed-fidelity.vsdx` + `.png`
+
+这条验证的意义：P0 修复的剥离逻辑依赖"5 行矩形"签名，
+而菱形恰好也是 **5 行**。若签名判定只看行数就会误删菱形的几何。
+实际判定同时检查行类型序列（1×MoveTo + 4×LineTo），
+菱形是 1×MoveTo + 2×LineTo + 2×LineTo 的不同组合——**测试证明它没被误伤**。
