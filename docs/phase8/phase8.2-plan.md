@@ -221,7 +221,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
 | 16 | **IR `order` 被忽略致流程倒置**（P0） | 转换器消费 `Order`；布局优先用显式 order，其次 `MeanY`，最后声明序 | **T1b** |
 | 17 | **样式静默丢失 + `lossless` 谎报**（P0） | `Opacity`/`Shadow`/`Radius`/`LineJoin` 四字段无消费者；要么执行、要么进 `unmet`；`lossless` 不得在丢失时报告 | **T2c** |
-| 18 | **Renderer 不消费 `FontFamily`**（P0） | `FontResolver` 读 VSDX 字体名；找不到时降级并报告。**若不做，白名单必须把 font-family 标为"仅 VSDX 有效、预览不体现"** | **T2d** |
+| 18 | **Renderer 不消费 `FontFamily`**（P0） | `FontResolver` 从 VSDX 的 `FaceNames` 读字体名；找不到时降级并进 `unmet`（**已由任务书 §3.5 第 4 条裁定，无替代方案**） | **T2d** |
 | 19 | **TextBlock `Color`/`Font` 层级错**（P0） | 移入 `Character/Row`，与 Node 一致；验证回读 | **T2e** |
 | 20 | **文字裁切不计入硬约束** | `text.overflow-*` 升级为 error（score 归零） | **T6b** |
 | 21 | **非法枚举静默回退并谎报** | 统一 `TryParse` 语义：失败记录原值进 `unmet`，再回退 | **T2f** |
