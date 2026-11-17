@@ -65,11 +65,16 @@ public sealed class RepairController
             return null;
         }
 
-        // Hard violations first, then the costliest soft issue.
-        var issue = report.Errors
+        // Page-utilisation findings describe the canvas, not the arrangement. Relayout cannot
+        // change them — only `--fit-page` can — so including them would make the loop chase a
+        // fix it can never perform and prevent "clean" from ever being reached.
+        static bool Actionable(LayoutIssue i) => i.Code != "page.underused" && i.Code != "page.margins";
+
+        var issue = report.Errors.Where(Actionable)
                         .OrderByDescending(i => SeverityRank(i.Code))
                         .FirstOrDefault()
-                    ?? report.Warnings.OrderByDescending(i => i.SoftWeight).FirstOrDefault();
+                    ?? report.Warnings.Where(Actionable)
+                        .OrderByDescending(i => i.SoftWeight).FirstOrDefault();
 
         if (issue is null)
         {

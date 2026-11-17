@@ -295,9 +295,19 @@ public static class LayoutAnalyzer
                 report.Add(new LayoutIssue
                 {
                     Code = "page.underused",
-                    Severity = "info",
+                    // A page barely larger than its content is a style issue; a page that is
+                    // overwhelmingly empty means the deliverable is mostly whitespace, which the
+                    // reader perceives as broken. Graduated severity makes that distinction
+                    // actionable instead of hiding both cases behind one info line.
+                    Severity = ratio < options.SeverelyUnderusedRatio ? "error" : "warning",
                     Page = page.Name,
-                    Message = $"图形只占页面的 {ratio:P0}；考虑缩小页面或加大间距"
+                    Message = $"图形只占页面的 {ratio:P0}；考虑缩小页面或加大间距",
+                    RootCause = ratio < options.SeverelyUnderusedRatio
+                        ? "页面尺寸远大于内容包围盒，交付物大部分是空白"
+                        : "页面留白偏多",
+                    RecommendedFix = "启用 --fit-page 让页面贴合内容，或减小间距/字号",
+                    SuggestedLevel = FixLevel.Local,
+                    SoftWeight = ratio < options.SeverelyUnderusedRatio ? 0 : 3
                 });
             }
 
@@ -858,6 +868,12 @@ public sealed class LayoutAnalyzerOptions
 
     /// <summary>Adjacent nodes in the same row should share a size within this ratio.</summary>
     public double SizeUniformityRatio { get; init; } = 1.35;
+
+    /// <summary>
+    /// Below this page-utilisation ratio, emptiness is a hard failure rather than a style note:
+    /// the deliverable is mostly blank page.
+    /// </summary>
+    public double SeverelyUnderusedRatio { get; init; } = 0.15;
 }
 
 /// <summary>

@@ -237,11 +237,12 @@ public sealed class DetectorTests
         var page = new Page
         {
             Name = "p",
-            Size = new PageSize { Width = 14, Height = 9 },
+            // Page sized snugly around the content so the only defect is the misalignment.
+            Size = new PageSize { Width = 7.0, Height = 3.0 },
             Nodes =
             {
-                new Node { Id = "a", Bounds = new Bounds(2, 6.0, 2, 0.9) },
-                new Node { Id = "b", Bounds = new Bounds(6, 6.2, 2, 0.9) }   // soft: misaligned
+                new Node { Id = "a", Bounds = new Bounds(2.0, 1.5, 2, 0.9) },
+                new Node { Id = "b", Bounds = new Bounds(5.0, 1.7, 2, 0.9) }   // soft: misaligned
             }
         };
 
@@ -258,12 +259,14 @@ public sealed class DetectorTests
         // Many identical soft violations must not drive the score to zero by sheer count.
         var nodes = new List<Node>();
         for (int i = 0; i < 12; i++)
-            nodes.Add(new Node { Id = $"a{i}", Bounds = new Bounds(2 + i * 0.9, 6.0 + (i % 2) * 0.3, 0.6, 0.6) });
+            nodes.Add(new Node { Id = $"a{i}", Bounds = new Bounds(2 + i * 0.9, 4.0 + (i % 2) * 0.3, 0.6, 1.2) });
 
+        // Keep the page tight around the content so this test exercises the repeat-cap rule,
+        // not the page-utilisation rule.
         var page = new Page
         {
             Name = "p",
-            Size = new PageSize { Width = 30, Height = 12 },
+            Size = new PageSize { Width = 13, Height = 6 },
             Nodes = nodes
         };
 

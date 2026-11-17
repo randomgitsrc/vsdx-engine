@@ -35,19 +35,23 @@ public sealed class RepairTests
 
     private static Diagram Clean()
     {
+        // Page deliberately sized to the content: the point of this fixture is "no layout
+        // defects", not "generous canvas".
         return new Diagram
         {
-            PageSize = new PageSize { Width = 12, Height = 8 },
+            // Sized so content fills ~45% of the page: this fixture tests "no defects", not
+            // "generous canvas", so page utilisation must not become the finding.
+            PageSize = new PageSize { Width = 6.0, Height = 2.6 },
             Pages =
             {
                 new Page
                 {
                     Name = "p",
-                    Size = new PageSize { Width = 12, Height = 8 },
+                    Size = new PageSize { Width = 6.0, Height = 2.6 },
                     Nodes =
                     {
-                        new Node { Id = "a", Text = "A", Bounds = new Bounds(3, 5, 2, 1) },
-                        new Node { Id = "b", Text = "B", Bounds = new Bounds(8, 5, 2, 1) }
+                        new Node { Id = "a", Text = "A", Bounds = new Bounds(1.6, 1.3, 1.8, 1.0) },
+                        new Node { Id = "b", Text = "B", Bounds = new Bounds(4.2, 1.3, 1.8, 1.0) }
                     }
                 }
             }
@@ -139,7 +143,8 @@ public sealed class RepairTests
         var restored = store.RollbackToLastGood();
 
         Assert.NotNull(restored);
-        Assert.Equal(3, restored!.Pages[0].Nodes[0].Bounds.X, 3);   // the Clean() layout
+        // The restored model must match the Clean() fixture's first node position.
+        Assert.Equal(1.6, restored!.Pages[0].Nodes[0].Bounds.X, 3);
     }
 
     [Fact]
@@ -182,7 +187,7 @@ public sealed class RepairTests
         var page = new Page
         {
             Name = "p",
-            Size = new PageSize { Width = 14, Height = 10 },
+            Size = new PageSize { Width = 5.5, Height = 6.0 },
             Groups =
             {
                 new Group { Id = "g1", Members = { "a" } },
@@ -190,8 +195,8 @@ public sealed class RepairTests
             },
             Nodes =
             {
-                new Node { Id = "a", Bounds = new Bounds(3, 7, 2, 1), GroupId = "g1" },
-                new Node { Id = "b", Bounds = new Bounds(3, 3, 2, 1), GroupId = "g2" }
+                new Node { Id = "a", Bounds = new Bounds(2.75, 4.3, 2, 1), GroupId = "g1" },
+                new Node { Id = "b", Bounds = new Bounds(2.75, 1.9, 2, 1), GroupId = "g2" }
             }
         };
 
