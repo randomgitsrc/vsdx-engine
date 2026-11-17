@@ -732,15 +732,27 @@ $ fc-match -f "%{file}" "DejaVu Sans"      -> /usr/share/fonts/truetype/dejavu/D
 | **A（推荐）** | 扫描系统字体目录 + 解析字体文件内的 family name（纯 .NET，无进程） |
 | B | 调用 `fc-match`（Linux 专用，且引入进程依赖） |
 
-**A 已进一步验证可行：**
+**A 已用可运行原型验证（不是纸上推演）：**
 
 ```console
-$ python3 -c "读取 DejaVuSans.ttf 的 name 表"
-  name table at 680660 len 15624
+$ dotnet run   # 零依赖，仅 System.Text + File.ReadAllBytes
+  DejaVuSans.ttf         -> DejaVu Sans
+  verdana.ttf            -> Verdana
+  georgia.ttf            -> Georgia
 ```
 
-TTF/OTF 的 `name` 表是**公开二进制格式**（tag + 偏移 + 长度），
-纯 .NET 用 `BinaryReader` 即可解析出 family name，**不需要第三方字体库**。
+解析 `name` 表（nameId=1 Family，platformId=3 Windows，UTF-16BE）**约 30 行**即可，
+无第三方库、无进程调用。
+
+**原型踩的两个坑（实现时要注意）：**
+
+| 问题 | 症状 | 原因 |
+| --- | --- | --- |
+| 用 `BinaryReader.ReadChars(4)` 读 tag | `ArgumentException` | 无 BOM 时 `ReadChars` 走 UTF-8 解码，遇到非文本字节报错。应 `ReadBytes(4)` + ASCII |
+| 用 `FileStream.Position` 来回跳跃 | `EndOfStreamException` | 偏移计算与流位置易错。**一次性 `File.ReadAllBytes` + 绝对索引**更可靠 |
+
+**这两个坑都不是"假设不成立"，是我的实现错了。**
+记录于此，避免 T2d 实施时重犯——**验证失败时先怀疑实现，再怀疑假设。**
 
 因此 T2d 的实现链路完全打通：
 
