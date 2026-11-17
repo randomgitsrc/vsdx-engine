@@ -124,14 +124,29 @@ public static class DesignSpecApplier
             ? DiagramLayoutEngine.SuggestStrategy(diagram)
             : DiagramLayoutEngine.Parse(spec.Layout);
 
-        if (!string.IsNullOrWhiteSpace(spec.Layout) &&
-            !spec.Layout.Equals("manual", StringComparison.OrdinalIgnoreCase))
+        bool manualRequested = spec.Layout.Equals("manual", StringComparison.OrdinalIgnoreCase);
+        bool wantsTopToBottom = spec.Direction.Equals("topToBottom", StringComparison.OrdinalIgnoreCase);
+
+        // Manual promises that the author's coordinates survive untouched, so a top-to-bottom
+        // request cannot be honoured there. Saying so is the only honest option: silently
+        // ignoring it would leave the caller believing the page was transposed.
+        if (manualRequested && wantsTopToBottom)
+        {
+            unmet.Add(new UnmetConstraint
+            {
+                Code = "direction.manual-ignored",
+                Target = "layout",
+                Reason = "manual 保留作者坐标，direction=topToBottom 未应用"
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(spec.Layout) && !manualRequested)
         {
             var options = new LayoutOptions
             {
                 NodeGapX = spec.Spacing.NodeGapX ?? 0.55,
                 BandGapY = spec.Spacing.BandGapY ?? 0.85,
-                Direction = spec.Direction.Equals("topToBottom", StringComparison.OrdinalIgnoreCase)
+                Direction = wantsTopToBottom
                     ? LayoutDirection.TopToBottom
                     : LayoutDirection.LeftToRight
             };

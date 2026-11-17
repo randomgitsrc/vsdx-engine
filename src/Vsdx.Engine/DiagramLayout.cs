@@ -77,6 +77,132 @@ public static class DiagramLayout
         }
     }
 
+
+    /// <summary>
+    /// Reflects every page across the line y = x, turning a wide layout into a tall one.
+    ///
+    /// This is a reflection, not a rotation, which matters for two details:
+    ///   * a shape rotated by θ becomes one rotated by 90 − θ, not by θ or −θ;
+    ///   * two applications are the identity, because 90 − (90 − θ) = θ.
+    ///
+    /// Everything positioned in page coordinates must be mirrored together. Transposing the
+    /// node boxes but leaving their labels, the free paths, or the container padding behind
+    /// produces a diagram whose parts disagree about which way is up — a failure that looks
+    /// like a styling bug but is really a geometry bug.
+    /// </summary>
+    public static void Transpose(Diagram diagram)
+    {
+        ArgumentNullException.ThrowIfNull(diagram);
+
+        foreach (var page in diagram.Pages)
+        {
+            foreach (var node in page.Nodes)
+            {
+                SwapBounds(node.Bounds);
+                node.Angle = TransposeAngle(node.Angle);
+            }
+
+            foreach (var group in page.Groups)
+            {
+                if (group.Bounds is not null) SwapBounds(group.Bounds);
+
+                // Container padding is expressed along named axes, so it has to trade sides too.
+                if (group.Style is { } style)
+                {
+                    (style.PaddingX, style.HeadingHeight) = (style.HeadingHeight, style.PaddingX);
+                }
+            }
+
+            foreach (var text in page.TextBlocks) SwapBounds(text.Bounds);
+
+            foreach (var path in page.Paths)
+            {
+                SwapBounds(path.Bounds);
+                path.Angle = TransposeAngle(path.Angle);
+                TransposeGeometry(path);
+            }
+
+            foreach (var edge in page.Edges)
+            {
+                SwapPoint(edge.FromPoint);
+                SwapPoint(edge.ToPoint);
+
+                if (edge.Waypoints is { } points)
+                {
+                    foreach (var point in points) SwapPoint(point);
+                }
+            }
+
+            if (page.Size is not null)
+            {
+                (page.Size.Width, page.Size.Height) = (page.Size.Height, page.Size.Width);
+            }
+        }
+
+        // The top-level page size is a second copy of the same fact; leaving it alone makes the
+        // document disagree with its only page.
+        if (diagram.PageSize is { } pageSize)
+        {
+            (pageSize.Width, pageSize.Height) = (pageSize.Height, pageSize.Width);
+        }
+
+        diagram.Orientation = diagram.Orientation?.ToLowerInvariant() switch
+        {
+            "portrait" => "landscape",
+            "landscape" => "portrait",
+            var other => other
+        };
+    }
+
+    /// <summary>Reflection across y = x maps an angle θ to 90° − θ.</summary>
+    private static double? TransposeAngle(double? angle) =>
+        angle is { } value ? NormalizeAngle(90.0 - value) : null;
+
+    private static double NormalizeAngle(double degrees)
+    {
+        double normalized = degrees % 360.0;
+        return normalized < 0 ? normalized + 360.0 : normalized;
+    }
+
+    private static void SwapBounds(Bounds bounds) =>
+        (bounds.X, bounds.Y, bounds.W, bounds.H) = (bounds.Y, bounds.X, bounds.H, bounds.W);
+
+    private static void SwapPoint(Point? point)
+    {
+        if (point is null) return;
+        (point.X, point.Y) = (point.Y, point.X);
+    }
+
+    /// <summary>
+    /// Mirrors the raw geometry rows. Row cells are string-keyed (X, Y, A, B, C, D, ...) and are
+    /// written verbatim into the package, so they must be swapped in place; drop them and the
+    /// outline would no longer match the box it was fitted to.
+    /// </summary>
+    private static void TransposeGeometry(FreePath path)
+    {
+        foreach (var geometry in path.Geometry)
+        {
+            foreach (var row in geometry.Rows) TransposeRowCells(row.Cells);
+        }
+    }
+
+    private static void TransposeRowCells(Dictionary<string, string> cells)
+    {
+        SwapCell(cells, "X", "Y");
+        SwapCell(cells, "A", "B");
+        SwapCell(cells, "C", "D");
+    }
+
+    private static void SwapCell(Dictionary<string, string> cells, string first, string second)
+    {
+        bool hasFirst = cells.TryGetValue(first, out var a);
+        bool hasSecond = cells.TryGetValue(second, out var b);
+
+        if (hasFirst && hasSecond) { cells[first] = b!; cells[second] = a!; }
+        else if (hasFirst) { cells.Remove(first); cells[second] = a!; }
+        else if (hasSecond) { cells.Remove(second); cells[first] = b!; }
+    }
+
     /// <summary>Groups ordered so that parents are laid out before their children.</summary>
     private static IEnumerable<Group> OrderGroups(Page page)
     {

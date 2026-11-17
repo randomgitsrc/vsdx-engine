@@ -125,6 +125,14 @@ public static class DiagramLayoutEngine
         };
     }
 
+    /// <summary>
+    /// True when the caller asked for a top-to-bottom layout under Manual, which cannot be
+    /// honoured: manual means the author's coordinates win. Reported by the caller as unmet
+    /// rather than silently ignored.
+    /// </summary>
+    public static bool IsDirectionIgnoredUnderManual(LayoutOptions options, LayoutStrategy strategy) =>
+        options.Direction == LayoutDirection.TopToBottom && strategy == LayoutStrategy.Manual;
+
     /// <summary>Runs the requested strategy. Manual is a no-op.</summary>
     public static LayoutResult Apply(
         Diagram diagram, LayoutOptions? options = null, LayoutStrategy? strategyOverride = null)
@@ -149,6 +157,18 @@ public static class DiagramLayoutEngine
             // clamped into the sheet afterwards, or a title at the author's y=8.5 can end up
             // outside a page that shrank to 6 inches.
             results.Add(engine.Layout(page, pageOptions));
+
+            // Direction is applied after the strategy has laid the page out, by reflecting the
+            // finished geometry. Doing it inside each engine would mean four implementations of
+            // the same reflection, and they would drift.
+            //
+            // Manual is deliberately excluded: its contract is that the author's coordinates are
+            // final, so silently rotating them would break the one guarantee manual makes.
+            if (options.Direction == LayoutDirection.TopToBottom && strategy != LayoutStrategy.Manual)
+            {
+                DiagramLayout.Transpose(diagram);
+            }
+
             ClampDecorationsToPage(page);
         }
 
