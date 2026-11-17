@@ -157,19 +157,22 @@ public static class DiagramLayoutEngine
             // clamped into the sheet afterwards, or a title at the author's y=8.5 can end up
             // outside a page that shrank to 6 inches.
             results.Add(engine.Layout(page, pageOptions));
-
-            // Direction is applied after the strategy has laid the page out, by reflecting the
-            // finished geometry. Doing it inside each engine would mean four implementations of
-            // the same reflection, and they would drift.
-            //
-            // Manual is deliberately excluded: its contract is that the author's coordinates are
-            // final, so silently rotating them would break the one guarantee manual makes.
-            if (options.Direction == LayoutDirection.TopToBottom && strategy != LayoutStrategy.Manual)
-            {
-                DiagramLayout.Transpose(diagram);
-            }
-
             ClampDecorationsToPage(page);
+        }
+
+        // Direction is applied once for the whole document, after every page has been laid out.
+        //
+        // Transposing inside the loop above would transpose all pages on every iteration: the
+        // reflection covers the entire diagram, not the page being processed. A two-page document
+        // would be reflected twice and come back to its original orientation while a three-page
+        // one flipped twice more — pages would disagree with each other about which way is up.
+        //
+        // Manual is deliberately excluded: its contract is that the author's coordinates are
+        // final, so reflecting them would break the one guarantee manual makes. The caller
+        // reports that as unmet rather than applying it silently.
+        if (options.Direction == LayoutDirection.TopToBottom && strategy != LayoutStrategy.Manual)
+        {
+            DiagramLayout.Transpose(diagram);
         }
 
         return results.FirstOrDefault() ?? new LayoutResult { Strategy = strategy };
