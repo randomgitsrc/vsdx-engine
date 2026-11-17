@@ -329,7 +329,20 @@ foreach (var container in ir.Containers) ...
 // 没有 edges，没有 textBlocks，没有 paths
 ```
 
-且实现只看 `diagram.Pages.FirstOrDefault()`——**多页时第二页及以后完全不映射**。
+**量化（`examples/phase8/arch.ir.json`，单页）：**
+
+```
+mapping size: 13
+  nodes   10 : covered 10    ✅
+  groups   3 : covered  3    ✅
+  edges    9 : covered  0    ❌ 全部缺失
+  texts    4 : covered  0    ❌ 全部缺失
+```
+
+**9 条边与 4 个文本块，映射覆盖率为 0%。**
+
+且实现只看 `diagram.Pages.FirstOrDefault()`——**多页时第二页及以后完全不映射**，
+实测多页 IR 的 `objectMapping` 是**空对象** `{}`（不是"缺第二页"）。
 
 任务 §2.2-F 明确要求："是否仅映射第一页、Node 和 Container，而未完整覆盖多页、Edge、
 TextBlock、Path" —— **答案：是**。
