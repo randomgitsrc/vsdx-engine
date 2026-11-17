@@ -205,7 +205,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 10 | `BaseSize` 抹平字体层级 | 改为缩放基准 `scale = BaseSize / TypeScale.NodeTitle` | T1 |
 | 11 | 字号在布局后应用 → 文字溢出 | **根因是阶段缺失，不是顺序**：spec 路径补 `DiagramSizer.Apply`（M1） | T0.5 |
 | 12 | `roleColors` 无 `default` 回退 | 支持 `default` 键；未覆盖角色进 `unmet`（按角色去重） | **T2b** |
-| 13 | **`mode=fixed` 名存实亡**（P0） | `fixed` 时忽略 `shrinkToFit`，或收缩后进 `unmet`（M2） | **T4b** |
+| 13 | **`mode=fixed` 名存实亡**（P0） | `fixed` 时忽略 `shrinkToFit`；若确需收缩**或放大**，必须进 `unmet` 说明实际尺寸（M2） | **T4b** |
 | 14 | **`swimlane` 协议不可达**（P1） | `DiagramIr.cs:282` 保留 `lane`，不改写为 `container`（M3） | **T0b** |
 | 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
 | 16 | **IR `order` 被忽略致流程倒置**（P0） | 转换器消费 `Order`；布局优先用显式 order，其次 `MeanY`，最后声明序 | **T1b** |
@@ -213,9 +213,18 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 **映射关系（已按审查 M5 更正，不再声称"一一对应"）：**
 
-- **17 项缺陷 → 17 行修法**：严格一一对应，编号相同
-- **17 项缺陷 → 18 个任务**：不是一一对应。`T9`（全量回归）不对应任何单一缺陷，
-  它是**跨任务的验收门禁**；其余 17 个任务与缺陷一一对应
+- **17 项缺陷 → 17 行修法**：行数与编号严格对应
+- **17 项缺陷 → 18 个任务**：不是一一对应。`T8`（三套产物 + 目视）与
+  `T9`（全量回归）不对应任何**单一**缺陷，二者是**跨任务的验收门禁**；
+  其余 16 个任务与缺陷一一对应
+
+  > 上一版只说了 `T9`，漏了 `T8`。脚本核验：
+  > `§4 task refs = 17 个`，`§9 tasks = 18 个`，差集恰为 `{T8, T9}`。
+  >
+  > **另有一处不完全一一对应：** 缺陷 2（Palette）与缺陷 10（BaseSize）
+  > 共用任务 `T1`（`StyleResolver`），因为两者都落在同一套解析器上。
+  > 因此 17 项缺陷实际映射到 **16 个不同任务**，不是 17 个。
+  > 这是合理的合并，但**不应声称"一一对应"**——三个数字并不相等。
 
 原表述"16⇄16⇄16 一一对应"是错的——§9 里 `T0.5` 曾缺失、`T8`/`T9` 无对应缺陷，
 数字相等只是巧合。现在是 16 : 16 : 17，且差异有明确解释。
@@ -423,7 +432,7 @@ text: '企业分析平台'            ✅
 | T0 | 修 `Direction` | 四策略 × 两方向，`xspread`/`yspread` 必须互换；转置覆盖 §11.1 全部空间数据 |
 | T0.5 | **spec 路径补 `DiagramSizer.Apply`** | 同字号下带 spec 与不带 spec 框体一致；`baseSize` 9→24 框体随之增大；`text.overflow-*` 为 0 |
 | T0b | `DiagramIr` 保留 `lane` | 声明 lane 的 IR → `applied` 含 `layout=Swimlane` **且几何与 layered 不同** |
-| T4b | `mode=fixed` 语义 | 请求 20×14 → 实得 20×14，或 `unmet` 有明确 entry |
+| T4b | `mode=fixed` 语义（**双向**） | 请求 20×14（内容少，会缩）→ 实得 20×14 或 `unmet`；请求 8×6（内容多，会涨）→ 实得 8×6 或 `unmet` |
 | T1 | `StyleResolver` + 4 套 palette | 单元测试证明三层优先级；palette 只有颜色字段 |
 | T1b | 容器顺序：消费 IR `order`（**T8 的前置**） | `flow.ir.json` 中 `intake` 的 Y 最大（最上）；缺失 order 时退回 `MeanY`，再缺失用声明序 |
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
