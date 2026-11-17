@@ -53,3 +53,10 @@ desktop.ini
 # ---------------------------------------------------------------------------
 /out/
 *.local.json
+
+# Reviewer / agent scratch directories. These hold throwaway CLI fixtures
+# (IR JSON, generated VSDX, exported models) produced while verifying behaviour.
+# They must never be committed: `git add -A` will otherwise sweep them in.
+.review-scratch/
+.scratch/
+*.review.json
