@@ -14,19 +14,24 @@
 | Group / Container | ✅ IV | `DiagramLayout.Apply`、`GroupTests` | 含 `msvStructureType` |
 | 嵌套容器 | ⚠️ II | `VisioNestingBridge`、`G1_*` 测试 | 靠 XML patch；join key 是容器标题（脆） |
 | Layer（图层） | ⚠️ II | `OfficeImoDocumentReader.cs:289` 读取 | **读取后可写回未验证** |
-| 自由路径 / 自定义几何 | ❌ MI | `Node.Shape` 是字符串 | 只能选内置 master |
+| 自由路径 / 自定义几何 | ⚠️ II | **实验 1：可写入、可保留、渲染正确；但读回被标记为 Rectangle** | 模型层缺 `FreePath` |
 | 独立文本（标题/注释/图例） | ❌ MI | `grep Title/Legend/Annotation` 仅 TypeScale | 无对象 |
-| 图片 | 🚫 UD | 反射未发现 image API | 需自行 patch OPC |
-| SVG 嵌入 | 🚫 UD | 反射未发现 | 需 `ForeignData` + 关系 |
-| 复合符号 | ❌ MI | — | 依赖 Stencil（库已支持，未接入） |
+| 图片 | ⚠️ II | **实验 2：ForeignData 可行，校验通过、渲染出占位框** | 需自写 XML；渲染器不显示真实位图 |
+| SVG 嵌入 | ⚠️ II | **实验 3：可行，需补 Content-Type** | 成本高于 PNG |
+| 复合符号 | ❌ MI | — | 建议走 Stencil（库已支持，未接入）而非自建 |
 | Z-order | ⚠️ II | `ShapeOrder` 读取但**从不写入** | 每次保存丢失 |
 | 对象 ID 稳定 | ✅ IV | `RoundTrip_IdsAreStable` | — |
 | 语义/视觉属性分离 | ⚠️ II | `Node.Type` 存在但仅 Protocol 用 | Engine 布局不读 `Node.Type` |
 | 图形数据（Shape Data） | ✅ IV | `RoundTrip_ShapeDataSurvives` | — |
 | 多页 | ⚠️ II | 模型/读写/渲染均支持 | **协议层不支持** |
 
-**小结：** 11 类表达能力（任务 §4.1）中，当前可表达 4 类
-（几何图形、连接关系、组合、图形数据），缺 7 类。
+**小结：** 11 类表达能力（任务 §4.1）中，模型可表达 4 类
+（几何图形、连接关系、组合、图形数据）。
+
+**重要更正：** 实验证明自由路径 / 图片 / SVG **在 VSDX 包格式层全部可行**
+（见 `technical-experiments.md`）。原标记为 🚫 是过于悲观的判断。
+当前缺的是**模型层与写入器支持**，不是底层格式限制。
+这显著降低了 Phase 8.1 / 8.3 的风险等级。
 
 ---
 
@@ -179,13 +184,16 @@
 | 状态 | 数量 | 占比 |
 | --- | --- | --- |
 | ✅ Implemented & Verified | 54 | 52% |
-| ⚠️ Implemented but Incomplete | 18 | 17% |
+| ⚠️ Implemented but Incomplete | 21 | 20% |
 | 📄 Protocol Only | 1 | 1% |
 | 🧪 Experimental | 3 | 3% |
-| ❌ Missing | 18 | 17% |
-| 🚫 Unsupported by Dependency | 8 | 8% |
+| ❌ Missing | 17 | 17% |
+| 🚫 Unsupported by Dependency | 6 | 6% |
 | ⛔ Not in Engine Scope | 1 | 1% |
 | **合计** | **103** | **100%** |
+
+> `🚫` 从 8 降到 6，因为实验证明自由路径、图片、SVG 在包格式层可行，
+> 改归 `⚠️ Implemented but Incomplete`（模型层缺失，格式层可用）。
 
 > 计数口径：逐行统计 §1–§9 表格状态列的第一个标记，每条矩阵行计一次。
 > 数字由脚本统计得出，非人工估算。
