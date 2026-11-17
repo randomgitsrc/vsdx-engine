@@ -44,7 +44,7 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
 
         foreach (var page in doc.Pages)
         {
-            diagram.Pages.Add(ReadPage(page, compat));
+            diagram.Pages.Add(ReadPage(page, vsdxPath, compat));
         }
 
         RecordMasters(doc, compat);
@@ -81,7 +81,66 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
         return metadata;
     }
 
-    private static Page ReadPage(OfficeIMO.Visio.VisioPage page, CompatibilityReport compat)
+    /// <summary>
+    /// Reads shape→parent links from the page part and resolves them to container headings.
+    ///
+    /// OfficeIMO.Visio does not project the <c>Parent</c> cell onto <c>VisioShape.Parent</c> on
+    /// load, so nested containers were flattened on every read. The cell is the only record
+    /// Visio keeps of the hierarchy, so it must be parsed from the XML. Package shape ids are
+    /// sequential, so the container heading (which the model stores as Group.Name) is used to
+    /// join the two representations.
+    /// </summary>
+    private static List<(string childHeading, string parentHeading)> ResolveParentLinksByHeading(
+        string vsdxPath, int pageId, IReadOnlyList<Group> groups, CompatibilityReport compat)
+    {
+        var result = new List<(string, string)>();
+        try
+        {
+            using var zip = System.IO.Compression.ZipFile.OpenRead(vsdxPath);
+            var entry = zip.GetEntry($"visio/pages/page{pageId + 1}.xml");
+            if (entry is null) return result;
+
+            System.Xml.Linq.XNamespace ns = "http://schemas.microsoft.com/office/visio/2012/main";
+            System.Xml.Linq.XDocument doc;
+            using (var stream = entry.Open()) doc = System.Xml.Linq.XDocument.Load(stream);
+
+            var headingById = new Dictionary<string, string>(StringComparer.Ordinal);
+            var parentOfId = new Dictionary<string, string>(StringComparer.Ordinal);
+
+            foreach (var shape in doc.Descendants(ns + "Shape"))
+            {
+                var id = (string?)shape.Attribute("ID");
+                if (id is null) continue;
+
+                var text = ((string?)shape.Element(ns + "Text"))?.Trim() ?? "";
+                if (!string.IsNullOrEmpty(text)) headingById[id] = text;
+
+                var parentCell = shape.Elements(ns + "Cell")
+                    .FirstOrDefault(c => (string?)c.Attribute("N") == "Parent");
+                var parentValue = (string?)parentCell?.Attribute("V");
+                if (!string.IsNullOrWhiteSpace(parentValue)) parentOfId[id] = parentValue!;
+            }
+
+            foreach (var (childId, parentId) in parentOfId)
+            {
+                if (!headingById.TryGetValue(childId, out var childHeading)) continue;
+                if (!headingById.TryGetValue(parentId, out var parentHeading)) continue;
+
+                // Only report pairs that correspond to model containers.
+                if (!groups.Any(g => string.Equals(g.Name, childHeading, StringComparison.Ordinal))) continue;
+                if (!groups.Any(g => string.Equals(g.Name, parentHeading, StringComparison.Ordinal))) continue;
+
+                result.Add((childHeading, parentHeading));
+            }
+        }
+        catch (Exception ex)
+        {
+            compat.Warn("read.parent-links", $"无法解析嵌套容器关系：{ex.Message}");
+        }
+        return result;
+    }
+
+    private static Page ReadPage(OfficeIMO.Visio.VisioPage page, string vsdxPath, CompatibilityReport compat)
     {
         var model = new Page
         {
@@ -144,6 +203,34 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
                 var parentGroup = model.Groups.FirstOrDefault(g => g.VisioShapeId == shape.Parent.Id);
                 if (parentGroup is not null) node.GroupId = parentGroup.Id;
             }
+        }
+
+        // Restore container-inside-container nesting. Visio records this as a Parent cell on
+        // the child shape; without reading it, hierarchy is lost on every round-trip.
+        // parentLinks is keyed by package shape id; model groups carry the container heading as
+        // their Name. The heading is the only stable join key between the two, so resolve the
+        // package ids to headings first.
+        var parentLinks = ResolveParentLinksByHeading(vsdxPath, page.Id, model.Groups, compat);
+
+        foreach (var (childHeading, parentHeading) in parentLinks)
+        {
+            var childGroup = model.Groups.FirstOrDefault(g =>
+                string.Equals(g.Name, childHeading, StringComparison.Ordinal));
+            var parentGroup = model.Groups.FirstOrDefault(g =>
+                string.Equals(g.Name, parentHeading, StringComparison.Ordinal));
+            if (childGroup is null || parentGroup is null) continue;
+            if (ReferenceEquals(childGroup, parentGroup)) continue;
+
+            childGroup.ParentId = parentGroup.Id;
+
+            // A nested container is also a member of its parent zone.
+            if (!parentGroup.Members.Contains(childGroup.Id, StringComparer.Ordinal))
+                parentGroup.Members.Add(childGroup.Id);
+
+            // The child's own members belong to the parent zone transitively.
+            foreach (var memberId in childGroup.Members)
+                if (!parentGroup.Members.Contains(memberId, StringComparer.Ordinal))
+                    parentGroup.Members.Add(memberId);
         }
 
         // Fall back to the group's own member list when the shape carries no ownership cell.

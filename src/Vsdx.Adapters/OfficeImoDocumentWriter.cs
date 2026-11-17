@@ -82,7 +82,8 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
                     if (shape is not null) containerShapes[group.Id] = shape;
                     continue;
                 }
-                compat.Warn("write.nested-group", $"Nested group '{group.Id}' is written as a sibling container; Visio nests via shape parenting.", group.Id);
+                // Written as a sibling first; VisioNestingBridge adds the Parent cell after the
+                // package is saved, because OfficeIMO exposes no nesting API.
                 var created = WriteGroup(page, group, pageModel, compat);
                 if (created is not null) containerShapes[group.Id] = created;
             }
@@ -151,6 +152,9 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         if (options.RequestRecalc) doc.RequestRecalcOnOpen();
 
         doc.Save(vsdxPath);
+
+        // Nested containers need a raw XML patch: OfficeIMO.Visio cannot express shape parenting.
+        VisioNestingBridge.Apply(diagram, vsdxPath, compat);
         VisioMetadataBridge.Write(diagram, vsdxPath);
 
         return new WriteResult

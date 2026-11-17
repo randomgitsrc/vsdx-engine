@@ -43,37 +43,46 @@ public sealed class VsdxEngine
     {
         DiagramJson.Normalize(diagram);
 
-        // Text first, then containers, then the page, then connectors. Geometry flows from
-        // content outward; nothing is sized independently of the words it must hold.
+        // Order matters and is not arbitrary: every step depends on the previous one's geometry.
+        //
+        //   1. size nodes from text        (changes node extents)
+        //   2. place nodes                 (changes node positions)
+        //   3. derive container bounds     (depends on final positions)
+        //   4. recentre                    (depends on final extents)
+        //   5. fit the page                (depends on final extents)
+        //   6. route connectors            (depends on final positions)
+        //
+        // Fitting the page before placement was a real defect: the page was sized from the
+        // author's stale coordinates, then layout moved everything and left a large empty band.
+
         if (options?.FitToText ?? false) DiagramSizer.Apply(diagram);
 
-        if (options?.Recenter ?? false)
-            foreach (var page in diagram.Pages) DiagramSizer.Recenter(page);
-
-        // "Fit the page to the content" means both directions: a page far larger than the
-        // drawing leaves the diagram looking stranded in a corner. The low-level API stays
-        // grow-only by default; the pipeline opts into trimming.
-        if (options?.FitPage ?? false)
-            foreach (var page in diagram.Pages) DiagramSizer.FitPage(page, shrink: true);
-
-        // Placement. "auto" resolves the diagram type to a strategy, which is what makes
-        // different diagram families get genuinely different treatment.
         var requested = options?.Layout;
-        if (!string.IsNullOrWhiteSpace(requested) && !requested.Equals("manual", StringComparison.OrdinalIgnoreCase))
+        bool willPlace = !string.IsNullOrWhiteSpace(requested)
+                         && !requested.Equals("manual", StringComparison.OrdinalIgnoreCase);
+
+        if (willPlace)
         {
-            var strategy = requested.Equals("auto", StringComparison.OrdinalIgnoreCase)
+            var strategy = requested!.Equals("auto", StringComparison.OrdinalIgnoreCase)
                 ? DiagramLayoutEngine.SuggestStrategy(diagram)
                 : DiagramLayoutEngine.Parse(requested);
 
             DiagramLayoutEngine.Apply(diagram, new LayoutOptions(), strategy);
         }
 
-        // Sizing moved shapes, so container bounds and routes must be recomputed afterwards.
         if (options?.AutoLayout ?? true)
-        {
             DiagramLayout.Apply(diagram);
+
+        if (options?.Recenter ?? false)
+            foreach (var page in diagram.Pages) DiagramSizer.Recenter(page);
+
+        // "Fit the page to the content" means both directions: a page far larger than the
+        // drawing leaves it stranded in a corner.
+        if (options?.FitPage ?? false)
+            foreach (var page in diagram.Pages) DiagramSizer.FitPage(page, shrink: true);
+
+        if (options?.AutoLayout ?? true)
             OrthogonalRouter.Route(diagram);
-        }
 
         Stamp(diagram, "create", outputPath);
         var result = _writer.Write(diagram, outputPath, options);

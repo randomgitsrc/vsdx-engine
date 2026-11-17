@@ -207,21 +207,50 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
         var result = new Dictionary<int, List<Node>>();
         foreach (var (layer, members) in bands)
         {
-            var scored = members.Select(node =>
-            {
-                var preds = page.Edges
-                    .Where(e => e.To == node.Id && e.From is not null && byId.ContainsKey(e.From))
-                    .Select(e => byId[e.From!].Bounds.X)
-                    .ToList();
+            // Order by graph position, not by predecessor X.
+            //
+            // The previous implementation scored a node by the mean X of its predecessors and
+            // gave sources double.MaxValue. That inverted every simple chain: a source has no
+            // predecessors, so it scored highest and was placed *after* its own successor.
+            // It also leaked absolute coordinates into ordering, so relayout results depended on
+            // the author's original X values.
+            //
+            // Correct ordering: walk the graph within this band. A node is emitted once all of
+            // its in-band predecessors have been emitted; ties break on author X for stability.
+            var membersInBand = members.ToHashSet();
+            var inBandPreds = members.ToDictionary(
+                n => n,
+                n => page.Edges
+                    .Where(e => e.To == n.Id && e.From is not null
+                             && byId.ContainsKey(e.From) && membersInBand.Contains(byId[e.From!]))
+                    .Select(e => byId[e.From!])
+                    .Distinct()
+                    .ToList());
 
-                double score = preds.Count > 0 ? preds.Average() : double.MaxValue;
-                return (node, score);
-            })
-            .OrderBy(t => t.score)
-            .ThenBy(t => t.node.Bounds.X)
-            .ThenBy(t => t.node.Id, StringComparer.Ordinal)
-            .Select(t => t.node)
-            .ToList();
+            var emitted = new HashSet<Node>();
+            var orderedMembers = new List<Node>();
+            var pending = members
+                .OrderBy(n => n.Bounds.X)
+                .ThenBy(n => n.Id, StringComparer.Ordinal)
+                .ToList();
+
+            while (pending.Count > 0)
+            {
+                // Emit every node whose in-band predecessors are already placed.
+                var ready = pending.Where(n => inBandPreds[n].All(emitted.Contains)).ToList();
+
+                // A cycle leaves nothing ready; break it deterministically rather than stalling.
+                if (ready.Count == 0) ready = new List<Node> { pending[0] };
+
+                foreach (var node in ready)
+                {
+                    orderedMembers.Add(node);
+                    emitted.Add(node);
+                    pending.Remove(node);
+                }
+            }
+
+            var scored = orderedMembers;
 
             result[layer] = scored;
         }

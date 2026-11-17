@@ -22,9 +22,15 @@ public static class DiagramSizer
     /// <summary>Page margin kept clear around the drawing.</summary>
     public const double PageMargin = 0.55;
 
-    /// <summary>Floor for page dimensions, so trimming cannot produce a useless page.</summary>
-    public const double MinPageWidth = 8.0;
-    public const double MinPageHeight = 6.0;
+    /// <summary>
+    /// Floor for page dimensions, so trimming cannot produce a useless page.
+    ///
+    /// These are deliberately modest. A previous 8x6" floor forced a tall, narrow diagram to sit
+    /// in a wide page with a large empty band, which is exactly the defect the audit found. The
+    /// floor exists to keep a page usable, not to impose a preferred aspect ratio.
+    /// </summary>
+    public const double MinPageWidth = 4.0;
+    public const double MinPageHeight = 3.0;
 
     /// <summary>
     /// Resizes every node to fit its text, then resizes containers to fit their members, then
