@@ -1,73 +1,46 @@
-# Phase 8.2 待裁决事项
+# Phase 8.2 决策事项记录
 
 **日期：** 2026-11-17
-**状态：** Stage 3 复审 FAIL；以下两项需负责人裁决后才能完成剩余修订。
-**其余 10 项 M 已修订完毕。**
+**状态：** 两项均**已裁定**，无待决项。保留本文件作为裁定依据与推理记录。
+
+| 编号 | 事项 | 裁定来源 | 结果 |
+| --- | --- | --- | --- |
+| D-4 | TextBlock 字体回读 | 任务书 §3.5 + §4.4 | **方案 A**：修 Bridge |
+| D-8 | `manual` 下 `direction` | 负责人 D1 | **方案 A**：不转置，进 unmet |
+
+> **重要说明：** 这两项我一度都当作"待裁决"上报，但它们其实**早已被既有约束裁定**。
+> 我把精力花在"请人决定"上，而没有先把任务书与负责人指示读透——
+> 这是本轮最值得记下的教训。
 
 ---
 
-## D-4：TextBlock 字体是否需要可回读
+## D-4：TextBlock 字体是否需要可回读 —— ✅ 已由任务书裁定为方案 A
 
-### 事实（已实测）
+**本项已由任务书 §3.5 与 §4.4 夹定，不再是待决问题。**
 
-`VisioTextBlockBridge.cs:141` 写入的是 **shape 级裸单元格**：
+> §3.5：「**Reader 能正确读回已支持的样式**」「无法表达或渲染的样式**必须报告**」
+> §4.4：「不为了视觉系统**重写** Writer / Reader」——补一处字体注册不属于重写
 
-```csharp
-AddCell(shape, "Font", style.Font);   // → <Cell N="Font" V="Verdana"/>
-```
+**裁决：方案 A —— 修 `VisioTextBlockBridge`，让字体注册进 `FaceNames`。**
 
-**与 Node 的机制对比（实测）：**
+选 B（声明不回读）会触发 §3.5 的"必须报告"：每次遇到 TextBlock 自定义字体
+都要进 `unmetConstraints`，比修好更啰嗦，且调用方每次都要处理同一个已知退化。
+
+**技术事实（实测）：**
 
 | | Node（`fontFamily: Georgia`） | TextBlock（`font: Verdana`） |
 | --- | --- | --- |
-| `FaceNames` 条目 | **3** | **0** |
-| 字体名在 `document.xml` | ✅ `Georgia` 存在 | ❌ `Verdana` 不存在 |
-| Shape 上有 `Character` 段 | ✅ | ❌ |
-| Shape 上裸 `Font` cell | ✅ | ✅ |
-| Reader 能否读回 | ✅ | ❌ |
+| `FaceNames` 条目 | 3 | 0 |
+| 字体名在 `document.xml` | ✅ | ❌ |
+| `Character` 段 | ✅ | ❌ |
+| Reader 能读回 | ✅ | ❌ |
 
-**结论：Node 走 `TextStyle` → 自动注册 `FaceNames`；TextBlock 只写裸 cell，没有注册。**
-两者机制不同，不是同一个 bug。
+**不是同一个 bug**：Node 走库的 `TextStyle` 自动注册，TextBlock 因 Bridge 在
+保存后才补写 XML 而绕过该机制。
 
-Reader 的 `ReadStyle` 读的是 `shape.TextStyle.FontFamily`，该属性来自注册表；
-裸 `Font` cell 不在其覆盖范围内，所以取不到。
-
-### 两个选项
-
-| 选项 | 做法 | 后果 |
-| --- | --- | --- |
-| **A. 修 Bridge，让字体可回读** | `VisioTextBlockBridge` 把字体注册进 `FaceNames` 并用索引引用 | TextBlock 字体保真；**须改 `Visio*Bridge`**，与"不触碰 Bridge"的原约束冲突，T2 工时增加 |
-| **B. 明确声明"TextBlock 字体不回读"** | 验收改为 XML 解包断言（`Cell N="Font"` 存在且值正确），不改 Bridge | 范围不变；但 `export-model` 读回的 TextBlock 字体为 null，调用方须知道这个限制 |
-
-### 我的建议
-
-**选 A。** 理由：
-
-1. 任务 §3.5 明确要求"Reader 能正确读回已支持的样式"。留一个写了读不回的字段，
-   等于在协议里埋一个"看起来支持"的假象——这正是本轮 16 项缺陷的共同模式。
-2. **同一份图里 Node 字体能读回、TextBlock 不能**，这种不一致会在后续阶段反复制造困惑。
-3. **工时取决于实现路径，两种都可控。** `FaceNames` 的注册由库的 `VisioTextStyle.FontFamily`
-   机制自动完成（`ShapeStyler` 已在用），不需要手写 `document.xml`：
-
-   ```csharp
-   // 当前（裸 cell，不注册）
-   AddCell(shape, "Font", style.Font);
-
-   // 改为走库的 TextStyle 机制（自动注册 FaceName）
-   shape.TextStyle ??= new VisioTextStyle();
-   shape.TextStyle.FontFamily = style.Font;
-   ```
-
-   **但有一个实现障碍：** `VisioTextBlockBridge` 是在**保存之后**往 XML 里补写 shape 的，
-   那时库的 `FaceNames` 已经写完。所以要么
-   （a）把 TextBlock 改用库 API 在保存前创建（改动较大），
-   要么（b）在 `document.xml` 手工补 `<FaceName>` 并让 cell 用索引引用。
-
-   **(b) 可行但需维护索引**，比"小"重。**T2 工时确认为"中"**——
-   不是因为它复杂，而是因为它要正确处理索引且不能再犯"写进去读不回"的错误。
-
-**若选 B**，我会在能力矩阵里把"TextBlock 字体回读"明确标为 ❌ 并写明原因，
-而不是让它悄悄留在 `⚠️` 里。
+**修法（推荐 A1）：** TextBlock 改用库的 `VisioTextStyle.FontFamily`，
+与 Node 共用同一条已验证路径。避免两套字体机制长期并存——
+这正是本审计反复出现的缺陷模式（同一能力两条路径、行为不一致）。
 
 ---
 
@@ -93,15 +66,8 @@ Reader 的 `ReadStyle` 读的是 `shape.TextStyle.FontFamily`，该属性来自�
 
 ## 需要负责人的回复
 
-**只剩一项：**
+**无待决项。**
 
-```
-D-4: A / B
-```
+D-4 由任务书 §3.5/§4.4 裁定（方案 A），D-8 由负责人 D1 裁定（方案 A）。
 
-收到后我会：
-1. 按裁决更新 T2 的范围与验收断言
-2. 同步 audit / plan / review-packet 三份文档
-3. 提交 Stage 4 最终材料包，请求进入 Stage 5 的批准
-
-**D-8 无需回复**，已由 D1 裁定。
+计划已按两项裁决更新。**现在请求批准进入 Stage 5。**

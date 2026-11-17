@@ -183,9 +183,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 十六项缺陷的修法（与 audit 一一对应）
+## 4. 十七项缺陷的修法（与 audit 一一对应）
 
-> **本节已按 M5 补齐，并按审查 M2/M3 与自查增至 16 项。** 原表只有 9 行；
+> **本节已按 M5 补齐，并按审查 M2/M3 与自查增至 17 项。** 原表只有 9 行；
 > 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
 > 均已并入 audit 与本节。
 >
@@ -209,12 +209,13 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 14 | **`swimlane` 协议不可达**（P1） | `DiagramIr.cs:282` 保留 `lane`，不改写为 `container`（M3） | **T0b** |
 | 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
 | 16 | **IR `order` 被忽略致流程倒置**（P0） | 转换器消费 `Order`；布局优先用显式 order，其次 `MeanY`，最后声明序 | **T1b** |
+| 17 | **缺"无法表达/渲染必须报告"机制** | 定义渲染器支持白名单；写入后抽样回读；白名单外进 `unmet` | **T2c** |
 
 **映射关系（已按审查 M5 更正，不再声称"一一对应"）：**
 
-- **16 项缺陷 → 16 行修法**：严格一一对应，编号相同
-- **16 项缺陷 → 17 个任务**：不是一一对应。`T9`（全量回归）不对应任何单一缺陷，
-  它是**跨任务的验收门禁**；其余 16 个任务与缺陷一一对应
+- **17 项缺陷 → 17 行修法**：严格一一对应，编号相同
+- **17 项缺陷 → 18 个任务**：不是一一对应。`T9`（全量回归）不对应任何单一缺陷，
+  它是**跨任务的验收门禁**；其余 17 个任务与缺陷一一对应
 
 原表述"16⇄16⇄16 一一对应"是错的——§9 里 `T0.5` 曾缺失、`T8`/`T9` 无对应缺陷，
 数字相等只是巧合。现在是 16 : 16 : 17，且差异有明确解释。
@@ -256,8 +257,16 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 **不触碰：** `FidelityGuard` / 协议版本号。
 
-**`Visio*Bridge` 的范围已修正（审查 M4）：** 原文写"不触碰 Visio*Bridge"，
-但 TextBlock 字体问题必须改 `VisioTextBlockBridge`——
+**`Visio*Bridge` 的范围已修正（审查 M4 + 任务书 §3.5）：**
+原文写"不触碰 Visio*Bridge"，但 TextBlock 字体必须修，理由是任务书硬要求，非偏好：
+
+> §3.5：「**Reader 能正确读回已支持的样式**」「无法表达或渲染的样式**必须报告**」
+> §4.4：「不为了视觉系统**重写** Writer / Reader」——补一处注册不属于重写
+
+**结论：修 `VisioTextBlockBridge`（方案 A），而非声明"不回读"**——
+后者会让每次遇到自定义字体都要进 `unmet`，比修好更啰嗦。
+
+原问题：
 
 ```csharp
 // VisioTextBlockBridge.cs:141 当前写的是 shape 级裸 Cell
@@ -419,6 +428,7 @@ text: '企业分析平台'            ✅
 | T1b | 容器顺序：消费 IR `order`（**T8 的前置**） | `flow.ir.json` 中 `intake` 的 Y 最大（最上）；缺失 order 时退回 `MeanY`，再缺失用声明序 |
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
 | T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
+| T2c | 样式可渲染性报告（任务书 §3.5） | 白名单外样式（如 `shadow`）→ `unmet` 含 `style.renderer-unsupported`；写入后抽样回读断言单元格存在 |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
 | T4 | 修 `Canvas.Unit`（**两处**：Writer + DesignSpecApplier） | `create` 与 `execute` 的 cm/mm 换算一致；标签与数值一致；`update` 不再二次换算 |
 | T5 | 修 `containerLayouts` 报告 | manual 下进 unmet |
