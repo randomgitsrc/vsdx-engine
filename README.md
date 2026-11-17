@@ -147,6 +147,7 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 | `check-layout --input out.vsdx [--json]` | 硬/软约束分离：重叠、容器相压、穿线、绕行比、行对齐、尺寸突变 |
 | `batch --op <create\|render\|validate\|export-model> --input-dir <dir> --out-dir <dir>` | 批量处理，单项失败不中断 |
 | `repair --input out.vsdx [--max-rounds n]` | 有界改进循环：计划 → 尝试 → 接受或回滚 → 升级 → 止损 |
+| `compare --input out.vsdx [--emit-dir d]` | 生成多个候选布局，硬约束筛选后按软指标排序 |
 | `diff --before a.vsdx --after b.vsdx [--json]` | 两版本结构对比 |
 | `version --json` | 工具 / 后端 / 模型版本 |
 
@@ -181,6 +182,7 @@ vsdx-tool batch --op validate --input out/ --json
 - 自动布局：分层 / 流程 / 树形 / 网格四种策略，`auto` 按图形类型选择
 - 文字驱动几何：字号层级（含可读性下限）、按标签推导节点/容器/页面尺寸
 - 有界自动修复：快照、影响分析、三级修复决策、失败回滚、策略去重与止损
+- 候选方案比较：多策略/多间距并行生成，隔离互不影响，硬约束过滤 + 软分数排序
 - 布局质量检查，**硬约束与软约束分离**：
   - 硬（不过即不可交付，分数强制为 0）：节点重叠、连线穿节点、容器相压、节点逃出容器
   - 软（影响专业度）：连线绕行比、行错位、同行尺寸突变、色带间距、间距过密、文字溢出、连线交叉

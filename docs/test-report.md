@@ -26,8 +26,13 @@ dotnet test tests/Vsdx.Tests/Vsdx.Tests.csproj -c Release
 | ExternalVsdxTests | 9 | ✅ | 手写 OPC 包读取、导出模型、单对象修改、重读、渲染、校验、复杂包保留原生特性、多页面读取与渲染 |
 | ValidationTests | 11 | ✅ | 合法包、缺文件、非 ZIP、缺 content types、坏 XML、重复 content type、坏连线引用、重复 Shape ID、渲染冒烟、浅校验、逐项报告 |
 | IntegrationTests | 14 | ✅ | 第一轮 15 节点端到端、布局无错误、第二轮完整场景、未改对象保留、第三轮保真、diff 准确、第四轮外部包生命周期、JSON 制品闭环、重叠/穿线/溢出检测、布线避障 |
+| SizingTests | 20 | ✅ | 文字驱动尺寸、字号层级、换行、页面适配 |
+| LayoutTests | 16 | ✅ | 分层/流程/树形/网格策略、确定性、容器保持 |
+| RepairTests | 20 | ✅ | 快照、回滚、影响分析、三级升级、止损 |
+| BenchmarkTests | 47 | ✅ | 6 族 × 3 档可交付 + 8 故障注入必检出 |
+| CandidateTests | 13 | ✅ | 候选隔离生成、硬约束过滤、软分数排序 |
 | DetectorTests | 14 | ✅ | 容器重叠、嵌套豁免、绕行比、行对齐、尺寸突变、硬软分离、重复封顶、修复指导 |
-| **合计** | **110** | **✅** | |
+| **合计** | **226** | **✅** | |
 
 ---
 

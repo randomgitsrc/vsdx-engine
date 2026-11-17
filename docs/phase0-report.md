@@ -981,3 +981,72 @@ Phase 0 记录："`examples/` 只有 3 份，任务 §8 要求 6 类 × 8 复杂
   后者受限于已知限制 L7（嵌套组扁平化）。
 
 测试：**213 项通过**（新增 `BenchmarkTests` 47 项），构建 0 warning。
+
+---
+
+## 十七、候选方案比较（任务 §4.8）
+
+任务要求"整体重新布局时允许生成多个方案，通过硬约束和软约束筛选，比较真实渲染结果，
+且候选必须隔离生成"。
+
+### 17.1 实现
+
+`CandidateComparison` 为同一模型生成多个变体，每个都从**深拷贝**出发，
+互不影响，也不触碰调用方的模型：
+
+```csharp
+var set = CandidateComparison.Generate(source);   // source 不会被修改
+set.Deliverable   // 硬约束通过者，按分数降序
+set.Rejected      // 被硬约束淘汰的，保留用于报告
+set.Best          // 最优候选
+```
+
+变体维度（`CandidateRecipe`）：布局策略、方向、行/列间距、是否转置、是否按文字重算尺寸。
+
+### 17.2 默认候选集
+
+1. 语义推荐策略（`SuggestStrategy`）
+2. 同策略 + 紧凑间距（0.40 / 0.65）
+3. 同策略 + 宽松间距（0.80 / 1.10）
+4. 一个**不同**策略（Flow / Layered / Grid 中与推荐不同的第一个）
+5. 若页面宽高比 > 1.7，追加一个转置候选
+
+### 17.3 实测
+
+```
+$ vsdx-tool compare --input h.vsdx --emit-dir out/
+
+  c1  Layered/LeftToRight                  score= 94 hard=0 soft=2 ok
+  c2  Layered/LeftToRight gap=0.40 band=0.65 score= 94 hard=0 soft=2 ok
+  c3  Layered/LeftToRight gap=0.80 band=1.10 score= 94 hard=0 soft=2 ok
+  c4  Flow/LeftToRight                     score= 94 hard=0 soft=2 ok
+
+  best: c1 (Layered/LeftToRight) score=94 — margins are small, look at the PNGs
+```
+
+候选确实不同（页面高度 6.33 / 6.73 / 7.23 英寸），但分数相同。
+工具明确提示 **"margins are small, look at the PNGs"**——这正是任务 §5.3
+"不能只依赖算法评分"的落地：分数相同时由人（或视觉模型）裁决。
+
+`--emit-dir` 会把每个候选的 VSDX / JSON / PNG 全部落盘，便于横向比对。
+
+### 17.4 接线到命令
+
+```bash
+vsdx-tool compare --input diagram.vsdx [--output winner.vsdx] [--emit-dir out/] [--json]
+```
+
+- `--output` 只在显式指定时写入选中的候选，**不会默认覆盖**原文件
+- `--emit-dir` 输出全部候选，供人工或视觉审查
+
+### 17.5 一个诚实的负面结果
+
+我最初写的测试断言"转置必能让宽图变窄"，实测**失败**了。
+原因是 `FitPage` 会在转置之后把页面裁剪到内容大小，两个方向都被归一化，
+因此页面尺寸趋同。
+
+这不是 bug——转置改变的是**图形自身的比例**，不是最终页面尺寸。
+测试改为断言"转置候选仍可交付"，并把"哪个更好"交给质量报告裁决。
+**把一条错误的设计假设写成测试，再让它失败，比让它通过更有价值。**
+
+测试：**226 项通过**（新增 `CandidateTests` 13 项），构建 0 warning。

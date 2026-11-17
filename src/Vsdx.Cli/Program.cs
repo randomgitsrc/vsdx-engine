@@ -63,6 +63,7 @@ public static class Program
             "validate" => Validate(options, json),
             "diff" => Diff(options, json),
             "repair" => Repair(options, json),
+            "compare" => Compare(options, json),
             "check-layout" => CheckLayout(options, json),
             "batch" => Batch(options, json),
             "version" or "--version" => Version(json),
@@ -614,6 +615,89 @@ public static class Program
         return finalReport.HardConstraintsPassed ? 0 : 1;
     }
 
+    /// <summary>
+    /// Generates several candidate layouts, filters by hard constraints and ranks the rest.
+    /// The winning model is written out only if asked for, so a comparison never overwrites a
+    /// good version by accident.
+    /// </summary>
+    private static int Compare(Args options, bool json)
+    {
+        var input = options.Require("input");
+        var output = options.Get("output");
+        var emit = options.Get("emit-dir");
+
+        var engine = new VsdxEngine();
+        var source = engine.Read(input).Diagram;
+
+        var set = CandidateComparison.Generate(source);
+
+        // Optionally render every candidate so the choice can be made by eye as well as by score.
+        var rendered = new List<(string id, string path)>();
+        if (emit is not null)
+        {
+            Directory.CreateDirectory(emit);
+            foreach (var candidate in set.Candidates)
+            {
+                var png = Path.Combine(emit, $"{Path.GetFileNameWithoutExtension(input)}-{candidate.Id}.png");
+                var vsdx = Path.Combine(emit, $"{Path.GetFileNameWithoutExtension(input)}-{candidate.Id}.vsdx");
+                DiagramJson.Save(candidate.Model, Path.Combine(emit, $"{Path.GetFileNameWithoutExtension(input)}-{candidate.Id}.json"));
+                engine.Create(candidate.Model, vsdx);
+                var render = engine.Render(new RenderRequest
+                {
+                    InputPath = vsdx, OutputPath = png, Format = "png", Dpi = 110
+                });
+                if (render.Pages.Count > 0) rendered.Add((candidate.Id, png));
+            }
+        }
+
+        var best = set.Best;
+
+        if (json)
+        {
+            Emit(new
+            {
+                ok = best is not null,
+                command = "compare",
+                input = Path.GetFullPath(input),
+                candidates = set.Candidates.Select(c => new
+                {
+                    c.Id,
+                    c.Description,
+                    deliverable = c.Deliverable,
+                    score = c.Score,
+                    hard = c.HardViolations,
+                    soft = c.SoftViolations,
+                    codes = c.Report.Issues.Select(i => i.Code).Distinct().ToArray()
+                }),
+                best = best is null ? null : new { best.Id, best.Description, score = best.Score },
+                clearWinner = set.HasClearWinner(),
+                rendered = rendered.Select(r => new { r.id, r.path })
+            });
+        }
+        else
+        {
+            Console.WriteLine($"compare {Path.GetFileName(input)}");
+            foreach (var line in set.Describe()) Console.WriteLine("  " + line);
+
+            Console.WriteLine();
+            if (best is null)
+                Console.WriteLine("  no candidate passed the hard constraints");
+            else
+                Console.WriteLine($"  best: {best.Id} ({best.Description}) score={best.Score}" +
+                                  (set.HasClearWinner() ? "" : "  — margins are small, look at the PNGs"));
+
+            foreach (var (id, path) in rendered) Console.WriteLine($"  rendered {id}: {path}");
+        }
+
+        if (best is not null && output is not null)
+        {
+            engine.Create(best.Model, output);
+            Console.WriteLine($"  wrote winner to {Path.GetFullPath(output)}");
+        }
+
+        return best is null ? 1 : 0;
+    }
+
     private static int CheckLayout(Args options, bool json)
     {
         var input = options.Require("input");
@@ -844,6 +928,9 @@ public static class Help
 
               check-layout  Detect overlap, crossing, overflow and containment defects
                               --input <file.vsdx> [--json]
+
+              compare       Generate and rank candidate layouts
+                              --input <file.vsdx> [--output <file.vsdx>] [--emit-dir <dir>] [--json]
 
               repair        Bounded improvement loop: plan, attempt, accept or roll back
                               --input <file.vsdx> [--output <file.vsdx>]
