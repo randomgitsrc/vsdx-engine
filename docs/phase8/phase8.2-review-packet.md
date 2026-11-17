@@ -9,7 +9,7 @@
 
 | # | 文件 | 说明 |
 | --- | --- | --- |
-| 1 | `phase8.2-audit.md` | Stage 1 现状审计（含字段执行矩阵、10 项缺陷、3 处自我更正） |
+| 1 | `phase8.2-audit.md` | Stage 1 现状审计（含字段执行矩阵、**12 项缺陷**、3 处自我更正） |
 | 2 | `phase8.2-plan.md` | Stage 2 实施计划（目标架构、优先级契约、文件级改动、测试计划） |
 | 3 | `phase8.2-independent-review.md` | Stage 3 独立审查报告 |
 | 4 | 本文件 | 提交说明与待决事项 |
@@ -32,7 +32,7 @@
 
 ---
 
-## 二、缺陷清单（10 项）
+## 二、缺陷清单（12 项）
 
 | # | 缺陷 | 严重度 |
 | --- | --- | --- |
@@ -46,8 +46,10 @@
 | 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | P1 |
 | 9 | `typography.min_size` 死代码 | P2 |
 | 10 | `BaseSize` 抹平字体层级 | P1 |
+| 11 | 字号在布局后应用 → 文字溢出 | P1 |
+| 12 | `roleColors` 无 default 回退 | P2 |
 
-**其中 4 项是初稿漏掉的**（Direction、Background、min_size、BaseSize），
+**其中 6 项是初稿漏掉的**（Direction、Background、min_size、BaseSize、溢出、default），
 印证了"读代码判断能力"不可靠。
 
 ---

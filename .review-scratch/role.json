@@ -1,0 +1,105 @@
+{
+  "id": "role",
+  "name": "Role",
+  "pageSize": {
+    "width": 5.25,
+    "height": 5.4,
+    "unit": "inches"
+  },
+  "orientation": "portrait",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Role",
+      "nameU": "Role",
+      "visioId": 0,
+      "size": {
+        "width": 5.25,
+        "height": 5.4,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 1.55,
+            "y": 1,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "2"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "tbx",
+          "name": "Role Title",
+          "text": "Role Title",
+          "role": "caption",
+          "visioShapeId": "2",
+          "bounds": {
+            "x": 2.7,
+            "y": 4.55,
+            "w": 4,
+            "h": 0.6
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 18,
+            "bold": false,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-17T13:03:49.3671491+00:00",
+    "modified": "2026-11-17T13:03:49.3998995+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-scratch/role.vsdx",
+    "sourceHash": "72c20b7bcba55edfc5dd1e6f8aca7d9d5d26c2b0683e9d6ab8967a4363094ee5",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-17T13:03:49.4119929+00:00",
+        "action": "create",
+        "target": "role.vsdx",
+        "detail": "pages=1, nodes=1, edges=0",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

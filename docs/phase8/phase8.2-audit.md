@@ -401,7 +401,24 @@ Writer 不写 `PageSheet/PageBackground`，Reader 不还原，因此：
 | `ExecutionResult` 结构 | `UnmetConstraints` 机制可用，只需正确填充 |
 
 **关键判断：写入层已经能做，缺的是解析层。** 这意味着 Phase 8.2 的工作量主要在
-`DesignSpec → 模型` 这一段，不需要触碰 Writer / Reader / VSDX 保真逻辑。
+`DesignSpec → 模型` 这一段。
+
+**但有一处例外必须说清楚：`Theme.Background` 的落盘需要改 Adapters。**
+
+§2.8 已证明该字段设置后从不写入 VSDX，因此修复它**必须**：
+- `OfficeImoDocumentWriter` 写 `PageSheet/PageBackground`
+- `OfficeImoDocumentReader` 读回该值
+
+这与"不改 Writer/Reader"的表述冲突。**准确的表述应为：**
+
+| 层 | 是否改动 | 原因 |
+| --- | --- | --- |
+| Writer / Reader | **仅背景色一处** | 其余样式通路已具备 |
+| `FidelityGuard` / `Visio*Bridge` | 不改 | 保真机制与样式无关 |
+| `LayoutStrategies` | **需改**（T0） | `Direction` 需在各引擎实现 |
+| 协议版本号 | 不改 | 只加执行，不加字段 |
+
+**初稿把"几乎不用改 Writer"写成了"不改 Writer"，范围描述不准确，已更正。**
 
 ---
 

@@ -1,0 +1,105 @@
+{
+  "id": "tiny2",
+  "name": "T2",
+  "pageSize": {
+    "width": 5.05,
+    "height": 5.75,
+    "unit": "inches"
+  },
+  "orientation": "portrait",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "T2",
+      "nameU": "T2",
+      "visioId": 0,
+      "size": {
+        "width": 5.05,
+        "height": 5.75,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 1.55,
+            "y": 1,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "2"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "caption1",
+          "name": "small caption",
+          "text": "small caption",
+          "role": "caption",
+          "visioShapeId": "2",
+          "bounds": {
+            "x": 3,
+            "y": 5,
+            "w": 3,
+            "h": 0.4
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 7.999992,
+            "bold": false,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-17T13:07:54.0193558+00:00",
+    "modified": "2026-11-17T13:07:54.0480889+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-scratch/tiny2.vsdx",
+    "sourceHash": "61b76346cd6c77b6d269c160ff8b398b2b9cb4d74de94e360c0fbdb19413016b",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-17T13:07:54.0602692+00:00",
+        "action": "create",
+        "target": "tiny2.vsdx",
+        "detail": "pages=1, nodes=1, edges=0",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

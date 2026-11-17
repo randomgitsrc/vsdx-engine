@@ -1,0 +1,6 @@
+{"irVersion":"1.0","id":"tb2","title":"TB2","kind":"microservices",
+ "nodes":[{"id":"a","label":"A"}],
+ "textBlocks":[
+  {"id":"note1","text":"a footnote","role":"note","box":{"x":3,"y":5,"width":4,"height":0.4}},
+  {"id":"title1","text":"Big Title","role":"title","box":{"x":3,"y":6,"width":4,"height":0.6}}
+ ]}

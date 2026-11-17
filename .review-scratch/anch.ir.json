@@ -1,0 +1,3 @@
+{"irVersion":"1.0","id":"anch","title":"ANCH","nodes":[
+ {"id":"a","label":"A","anchor":{"x":2,"y":2,"mode":"fixed"}},
+ {"id":"b","label":"B","anchor":{"x":6,"y":4,"mode":"fixed"}}]}

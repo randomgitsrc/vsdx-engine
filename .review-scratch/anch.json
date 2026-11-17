@@ -1,0 +1,101 @@
+{
+  "id": "anch",
+  "name": "ANCH",
+  "pageSize": {
+    "width": 11,
+    "height": 8.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "ANCH",
+      "nameU": "ANCH",
+      "visioId": 0,
+      "size": {
+        "width": 11,
+        "height": 8.5,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 2,
+            "y": 2,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "b",
+          "name": "B",
+          "text": "B",
+          "shape": "Rectangle",
+          "visioShapeId": "b",
+          "bounds": {
+            "x": 6,
+            "y": 4,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "b"
+      ],
+      "paths": [],
+      "textBlocks": []
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-17T13:09:34.2240472+00:00",
+    "modified": "2026-11-17T13:09:34.2497877+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-scratch/anch.vsdx",
+    "sourceHash": "fbb350a6b27947684474200726455e777b48cc79f4dd4ee421838bde074b717e",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-17T13:09:34.2721514+00:00",
+        "action": "create",
+        "target": "anch.vsdx",
+        "detail": "pages=1, nodes=2, edges=0",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}
