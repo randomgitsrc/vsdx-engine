@@ -84,7 +84,8 @@ public static class Program
             // byte-for-byte control over the output.
             FitToText = options.Has("fit-text"),
             FitPage = options.Has("fit-page"),
-            Recenter = options.Has("recenter")
+            Recenter = options.Has("recenter"),
+            Layout = options.Get("layout")
         });
 
         if (json)
@@ -707,6 +708,7 @@ public static class Help
                               --input <model.json> --output <file.vsdx>
                               [--title <text>] [--author <text>] [--no-validate] [--json]
                               [--fit-text] [--fit-page] [--recenter]
+                              [--layout layered|grid|flow|tree|manual|auto]
 
               inspect       Read a VSDX and report its structure
                               --input <file.vsdx> [--json]

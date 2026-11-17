@@ -56,6 +56,18 @@ public sealed class VsdxEngine
         if (options?.FitPage ?? false)
             foreach (var page in diagram.Pages) DiagramSizer.FitPage(page, shrink: true);
 
+        // Placement. "auto" resolves the diagram type to a strategy, which is what makes
+        // different diagram families get genuinely different treatment.
+        var requested = options?.Layout;
+        if (!string.IsNullOrWhiteSpace(requested) && !requested.Equals("manual", StringComparison.OrdinalIgnoreCase))
+        {
+            var strategy = requested.Equals("auto", StringComparison.OrdinalIgnoreCase)
+                ? DiagramLayoutEngine.SuggestStrategy(diagram)
+                : DiagramLayoutEngine.Parse(requested);
+
+            DiagramLayoutEngine.Apply(diagram, new LayoutOptions(), strategy);
+        }
+
         // Sizing moved shapes, so container bounds and routes must be recomputed afterwards.
         if (options?.AutoLayout ?? true)
         {

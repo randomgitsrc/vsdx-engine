@@ -708,3 +708,84 @@ vsdx-tool create --input model.json --output out.vsdx \
 中英文换行、字号下限、字号随画布增长、六级字号层次。
 
 全量 **130 项通过**，构建 0 warning。
+
+---
+
+## 十四、Phase 3 实施结果（布局引擎）
+
+Phase 0 的核心结论是"引擎从不放置节点"。本阶段补上这一层。
+
+### 14.1 四种布局策略
+
+| 策略 | 适用 | 依据 |
+| --- | --- | --- |
+| `Layered` | 分层架构、微服务、部署、网络 | 容器（或连线方向推断）分层，层内按上游平均位置排序 |
+| `Flow` | 业务流程、管道 | 沿连线方向走 Kahn 拓扑序，容器存在时改为"每容器一行" |
+| `Tree` | 组织结构 | BFS 层级，层内居中 |
+| `Grid` | 清单式、无分组的简单图 | 均匀行列 |
+
+`Manual` 保留原样，`Auto` 按 `Diagram.Type` + 是否含判断节点选择。
+
+### 14.2 `Diagram.Type` 从死字段变成决策输入
+
+Phase 0 发现 `grep diagram.Type` 为空。现在：
+
+```csharp
+public static LayoutStrategy SuggestStrategy(Diagram diagram)
+```
+
+| 声明类型 | 选择 |
+| --- | --- |
+| `architecture` / `microservices` / `network` | Layered |
+| `workflow` **含判断节点** | Flow |
+| `workflow` 无判断节点 | Layered（纯管道用色带更好读） |
+| `org` | Tree |
+| 无类型但有容器 | Layered |
+| 无类型无容器 | Grid |
+
+### 14.3 修掉的五个自身缺陷
+
+布局引擎写完后，有五个 bug 让它一开始**全部 12 种组合都硬约束失败**。逐个记录：
+
+| # | 症状 | 根因 | 修正 |
+| --- | --- | --- | --- |
+| 1 | 相邻容器总是重叠 0.21" | 行距只加节点高度，漏掉容器标题高度 + 底部内边距 | 预留完整色带包络 |
+| 2 | 容器层序颠倒（数据层跑到顶部） | 层号随 Y 递减，但页面游标从底部升起，绘制顺序又反了一次 | 层号改为"越高越大"，绘制按升序 |
+| 3 | 上游节点跑到最下面 | `Rank()` 算的是"向上游的距离"，源点得 0，而 0 层画在最底 | 层号取反：源点应得最高层号 |
+| 4 | 组织结构图根节点在底部 | `levels[0]` 是根，但游标从底部升起 | 按层级倒序绘制 |
+| 5 | Flow 让容器成员横跨整页 | 单条链把所有节点串成一行，容器互相吞并 | 有容器时改为"每容器一行" |
+
+第 2、3 条是典型的**坐标系方向错误**：Y 轴向上、层号语义、绘制顺序三者中任意一处弄反，
+结果都表现为"顺序看起来随机"。这类 bug 不会抛异常，只会静默产出错图。
+
+### 14.4 顺带修掉的过期 waypoints
+
+重排后节点坐标全变，但模型里的 `waypoints` 是**绝对坐标**，仍指向旧位置，
+于是连线穿过无关节点。现在重新布局时清空 waypoints，交给布线器重算。
+
+### 14.5 实测结果
+
+三份示例 × 五种策略 = **15 种组合全部通过硬约束**：
+
+```
+architecture + layered   hard=True
+architecture + flow      hard=True
+architecture + grid      hard=True
+architecture + tree      hard=True
+workflow     + layered   hard=True
+workflow     + flow      hard=True
+...                      15/15
+```
+
+`--layout auto` 在三份示例上分别选中 Layered / Layered / Layered，
+均通过硬约束。
+
+### 14.6 明确未做
+
+- **没有引入 Graphviz / MSAGL**。Phase 0 建议的分层布局用自研实现已能满足现有三份示例，
+  且避免了进程依赖。若后续出现超大图（>100 节点）或需要 Sugiyama 的交叉最小化，
+  再按 Phase 0 §四 的方案接入 `dot`，届时用基准测试决定而非预先引入。
+- **没有实现交叉最小化**。当前层内排序只是按上游均值，`edge.crossing` 仍会出现。
+  这是 Phase 4/5 的优化项，不是正确性缺陷。
+
+测试：**146 项通过**（新增 `LayoutTests` 16 项），构建 0 warning。

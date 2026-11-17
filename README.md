@@ -136,7 +136,9 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 
 | 命令 | 作用 |
 | --- | --- |
-| `create --input model.json --output out.vsdx [--fit-text] [--fit-page] [--recenter]` | 由 JSON 模型创建 VSDX；可选按文字推导尺寸、页面贴合内容 |
+| `create --input model.json --output out.vsdx` | 由 JSON 模型创建 VSDX |
+| `--layout layered\|flow\|tree\|grid\|auto` | 自动布局（`auto` 按图形类型选择策略） |
+| `--fit-text --fit-page --recenter` | 按文字推导尺寸、页面贴合内容、内容居中 |
 | `inspect --input out.vsdx [--json]` | 读取并报告结构（节点/连线/分组/图层/Shape Data） |
 | `export-model --input out.vsdx --output model.json` | 导出 JSON 模型 |
 | `update --input old.vsdx --model new.json --output new.vsdx` | **增量**应用修改 |
@@ -175,6 +177,7 @@ vsdx-tool batch --op validate --input out/ --json
 - 增量修改：只写模型与包之间有差异的对象；模型未提及的对象默认保留
 - 由 VSDX 渲染 SVG / PNG，含中文（自动挑选 CJK 字体），支持多页面、自定义 DPI、背景、
   透明背景、字体替代
+- 自动布局：分层 / 流程 / 树形 / 网格四种策略，`auto` 按图形类型选择
 - 布局质量检查，**硬约束与软约束分离**：
   - 硬（不过即不可交付，分数强制为 0）：节点重叠、连线穿节点、容器相压、节点逃出容器
   - 软（影响专业度）：连线绕行比、行错位、同行尺寸突变、色带间距、间距过密、文字溢出、连线交叉

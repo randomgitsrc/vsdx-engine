@@ -177,6 +177,12 @@ public sealed class WriteOptions
 
     /// <summary>Shift the drawing so it sits inside the page with equal margins.</summary>
     public bool Recenter { get; init; }
+
+    /// <summary>
+    /// Layout strategy name: layered / grid / flow / tree / manual / auto.
+    /// "auto" picks a strategy from the diagram's declared type.
+    /// </summary>
+    public string? Layout { get; init; }
     public string? Title { get; init; }
     public string? Author { get; init; }
     public bool RequestRecalc { get; init; } = true;

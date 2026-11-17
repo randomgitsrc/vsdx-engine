@@ -156,6 +156,35 @@ vsdx-tool render --input diagram.vsdx --format png --output diagram.png --dpi 12
 vsdx-tool render --input diagram.vsdx --format svg --output diagram.svg
 ```
 
+### Or let the engine place the nodes entirely
+
+If you are generating a diagram from a model rather than editing an existing one, you usually
+do not need to hand-place anything:
+
+```bash
+vsdx-tool create --input model.json --output diagram.vsdx --layout auto --fit-page
+```
+
+`--layout` picks the arrangement; `auto` chooses from the diagram's `type`:
+
+| Strategy | Use for | What it does |
+| --- | --- | --- |
+| `layered` | architecture, microservices, network, deployment | Bands top-to-bottom, nodes ordered left-to-right inside each band |
+| `flow` | business processes, pipelines | Follows the arrows; with containers, one band per container |
+| `tree` | org charts | Root on top, widens downward |
+| `grid` | inventories, no grouping | Uniform rows and columns |
+| `manual` | you pinned every coordinate | Nothing moves |
+
+`auto` resolves to: architecture/network/microservices → `layered`; workflow **with a decision
+node** → `flow`; workflow without decisions → `layered`; org → `tree`.
+
+When containers are present, `grid` and `tree` fall back to a banded layout rather than
+scattering members — grouping always wins over the nominal strategy.
+
+Prefer authoring the model with only ids, text, `groupId` and edges, then let `--layout auto
+--fit-text --fit-page` derive all geometry. Hand-writing coordinates is what makes a diagram
+look assembled rather than designed.
+
 ### Let the engine size the boxes, then look
 
 Hand-writing every `bounds` is what makes a diagram look assembled rather than designed. If
