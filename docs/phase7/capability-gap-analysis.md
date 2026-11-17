@@ -252,3 +252,46 @@ CLI 无超时参数。建议先给 CLI 加 `--timeout`，再把 token 贯穿 `Vs
 
 建议在 Gate C 决策时确认：泳道是否必须作为一等概念（`Lane` 类型），
 还是可以用 `Group.Kind = "lane"` 表达。后者成本更低且不破坏兼容性。
+
+---
+
+## 8. 补充：G4 泳道已实现（Gate 后续）
+
+审计时 G4 标记为"未实现"。本轮已补上，记录在此以便对照。
+
+### 实现方式
+
+泳道**不是新的几何算法**，而是"带语义的容器"：
+
+- `Group.Kind = "lane"` 触发 `SwimlaneLayoutEngine`
+- 泳道按声明顺序纵向堆叠，**每条泳道内部独立横向流动**
+- 泳道内节点按图内拓扑序排列（不是作者坐标序）
+- 不属于任何泳道的节点置于顶部独立一行
+
+### 与任务书的差异说明
+
+任务 §4.1 把泳道列为独立图形类别。实现上复用容器机制而非引入新概念，
+理由是：泳道的几何本质就是"横向分区 + 区内流程"，与容器同构。
+引入 `Lane` 一等类型会增加模型复杂度而不增加表达能力。
+
+### 实测
+
+```
+$ vsdx-tool create --input swimlane.json --output swim.vsdx --layout auto --fit-text --fit-page
+created swim.vsdx  pages=1 shapes=8 connectors=7  compatibility: lossless
+
+$ vsdx-tool check-layout --input swim.vsdx
+score=96/100   （仅 1 处连线交叉，无硬约束问题）
+```
+
+产物：`examples/phase7/swimlane.json` + `swimlane.png`
+
+### 仍存在的泳道限制
+
+| 限制 | 说明 |
+| --- | --- |
+| 泳道标题样式 | 用容器标题，非 Visio 原生泳道形状 |
+| 泳道内多行 | 单条泳道内触发换行时，行距不受泳道高度约束 |
+| 跨泳道连线 | 走通用正交路由，未针对泳道优化（有交叉） |
+
+后者已在视觉审查中确认：`swimlane.png` 中两条跨泳道连线交叉一次。

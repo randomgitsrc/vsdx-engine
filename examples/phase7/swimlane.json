@@ -1,0 +1,26 @@
+{"id":"swim","name":"跨职能泳道","type":"workflow","pageSize":{"width":16,"height":10,"unit":"inches"},
+ "pages":[{"id":"p","name":"Swimlane","size":{"width":16,"height":10,"unit":"inches"},
+  "groups":[
+   {"id":"l_sales","name":"销售部 Sales","kind":"lane","autoSize":true,
+    "style":{"fill":"#EAF3FB","stroke":"#9DC3E6","bold":true,"hAlign":"left"}},
+   {"id":"l_fin","name":"财务部 Finance","kind":"lane","autoSize":true,
+    "style":{"fill":"#EDF7ED","stroke":"#A9D08E","bold":true,"hAlign":"left"}},
+   {"id":"l_ops","name":"运营部 Operations","kind":"lane","autoSize":true,
+    "style":{"fill":"#FDF2E9","stroke":"#F4B183","bold":true,"hAlign":"left"}}],
+  "nodes":[
+   {"id":"s1","text":"接单","shape":"circle","bounds":{"x":2,"y":8,"w":1.1,"h":1.1},"groupId":"l_sales","style":{"fill":"#2E75B6","textColor":"#FFFFFF","fontSize":9}},
+   {"id":"s2","text":"报价","shape":"rounded","bounds":{"x":5,"y":8,"w":2,"h":0.9},"groupId":"l_sales","style":{"fill":"#2E75B6","textColor":"#FFFFFF"}},
+   {"id":"s3","text":"签合同","shape":"rounded","bounds":{"x":8.5,"y":8,"w":2,"h":0.9},"groupId":"l_sales","style":{"fill":"#2E75B6","textColor":"#FFFFFF"}},
+   {"id":"f1","text":"审核信用","shape":"rounded","bounds":{"x":5,"y":5,"w":2.2,"h":0.9},"groupId":"l_fin","style":{"fill":"#70AD47","textColor":"#FFFFFF"}},
+   {"id":"f2","text":"开票","shape":"rounded","bounds":{"x":8.5,"y":5,"w":2,"h":0.9},"groupId":"l_fin","style":{"fill":"#70AD47","textColor":"#FFFFFF"}},
+   {"id":"o1","text":"备货","shape":"rounded","bounds":{"x":2,"y":2,"w":2,"h":0.9},"groupId":"l_ops","style":{"fill":"#ED7D31","textColor":"#FFFFFF"}},
+   {"id":"o2","text":"发货","shape":"rounded","bounds":{"x":5,"y":2,"w":2,"h":0.9},"groupId":"l_ops","style":{"fill":"#ED7D31","textColor":"#FFFFFF"}},
+   {"id":"o3","text":"确认收货","shape":"rounded","bounds":{"x":8.5,"y":2,"w":2.2,"h":0.9},"groupId":"l_ops","style":{"fill":"#ED7D31","textColor":"#FFFFFF"}}],
+  "edges":[
+   {"id":"e1","from":"s1","to":"s2","kind":"straight"},
+   {"id":"e2","from":"s2","to":"s3","kind":"straight"},
+   {"id":"e3","from":"s3","to":"f1","kind":"rightAngle","label":"提交审核"},
+   {"id":"e4","from":"f1","to":"f2","kind":"straight"},
+   {"id":"e5","from":"f2","to":"o1","kind":"rightAngle","label":"通知备货"},
+   {"id":"e6","from":"o1","to":"o2","kind":"straight"},
+   {"id":"e7","from":"o2","to":"o3","kind":"straight"}]}]}

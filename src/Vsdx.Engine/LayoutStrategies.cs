@@ -24,7 +24,13 @@ public enum LayoutStrategy
     Flow,
 
     /// <summary>Hierarchy from a root, widening downward; suits org charts.</summary>
-    Tree
+    Tree,
+
+    /// <summary>
+    /// Cross-functional swimlanes: horizontal bands with independent left-to-right flows inside
+    /// each. Selected automatically when the page declares <c>Kind = "lane"</c> containers.
+    /// </summary>
+    Swimlane
 }
 
 /// <summary>Primary reading direction.</summary>
@@ -98,6 +104,11 @@ public static class DiagramLayoutEngine
         var page = diagram.Pages.FirstOrDefault();
         if (page is null) return LayoutStrategy.Manual;
 
+        // Declared lanes are an explicit request for swimlane treatment, which outranks the
+        // diagram's nominal kind: the author has already said how the page is organised.
+        if (page.Groups.Any(g => string.Equals(g.Kind, "lane", StringComparison.OrdinalIgnoreCase)))
+            return LayoutStrategy.Swimlane;
+
         // A business flow with decisions reads along its edges, not as bands.
         bool hasDecisions = page.Nodes.Any(n =>
             string.Equals(n.Shape, "Diamond", StringComparison.OrdinalIgnoreCase) ||
@@ -144,6 +155,7 @@ public static class DiagramLayoutEngine
         LayoutStrategy.Grid => new GridLayoutEngine(),
         LayoutStrategy.Flow => new FlowLayoutEngine(),
         LayoutStrategy.Tree => new TreeLayoutEngine(),
+        LayoutStrategy.Swimlane => new SwimlaneLayoutEngine(),
         _ => new ManualLayoutEngine()
     };
 
@@ -154,6 +166,7 @@ public static class DiagramLayoutEngine
         "grid" => LayoutStrategy.Grid,
         "flow" or "pipeline" => LayoutStrategy.Flow,
         "tree" or "orgchart" => LayoutStrategy.Tree,
+        "swimlane" or "lane" or "lanes" => LayoutStrategy.Swimlane,
         "manual" or "none" => LayoutStrategy.Manual,
         _ => LayoutStrategy.Layered
     };
