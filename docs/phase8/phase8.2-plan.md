@@ -833,10 +833,30 @@ if (!Allowed.Contains(value))
 private static readonly string[] NotYetExecuted = { "metadata.*" };
 ```
 
-**闸门 1 的实现方式更正（审查 M7 已编译验证）：**
-`UnmappedMemberHandling.Disallow` 会**直接抛异常**，无法同时返回
-`Value` 与 `UnknownMembers`。因此只能用**自定义 converter** 收集未知键，
-原括号里的"或"不是可选项，是唯一路径。
+**闸门 1 的实现方式（已编译验证三种方案）：**
+
+```console
+Q1: UnmappedMemberHandling.Disallow      -> THROWS JsonException
+Q2: JsonDocument 预扫未知键              -> 可检出 ["bogus"]
+Q3: UnmappedMemberHandling.Skip（默认）  -> 静默丢弃
+```
+
+- `Disallow` **会抛异常**，拿不到"值 + 未知键"两者，不可用
+- 自定义 converter 可行，但要为每个类型重写读取逻辑，成本高
+- **选定方案：先用 `JsonDocument` 预扫，再正常反序列化**
+
+```csharp
+var doc = JsonDocument.Parse(json);
+var unknown = doc.RootElement.EnumerateObject()
+    .Select(p => p.Name)
+    .Where(n => !KnownRootMembers.Contains(n, StringComparer.OrdinalIgnoreCase))
+    .ToList();
+var value = doc.Deserialize<DiagramIr>(opts);   // 正常路径，不抛
+```
+
+实现简单、不侵入类型定义、能同时产出两者。
+**嵌套对象**（如 `theme.typografy`）需要按已知 schema 递归比对同一份 `JsonDocument`，
+工作量集中在一个辅助类里。
 
 ### 15.3 `ExecutionResult` 扩展
 
