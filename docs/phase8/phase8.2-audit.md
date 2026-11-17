@@ -376,6 +376,47 @@ IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
 
 **这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
 
+### 2.12 【P0】IR 声明了容器顺序，但布局完全忽略 → 流程倒置
+
+**实测**（`examples/phase8/flow.ir.json`）：
+
+IR 用 `order` 声明容器次序：`intake(2) → review(1) → fulfil(0)`，
+语义上订单从受理→审核→履约，**受理应在最上**。
+
+实际产出：
+
+```
+fulfil   y=5.55   ← 最上
+review   y=3.43
+intake   y=1.30   ← 最下
+```
+
+**顺序完全颠倒**，流程从底部开始读。
+
+**根因链：**
+
+1. `IrContainer.Order` 在 `DiagramIrConverter` 中**从未被消费**
+2. `LayeredLayoutEngine` 改用成员的 `MeanY` 排序容器（`:117-121`）
+3. IR 节点无 `anchor` → 全部 `Bounds(0,0,2.0,0.9)`（`DiagramIr.cs:297`）
+4. 所有容器 `MeanY == 0` → `OrderByDescending` **退化为无操作**
+5. 容器按字典/插入顺序排列，与 `order` 无关
+
+**这是缺陷 6（`IrContainer.Order` 接受不执行）的一个具体后果**，
+但后果比"字段无效"严重得多：**产出语义颠倒的图**，且 `status=succeeded`、`hard=True`、`score=100`。
+
+**为什么 `score=100`：** 质量检测只看几何合法性（不重叠、不越界、连线不穿节点），
+**不检查容器顺序是否符合语义**——后者需要语义知识，不属于检测器职责。
+
+**修法：**
+
+1. `DiagramIrConverter` 消费 `IrContainer.Order`（写入 `Group.Bounds.Y` 或新字段）
+2. `LayeredLayoutEngine` 容器排序优先用显式 `order`，缺失时再退回 `MeanY`
+3. 两者都缺失时，按 IR 声明顺序（`OrderBy(ID)` 至少稳定，而非字典序）
+
+**验收：** `flow.ir.json` 产出中 `intake` 的 Y 必须最大（最上）。
+
+---
+
 ### 2.11 【P1】装饰元素逐个独立夹紧，相对间距被压没
 
 **实测**（新建的 `examples/phase8/arch.ir.json`）：
@@ -672,6 +713,7 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 13 | `mode=fixed` 名存实亡 | **P0** | ❌ **遗漏，且初稿判为"✅ 已实现"** |
 | 14 | `swimlane` 经协议不可达 | P1 | ❌ **遗漏** |
 | 15 | 装饰元素独立夹紧致间距塌陷 | P1 | ❌ **遗漏**（Phase 8.1 遗留） |
+| 16 | IR 容器 `order` 被忽略致流程倒置 | **P0** | ❌ **遗漏** |
 
-**15 项缺陷中，初稿漏了 9 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
+**16 项缺陷中，初稿漏了 10 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。

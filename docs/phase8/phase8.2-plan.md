@@ -182,9 +182,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 十五项缺陷的修法（与 audit 一一对应）
+## 4. 十六项缺陷的修法（与 audit 一一对应）
 
-> **本节已按 M5 补齐，并按审查 M2/M3 与自查增至 15 项。** 原表只有 9 行；
+> **本节已按 M5 补齐，并按审查 M2/M3 与自查增至 16 项。** 原表只有 9 行；
 > 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
 > 均已并入 audit 与本节。
 >
@@ -207,8 +207,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 13 | **`mode=fixed` 名存实亡**（P0） | `fixed` 时忽略 `shrinkToFit`，或收缩后进 `unmet`（M2） | **T4b** |
 | 14 | **`swimlane` 协议不可达**（P1） | `DiagramIr.cs:282` 保留 `lane`，不改写为 `container`（M3） | **T0b** |
 | 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
+| 16 | **IR `order` 被忽略致流程倒置**（P0） | 转换器消费 `Order`；布局优先用显式 order，其次 `MeanY`，最后声明序 | **T1b** |
 
-**15 项缺陷 ⇄ 15 行修法 ⇄ 15 个任务**（T0 拆 T0b、T2 拆 T2b、T4 拆 T4b、新增 T8a），一一对应。
+**16 项缺陷 ⇄ 16 行修法 ⇄ 16 个任务**（T0→T0b、T2→T2b、T4→T4b、T1→T1b，新增 T8a），一一对应。
 
 ### 4.1 ObjectMapping 键格式（已裁决，不再是待决项）
 
@@ -326,6 +327,7 @@ text: '企业分析平台'            ✅
 | 节点无角色配色，service/database/queue 视觉无差别 | 缺陷 2（Typography/roleColors 仅部分） |
 | **标题与副标题重叠** | 缺陷 15（装饰元素独立夹紧） |
 | 分隔线穿过副标题文字 | 缺陷 15（同上） |
+| **流程图三个容器上下颠倒**（履约在最上、受理在最下） | 缺陷 16（IR `order` 被忽略） |
 | 连线大量交叉 | 布局问题，不在本阶段范围 |
 
 **这五条是 Phase 8.2 要改善的视觉基线。** 修复后再用同样三个 IR 产出对比 PNG。
@@ -390,6 +392,7 @@ text: '企业分析平台'            ✅
 | T0b | `DiagramIr` 保留 `lane` | 声明 lane 的 IR → `applied` 含 `layout=Swimlane` **且几何与 layered 不同** |
 | T4b | `mode=fixed` 语义 | 请求 20×14 → 实得 20×14，或 `unmet` 有明确 entry |
 | T1 | `StyleResolver` + 4 套 palette | 单元测试证明三层优先级；palette 只有颜色字段 |
+| T1b | 容器顺序：消费 IR `order` | `flow.ir.json` 中 `intake` 的 Y 最大（最上）；缺失 order 时退回 `MeanY`，再缺失用声明序 |
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
 | T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
