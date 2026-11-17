@@ -13,7 +13,7 @@
 
 | # | 文件 | 说明 |
 | --- | --- | --- |
-| 1 | `phase8.2-audit.md` | Stage 1 现状审计（**23 项缺陷**、字段执行矩阵、5 处自我更正） |
+| 1 | `phase8.2-audit.md` | Stage 1 现状审计（**24 项缺陷**、字段执行矩阵、5 处自我更正） |
 | 2 | `phase8.2-plan.md` | Stage 2 实施计划（19 节，含 M1–M12 修订） |
 | 3 | `phase8.2-independent-review.md` | **Stage 3 独立审查，裁决 FAIL，M1–M12** |
 | 4 | 本文件 | 提交说明（第二版） |

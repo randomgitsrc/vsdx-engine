@@ -432,6 +432,58 @@ IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
 
 **这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
 
+### 2.20 【P1】对比度能力已实现，但无任何校验
+
+**任务书 §5.3 要求"颜色与文字对比合理"，但审计与计划此前均未覆盖。**
+
+**现状：能力有，校验无。**
+
+`ColorUtil.ReadableTextColor` 实现正确（按 WCAG 对比度择优）：
+
+```csharp
+public static string ReadableTextColor(string background) =>
+    Contrast(background, "#FFFFFF") >= Contrast(background, "#111111") ? "#FFFFFF" : "#111111";
+```
+
+且已在三处调用（`DesignSpec` roleColors、`ShapeStyler`、`Writer`）。
+
+**但 `LayoutAnalyzer` 中没有任何对比度检查：**
+
+```console
+$ grep -c "contrast|Contrast|luminance" src/Vsdx.Engine/LayoutAnalyzer.cs
+0
+```
+
+**实测：**
+
+```console
+$ --spec '{"roleColors":{"service":"#FFFF99"}}'
+  n1: fill=#FFFF99  textColor=#111111    ← 对比度约 16:1
+  quality: hard=True  score=95           ← 无任何提示
+```
+
+`#FFFF99` 是浅黄，配近黑文字对比度过高（刺眼），而系统"正确地"选了黑字
+——按算法没错，但**没有判断结果是否落在合理区间**。
+
+**两类失败都没有被发现：**
+
+| 情形 | 现状 |
+| --- | --- |
+| 对比度过低（浅底 + 浅字，读不清） | 不报告（`ReadableTextColor` 会避免，但调用方显式设 `textColor` 时可绕过） |
+| 对比度过高（深底 + 纯黑或浅底 + 近黑） | **完全不检测** |
+
+**修法（T1d）：**
+
+1. `LayoutAnalyzer` 新增 `text.low-contrast` / `text.harsh-contrast` 检查
+   （WCAG 阈值：正文 ≥ 4.5:1，且 < 21:1 上限避免刺眼）
+2. 显式 `textColor` 覆盖时同样校验——绕过自动选择的路径必须被检查
+3. 无法解析颜色时进 `unmet`（`style.color-unparsed`）
+
+**验收：** 显式设 `#FFFF99` 底 + `#FFFF00` 字（对比度 1.05:1）→
+`text.low-contrast` 必须出现；设 `#000000` 底 + `#111111` 字 → 同样必须报告。
+
+---
+
 ### 2.19 【P1】默认路径完全不写字体，中英文混排无从谈起
 
 **任务书 §5.2 明确要求覆盖"中英文混排"**，但审计与计划此前**完全未提及**。
@@ -1067,6 +1119,7 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 21 | **非法枚举静默回退并谎报已执行** | P1 | ❌ **遗漏**（审查 E-4） |
 | 22 | **`LocalRelayout` 不检查越界碰撞** | P1 | ❌ **遗漏**（本轮发现） |
 | 23 | **默认路径不写字体，混排无保障** | **P1** | ❌ **遗漏**（任务书 §5.2 明确要求） |
+| 24 | **对比度无任何校验** | P1 | ❌ **遗漏**（任务书 §5.3 明确要求） |
 
-**23 项缺陷中，初稿漏了 17 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
+**24 项缺陷中，初稿漏了 18 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
