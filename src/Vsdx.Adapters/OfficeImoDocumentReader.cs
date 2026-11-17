@@ -82,6 +82,41 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
     }
 
     /// <summary>
+    /// Reads raw <c>Master</c> attributes from the page part, keyed by shape id.
+    /// OfficeIMO projects a resolved master name but not the original reference, and the
+    /// reference is what has to survive a round-trip.
+    /// </summary>
+    private static Dictionary<string, string> ReadSourceMasters(
+        string vsdxPath, int pageId, CompatibilityReport compat)
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        try
+        {
+            using var zip = System.IO.Compression.ZipFile.OpenRead(vsdxPath);
+            var entry = zip.GetEntry($"visio/pages/page{pageId + 1}.xml");
+            if (entry is null) return result;
+
+            System.Xml.Linq.XNamespace ns = "http://schemas.microsoft.com/office/visio/2012/main";
+            System.Xml.Linq.XDocument doc;
+            using (var stream = entry.Open()) doc = System.Xml.Linq.XDocument.Load(stream);
+
+            foreach (var shape in doc.Descendants(ns + "Shape"))
+            {
+                var id = (string?)shape.Attribute("ID");
+                var master = (string?)shape.Attribute("Master");
+                if (id is not null && master is not null) result[id] = master;
+            }
+        }
+        catch (Exception ex)
+        {
+            compat.Warn("read.master-ref", $"无法解析母版引用：{ex.Message}");
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Parses every Geometry section in a page part, keyed by Visio shape id.
     ///
     /// OfficeIMO does not project geometry onto its shape model, so this reads the XML directly.
@@ -311,6 +346,11 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
             }
         };
 
+        // OfficeIMO does not expose the raw Master attribute, so capture it from the part. Without
+        // it a round-trip silently drops the link to an unrecognised master: the outline is
+        // materialised, so the shape still looks right, but it stops being a master instance.
+        var sourceMasters = ReadSourceMasters(vsdxPath, page.Id, compat);
+
         var shapeOrder = new List<string>();
         var containers = new Dictionary<string, OfficeIMO.Visio.VisioShape>(StringComparer.Ordinal);
 
@@ -349,6 +389,7 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
             }
 
             var node = ReadNode(shape, compat);
+            if (sourceMasters.TryGetValue(shape.Id, out var masterRef)) node.SourceMaster = masterRef;
             model.Nodes.Add(node);
             shapeOrder.Add(shape.Id);
         }

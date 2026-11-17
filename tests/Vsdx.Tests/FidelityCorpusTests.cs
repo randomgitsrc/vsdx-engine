@@ -295,24 +295,15 @@ public sealed class FidelityCorpusTests
             var shape = doc.Descendants(ns + "Shape")
                 .First(s => (string?)s.Attribute("ID") == id);
 
-            // Known limitation, recorded rather than silently accepted: the incremental editor
-            // re-creates shapes from the model and does not preserve the Master attribute for
-            // masters it does not recognise. The geometry is materialised instead, so the shape
-            // still looks right, but its link to the original master is gone.
-            //
-            // This is NOT the P0 defect (the outline is preserved, not replaced by a rectangle),
-            // so the assertion records the situation instead of pretending it is correct.
+            // A shape that was master-backed must still be master-backed: losing the link turns it
+            // into a detached outline, so editing the master in Visio would no longer update it.
+            // VisioMasterBridge restores the reference from Node.SourceMaster.
             bool hasMaster = shape.Attribute("Master") is not null;
             bool wasMasterBacked = originalMasters.GetValueOrDefault(id);
 
-            if (wasMasterBacked && !hasMaster)
-            {
-                // Accept: geometry carried over, master link dropped.
-                continue;
-            }
-
             Assert.True(hasMaster,
-                $"shape {id} gained {now} geometry rows without a master — the P0 defect returned");
+                $"shape {id} gained {now} geometry rows but lost its master reference " +
+                $"(was master-backed: {wasMasterBacked})");
         }
     }
 

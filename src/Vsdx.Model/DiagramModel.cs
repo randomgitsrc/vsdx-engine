@@ -206,6 +206,13 @@ public sealed class Node
     public double? Angle { get; set; }
     /// <summary>True when the node came from an external file and was not created by this engine.</summary>
     public bool? Imported { get; set; }
+
+    /// <summary>
+    /// The package's original <c>Master</c> reference, verbatim, when the node came from an
+    /// external file. Preserved so a round-trip does not silently drop the link to a master the
+    /// engine does not recognise: the shape would survive but stop being a master instance.
+    /// </summary>
+    public string? SourceMaster { get; set; }
 }
 
 public sealed class Edge

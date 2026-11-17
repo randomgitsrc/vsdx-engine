@@ -35,6 +35,11 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
         // during Save can be removed again. Must happen before Load.
         var ungeometried = VisioGeometryPreserver.SnapshotUngeometriedShapes(sourceVsdxPath);
 
+        // Structural snapshot taken before any edit, so the result can be checked for damage.
+        var beforeStructure = FidelityGuard.Capture(sourceVsdxPath);
+        var beforeIds = beforeStructure.ToDictionary(
+            kv => kv.Key, kv => kv.Value.Keys.ToHashSet(StringComparer.Ordinal));
+
         var doc = VisioDocument.Load(sourceVsdxPath);
 
         var changes = new List<ModelChange>();
@@ -297,6 +302,43 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
         // created shapes in its own dependency-satisfying order.
         VisioZOrderBridge.Apply(model, outputVsdxPath, compat);
 
+        // Restore master links the editor could not resolve, so an external shape stays a master
+        // instance instead of silently becoming a detached outline.
+        VisioMasterBridge.Apply(model, outputVsdxPath, compat);
+
+        // Never hand back a package that lost content. The accepted decision is explicit: a
+        // restricted capability is acceptable, silently damaged output is not. Deletions the
+        // caller asked for are excluded; everything else that disappeared is treated as damage.
+        var afterStructure = FidelityGuard.Capture(outputVsdxPath);
+        var losses = FidelityGuard.Compare(beforeStructure, afterStructure)
+            .Where(l => l.Kind != FidelityLossKind.UnexpectedShape)
+            .Where(l => l.Kind != FidelityLossKind.ShapeMissing
+                        || !WasIntentionallyRemoved(l, beforeIds, model))
+            .ToList();
+
+        foreach (var loss in losses)
+        {
+            if (loss.IsFatal)
+            {
+                compat.Warn("fidelity.loss", loss.Detail, loss.ShapeId);
+            }
+            else
+            {
+                compat.Info("fidelity.change", loss.Detail, loss.ShapeId);
+            }
+        }
+
+        var fatal = losses.Where(l => l.IsFatal).ToList();
+        if (fatal.Count > 0)
+        {
+            // Refuse: the output must not look like a successful result.
+            File.Delete(outputVsdxPath);
+            throw new InvalidOperationException(
+                "拒绝输出：本次修改无法保证保真，可能损坏原有图形。" +
+                string.Join("；", fatal.Select(f => f.Detail)) +
+                "。请改用只读方式检查，或报告该限制。");
+        }
+
         VisioMetadataBridge.Write(model, outputVsdxPath);
 
         var result = new UpdateResult
@@ -539,6 +581,31 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// True when a shape legitimately disappeared because the caller deleted it from the model.
+    /// Deleting is an instruction, not damage.
+    /// </summary>
+    private static bool WasIntentionallyRemoved(
+        FidelityLoss loss,
+        Dictionary<int, HashSet<string>> beforeIds,
+        Diagram model)
+    {
+        if (loss.ShapeId is null) return false;
+        if (!beforeIds.TryGetValue(loss.Page, out var ids)) return false;
+
+        // Still present in the model? Then its disappearance is damage, not intent.
+        var page = loss.Page < model.Pages.Count ? model.Pages[loss.Page] : null;
+        if (page is null) return false;
+
+        bool inModel = page.Nodes.Any(n => n.VisioShapeId == loss.ShapeId)
+                       || page.Groups.Any(g => g.VisioShapeId == loss.ShapeId)
+                       || page.Paths.Any(p => p.VisioShapeId == loss.ShapeId)
+                       || page.TextBlocks.Any(t => t.VisioShapeId == loss.ShapeId)
+                       || page.Edges.Any(e => e.VisioShapeId == loss.ShapeId);
+
+        return !inModel;
     }
 
     private static void ApplyGroups(
