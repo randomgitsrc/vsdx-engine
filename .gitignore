@@ -58,5 +58,7 @@ desktop.ini
 # (IR JSON, generated VSDX, exported models) produced while verifying behaviour.
 # They must never be committed: `git add -A` will otherwise sweep them in.
 .review-scratch/
+.review-scratch-r2/
+.p9/
 .scratch/
 *.review.json

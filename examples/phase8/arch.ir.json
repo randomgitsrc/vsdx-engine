@@ -1,0 +1,48 @@
+{
+  "irVersion": "1.0",
+  "id": "phase82-arch",
+  "title": "企业分析平台",
+  "kind": "architecture",
+  "containers": [
+    { "id": "edge",  "label": "接入层 Access",  "kind": "layer", "order": 2 },
+    { "id": "svc",   "label": "服务层 Service", "kind": "layer", "order": 1 },
+    { "id": "data",  "label": "数据层 Data",    "kind": "layer", "order": 0 }
+  ],
+  "nodes": [
+    { "id": "web",    "label": "Web 门户\nReact SPA", "role": "client",   "containerId": "edge" },
+    { "id": "mobile", "label": "移动端\niOS / Android", "role": "client",  "containerId": "edge" },
+    { "id": "gw",     "label": "API 网关\nKong",       "role": "gateway", "containerId": "edge" },
+    { "id": "auth",   "label": "认证服务\nOAuth2",     "role": "service", "containerId": "edge" },
+    { "id": "order",  "label": "订单服务\nOrder",      "role": "service", "containerId": "svc" },
+    { "id": "query",  "label": "查询服务\nQuery",      "role": "service", "containerId": "svc" },
+    { "id": "bus",    "label": "事件总线\nKafka",      "role": "queue",   "containerId": "svc" },
+    { "id": "pg",     "label": "PostgreSQL\n主库",     "role": "database", "containerId": "data" },
+    { "id": "redis",  "label": "Redis\n缓存",          "role": "storage",  "containerId": "data" },
+    { "id": "lake",   "label": "数据湖\nS3",           "role": "storage",  "containerId": "data" }
+  ],
+  "edges": [
+    { "id": "e1",  "from": "web",    "to": "gw",     "relation": "calls",     "label": "HTTPS" },
+    { "id": "e2",  "from": "mobile", "to": "gw",     "relation": "calls",     "label": "gRPC" },
+    { "id": "e3",  "from": "gw",     "to": "auth",   "relation": "calls",     "label": "verify" },
+    { "id": "e4",  "from": "gw",     "to": "order",  "relation": "calls",     "label": "REST" },
+    { "id": "e5",  "from": "order",  "to": "query",  "relation": "depends",   "label": "dataset" },
+    { "id": "e6",  "from": "query",  "to": "bus",    "relation": "publishes", "label": "event" },
+    { "id": "e7",  "from": "order",  "to": "pg",     "relation": "writes",    "label": "SQL" },
+    { "id": "e8",  "from": "query",  "to": "redis",  "relation": "reads",     "label": "cache" },
+    { "id": "e9",  "from": "bus",    "to": "lake",   "relation": "writes",    "label": "Parquet" }
+  ],
+  "textBlocks": [
+    { "id": "title", "text": "企业分析平台", "role": "title",
+      "box": { "x": 6.0, "y": 11.4, "width": 9.0, "height": 0.6 },
+      "align": "center", "bold": true },
+    { "id": "subtitle", "text": "Enterprise Analytics Platform", "role": "subtitle",
+      "box": { "x": 6.0, "y": 10.8, "width": 9.0, "height": 0.4 },
+      "align": "center" },
+    { "id": "legend", "text": "蓝 = 接入   绿 = 服务   橙 = 数据   黄 = 消息",
+      "role": "legend", "box": { "x": 6.0, "y": 0.9, "width": 9.0, "height": 0.35 },
+      "align": "center" },
+    { "id": "note", "text": "注：网关负责鉴权与限流；事件总线承担异步解耦",
+      "role": "note", "box": { "x": 3.2, "y": 0.45, "width": 6.2, "height": 0.3 },
+      "align": "left", "italic": true }
+  ]
+}

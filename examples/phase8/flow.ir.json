@@ -1,0 +1,46 @@
+{
+  "irVersion": "1.0",
+  "id": "phase82-flow",
+  "title": "订单履行流程",
+  "kind": "workflow",
+  "containers": [
+    { "id": "intake", "label": "受理 Intake",     "kind": "layer", "order": 2 },
+    { "id": "review", "label": "审核 Review",     "kind": "layer", "order": 1 },
+    { "id": "fulfil", "label": "履约 Fulfilment", "kind": "layer", "order": 0 }
+  ],
+  "nodes": [
+    { "id": "start",  "label": "订单提交",   "role": "actor",    "containerId": "intake" },
+    { "id": "valid",  "label": "校验订单",   "role": "service",  "containerId": "intake" },
+    { "id": "risk",   "label": "风控评估",   "role": "decision", "containerId": "review" },
+    { "id": "stock",  "label": "库存检查",   "role": "decision", "containerId": "review" },
+    { "id": "pay",    "label": "支付授权",   "role": "service",  "containerId": "review" },
+    { "id": "reject", "label": "拒绝订单",   "role": "external", "containerId": "review" },
+    { "id": "manual", "label": "人工复核",   "role": "service",  "containerId": "review" },
+    { "id": "pick",   "label": "拣货包装",   "role": "service",  "containerId": "fulfil" },
+    { "id": "ship",   "label": "发货",       "role": "service",  "containerId": "fulfil" },
+    { "id": "notify", "label": "通知客户",   "role": "service",  "containerId": "fulfil" },
+    { "id": "done",   "label": "完成",       "role": "actor",    "containerId": "fulfil" }
+  ],
+  "edges": [
+    { "id": "f1",  "from": "start",  "to": "valid",  "relation": "flows",    "label": "提交" },
+    { "id": "f2",  "from": "valid",  "to": "risk",   "relation": "flows",    "label": "校验通过" },
+    { "id": "f3",  "from": "risk",   "to": "stock",  "relation": "flows",    "label": "低风险" },
+    { "id": "f4",  "from": "risk",   "to": "reject", "relation": "flows",    "label": "高风险" },
+    { "id": "f5",  "from": "stock",  "to": "pay",    "relation": "flows",    "label": "有货" },
+    { "id": "f6",  "from": "stock",  "to": "manual", "relation": "flows",    "label": "缺货" },
+    { "id": "f7",  "from": "manual", "to": "pay",    "relation": "flows",    "label": "补货完成" },
+    { "id": "f8",  "from": "pay",    "to": "pick",   "relation": "flows",    "label": "已授权" },
+    { "id": "f9",  "from": "pick",   "to": "ship",   "relation": "flows",    "label": "已包装" },
+    { "id": "f10", "from": "ship",   "to": "notify", "relation": "flows",    "label": "已出库" },
+    { "id": "f11", "from": "notify", "to": "done",   "relation": "flows",    "label": "已通知" },
+    { "id": "f12", "from": "reject", "to": "done",   "relation": "flows",    "label": "取消" }
+  ],
+  "textBlocks": [
+    { "id": "title", "text": "订单履行流程", "role": "title",
+      "box": { "x": 6.5, "y": 10.6, "width": 9.0, "height": 0.6 },
+      "align": "center", "bold": true },
+    { "id": "note", "text": "注：风控与库存任一不通过即转入拒绝或人工复核",
+      "role": "note", "box": { "x": 3.5, "y": 0.5, "width": 7.0, "height": 0.3 },
+      "align": "left", "italic": true }
+  ]
+}

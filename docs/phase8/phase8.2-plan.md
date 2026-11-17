@@ -182,9 +182,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 十四项缺陷的修法（与 audit 一一对应）
+## 4. 十五项缺陷的修法（与 audit 一一对应）
 
-> **本节已按 M5 补齐，并按审查 M2/M3 增至 14 项。** 原表只有 9 行；
+> **本节已按 M5 补齐，并按审查 M2/M3 与自查增至 15 项。** 原表只有 9 行；
 > 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
 > 均已并入 audit 与本节。
 >
@@ -206,8 +206,9 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 12 | `roleColors` 无 `default` 回退 | 支持 `default` 键；未覆盖角色进 `unmet`（按角色去重） | **T2b** |
 | 13 | **`mode=fixed` 名存实亡**（P0） | `fixed` 时忽略 `shrinkToFit`，或收缩后进 `unmet`（M2） | **T4b** |
 | 14 | **`swimlane` 协议不可达**（P1） | `DiagramIr.cs:282` 保留 `lane`，不改写为 `container`（M3） | **T0b** |
+| 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
 
-**14 项缺陷 ⇄ 14 行修法 ⇄ 14 个任务**（T0 拆 T0b、T2 拆 T2b、T4 拆 T4b），一一对应。
+**15 项缺陷 ⇄ 15 行修法 ⇄ 15 个任务**（T0 拆 T0b、T2 拆 T2b、T4 拆 T4b、新增 T8a），一一对应。
 
 ### 4.1 ObjectMapping 键格式（已裁决，不再是待决项）
 
@@ -296,16 +297,38 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 #### 正确做法
 
-新建真正的 IR 文件：
+**三个 IR 文件已创建并实测**（Stage 3 复审前补齐，见下）：
 
-| 产物 | 输入（新建） | 内容要求 |
+| 产物 | 输入 | 实测结果 |
 | --- | --- | --- |
-| 分层架构图 | `examples/phase8/arch.ir.json` | 3 容器 × 3-5 节点，含 gateway/database/service 角色 |
-| 流程图 | `examples/phase8/flow.ir.json` | 判断节点 + 分支 + 连线标签 |
-| 综合图 | `examples/phase8/overview.ir.json` | 标题 + 容器 + 连线标签 + 注释 + 自定义路径 |
+| 分层架构图 | `examples/phase8/arch.ir.json` | 10 节点 / 9 边 / 4 文本块；`succeeded`，hard=True，score 92 |
+| 流程图 | `examples/phase8/flow.ir.json` | 11 节点 / 12 边 / 2 文本块；`succeeded`，hard=True，score 100 |
+| 综合图 | `examples/phase8/overview.ir.json` | 10 节点 / 9 边 / 4 文本块 / 1 路径；`succeeded`，hard=True，score 92 |
+
+**标签保真已验证**（对照旧输入格式的失败）：
+
+```
+node: 'Web 门户\nReact SPA'  ✅   （旧 benchmarks 输入会退化成 'web'）
+edge: 'HTTPS'                 ✅
+text: '企业分析平台'            ✅
+```
 
 每份 IR 分别配 **3 套 DesignSpec**（enterprise / technical / muted），
 产出 9 组 VSDX + PNG。
+
+#### 实测暴露的现状缺陷（作为「修前基线」记录）
+
+用这三个 IR 跑当前代码，PNG 目视可见：
+
+| 观察 | 对应缺陷 |
+| --- | --- |
+| 三个容器**同一种浅蓝**，看不出层次 | 缺陷 5（容器色硬编码） |
+| 节点无角色配色，service/database/queue 视觉无差别 | 缺陷 2（Typography/roleColors 仅部分） |
+| **标题与副标题重叠** | 缺陷 15（装饰元素独立夹紧） |
+| 分隔线穿过副标题文字 | 缺陷 15（同上） |
+| 连线大量交叉 | 布局问题，不在本阶段范围 |
+
+**这五条是 Phase 8.2 要改善的视觉基线。** 修复后再用同样三个 IR 产出对比 PNG。
 
 #### 验收断言（可证伪）
 
@@ -375,6 +398,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | T6 | 修 `min_size` 死代码 | 低于下限时进 unmet |
 | T7 | `ObjectMapping` 全对象 + 多页 | 两页 × 四类对象全覆盖 |
 | T8 | 三套产物 + PNG + 目视 | 提交 VSDX/PNG/spec，附观察记录 |
+| T8a | 装饰元素相对间距 | title/subtitle 间距 0.6" → 页面收缩后仍 ≥ 0.5" |
 | T9 | 全量回归 | 373 测试 + 18 基准 + 0 warning |
 | T10 | `Theme.Background` 落盘 + 回读 | 写 `#FAFAFA` → 读回同值 |
 

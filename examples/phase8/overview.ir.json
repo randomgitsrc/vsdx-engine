@@ -1,0 +1,57 @@
+{
+  "irVersion": "1.0",
+  "id": "phase82-overview",
+  "title": "系统全景综合图",
+  "kind": "architecture",
+  "containers": [
+    { "id": "front", "label": "前端 Frontend",       "kind": "layer", "order": 2 },
+    { "id": "back",  "label": "后端 Backend",        "kind": "layer", "order": 1 },
+    { "id": "infra", "label": "基础设施 Infrastructure", "kind": "layer", "order": 0 }
+  ],
+  "nodes": [
+    { "id": "web",    "label": "Web 门户\nReact",     "role": "client",   "containerId": "front" },
+    { "id": "mobile", "label": "移动端\niOS",         "role": "client",   "containerId": "front" },
+    { "id": "api",    "label": "API 网关\nKong",      "role": "gateway",  "containerId": "back" },
+    { "id": "order",  "label": "订单服务\nOrder",     "role": "service",  "containerId": "back" },
+    { "id": "report", "label": "报表服务\nReport",    "role": "service",  "containerId": "back" },
+    { "id": "worker", "label": "异步 Worker",         "role": "service",  "containerId": "back" },
+    { "id": "pg",     "label": "PostgreSQL",          "role": "database", "containerId": "infra" },
+    { "id": "redis",  "label": "Redis 缓存",          "role": "storage",  "containerId": "infra" },
+    { "id": "kafka",  "label": "Kafka",               "role": "queue",    "containerId": "infra" },
+    { "id": "mon",    "label": "监控告警",            "role": "monitor",  "containerId": "infra" }
+  ],
+  "edges": [
+    { "id": "g1", "from": "web",    "to": "api",    "relation": "calls",     "label": "HTTPS" },
+    { "id": "g2", "from": "mobile", "to": "api",    "relation": "calls",     "label": "gRPC" },
+    { "id": "g3", "from": "api",    "to": "order",  "relation": "calls",     "label": "REST" },
+    { "id": "g4", "from": "api",    "to": "report", "relation": "calls",     "label": "REST" },
+    { "id": "g5", "from": "order",  "to": "pg",     "relation": "writes",    "label": "SQL" },
+    { "id": "g6", "from": "order",  "to": "redis",  "relation": "reads",     "label": "cache" },
+    { "id": "g7", "from": "order",  "to": "kafka",  "relation": "publishes", "label": "event" },
+    { "id": "g8", "from": "kafka",  "to": "worker", "relation": "consumes",  "label": "consume" },
+    { "id": "g9", "from": "kafka",  "to": "mon",    "relation": "depends",   "label": "metrics" }
+  ],
+  "paths": [
+    { "id": "rule", "name": "分隔线",
+      "box": { "x": 6.5, "y": 9.0, "width": 11.0, "height": 0.04 },
+      "stroke": "#BFBFBF", "strokeWidth": 0.014, "filled": false,
+      "rows": [
+        { "type": "MoveTo", "cells": { "X": "0", "Y": "0" } },
+        { "type": "LineTo", "cells": { "X": "11", "Y": "0" } }
+      ] }
+  ],
+  "textBlocks": [
+    { "id": "title", "text": "系统全景综合图", "role": "title",
+      "box": { "x": 6.5, "y": 10.0, "width": 9.0, "height": 0.6 },
+      "align": "center", "bold": true },
+    { "id": "subtitle", "text": "System Overview — 纵向切片", "role": "subtitle",
+      "box": { "x": 6.5, "y": 9.5, "width": 9.0, "height": 0.35 },
+      "align": "center" },
+    { "id": "legend", "text": "蓝 = 前端   绿 = 后端   橙 = 基础设施", "role": "legend",
+      "box": { "x": 6.5, "y": 1.2, "width": 9.0, "height": 0.35 },
+      "align": "center" },
+    { "id": "note", "text": "注：Kafka 同时承担业务事件与监控指标两路流量",
+      "role": "note", "box": { "x": 3.5, "y": 0.6, "width": 6.5, "height": 0.3 },
+      "align": "left", "italic": true }
+  ]
+}
