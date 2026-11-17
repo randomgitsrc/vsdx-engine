@@ -704,6 +704,45 @@ var fontFile = resolver.Resolve(requiresCjk, request.FontFile);
 
 **这条链是通的**，不存在"渲染器架构不支持"的障碍——纯属参数没接上。
 这与缺陷 18 的性质一致（同缺陷 15/19：管线都在，最后一跳断了）。
+
+**第 2 步「FaceName → 系统字体文件」已实测可行：**
+
+```console
+$ fc-match -f "%{file}" "Verdana"          -> /mnt/c/Windows/Fonts/verdana.ttf
+$ fc-match -f "%{file}" "Georgia"          -> /mnt/c/Windows/Fonts/georgia.ttf
+$ fc-match -f "%{file}" "Microsoft YaHei"  -> /mnt/c/Windows/Fonts/msyh.ttc
+$ fc-match -f "%{file}" "DejaVu Sans"      -> /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+```
+
+四个字体族名全部解析成功。**但 fc-match 是外部进程，不能作为运行时依赖**
+（任务书 §4 要求评估依赖）。因此实现上应：
+
+| 方案 | 说明 |
+| --- | --- |
+| **A（推荐）** | 扫描系统字体目录 + 解析字体文件内的 family name（纯 .NET，无进程） |
+| B | 调用 `fc-match`（Linux 专用，且引入进程依赖） |
+
+**A 已进一步验证可行：**
+
+```console
+$ python3 -c "读取 DejaVuSans.ttf 的 name 表"
+  name table at 680660 len 15624
+```
+
+TTF/OTF 的 `name` 表是**公开二进制格式**（tag + 偏移 + 长度），
+纯 .NET 用 `BinaryReader` 即可解析出 family name，**不需要第三方字体库**。
+
+因此 T2d 的实现链路完全打通：
+
+| 步 | 手段 | 依赖 |
+| --- | --- | --- |
+| 1 | 从 VSDX `document.xml` 读 `FaceName` | 已有 |
+| 2 | 枚举系统字体目录 | `Directory.GetFiles` |
+| 3 | 读字体文件 name 表取 family | `BinaryReader`（约 40 行） |
+| 4 | 传入 `Resolve(preferredFontFile)` | 参数已存在 |
+
+**无新依赖，无进程调用。** 若某字体文件解析失败则跳过并继续下一个候选，
+全部失败时降级并进 `unmet`（`style.font-unresolved`）。
 | T2e | TextBlock 字色/字体层级 | `color:#FF0000` 与 `font:Verdana` 回读非 null；三色三字体产出 PNG 互不相同 |
 
 **T2e 的修法只有两行移动**（已核实代码位置）：
