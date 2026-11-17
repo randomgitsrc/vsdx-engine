@@ -1,0 +1,1013 @@
+{
+  "id": "architecture",
+  "name": "企业智能分析平台架构图",
+  "pageSize": {
+    "width": 21.5,
+    "height": 11.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Platform Architecture",
+      "nameU": "Platform Architecture",
+      "visioId": 0,
+      "size": {
+        "width": 21.5,
+        "height": 11.5,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_data",
+          "name": "数据层  Data Layer",
+          "nameU": "Container",
+          "members": [
+            "postgresql",
+            "redis-cache",
+            "audit-log",
+            "data-lake",
+            "prometheus"
+          ],
+          "visioShapeId": "grp_data",
+          "bounds": {
+            "x": 12.225,
+            "y": 3.53,
+            "w": 16.55,
+            "h": 2.16
+          },
+          "style": {
+            "fill": "#FDF2E9",
+            "fillPattern": "1",
+            "stroke": "#F4B183",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        },
+        {
+          "id": "grp_services",
+          "name": "服务层  Service Layer",
+          "nameU": "Container",
+          "members": [
+            "ingest-service",
+            "query-service",
+            "report-engine",
+            "scheduler",
+            "event-bus"
+          ],
+          "visioShapeId": "grp_services",
+          "bounds": {
+            "x": 12.225,
+            "y": 6.68,
+            "w": 16.55,
+            "h": 2.06
+          },
+          "style": {
+            "fill": "#EDF7ED",
+            "fillPattern": "1",
+            "stroke": "#A9D08E",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        },
+        {
+          "id": "grp_access",
+          "name": "接入层  Access Layer",
+          "nameU": "Container",
+          "members": [
+            "web-portal",
+            "mobile-app",
+            "api-gateway",
+            "auth-service",
+            "cdn-edge"
+          ],
+          "visioShapeId": "grp_access",
+          "bounds": {
+            "x": 6.4,
+            "y": 9.0675,
+            "w": 10.5,
+            "h": 3.585
+          },
+          "style": {
+            "fill": "#EAF3FB",
+            "fillPattern": "1",
+            "stroke": "#9DC3E6",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web-portal",
+          "name": "web-portal",
+          "text": "Web 门户\nReact SPA",
+          "shape": "Rectangle",
+          "visioShapeId": "web-portal",
+          "bounds": {
+            "x": 2.6,
+            "y": 9.6,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp_access",
+          "style": {
+            "fill": "#2E75B6",
+            "fillPattern": "1",
+            "stroke": "#1F4E79",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "frontend-team",
+            "tier": "edge",
+            "sla": "99.95%"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "edge"
+          ],
+          "imported": true
+        },
+        {
+          "id": "mobile-app",
+          "name": "mobile-app",
+          "text": "移动端\niOS / Android",
+          "shape": "Rectangle",
+          "visioShapeId": "mobile-app",
+          "bounds": {
+            "x": 2.6,
+            "y": 8.05,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp_access",
+          "style": {
+            "fill": "#2E75B6",
+            "fillPattern": "1",
+            "stroke": "#1F4E79",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "mobile-team",
+            "tier": "edge"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "edge"
+          ],
+          "imported": true
+        },
+        {
+          "id": "api-gateway",
+          "name": "api-gateway",
+          "text": "API 网关\nKong",
+          "shape": "Hexagon",
+          "visioShapeId": "api-gateway",
+          "bounds": {
+            "x": 5.35,
+            "y": 9.6,
+            "w": 2.4,
+            "h": 1
+          },
+          "groupId": "grp_access",
+          "style": {
+            "fill": "#F2B705",
+            "fillPattern": "1",
+            "stroke": "#BF8F00",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#3F2E00",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "platform-team",
+            "tier": "edge",
+            "rateLimit": "10k rps"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "edge"
+          ],
+          "imported": true
+        },
+        {
+          "id": "auth-service",
+          "name": "auth-service",
+          "text": "认证服务\nOAuth2 / JWT",
+          "shape": "Rectangle",
+          "visioShapeId": "auth-service",
+          "bounds": {
+            "x": 8.1,
+            "y": 9.6,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "groupId": "grp_access",
+          "style": {
+            "fill": "#5B9BD5",
+            "fillPattern": "1",
+            "stroke": "#2E75B6",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "security-team",
+            "tier": "edge"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "edge"
+          ],
+          "imported": true
+        },
+        {
+          "id": "cdn-edge",
+          "name": "cdn-edge",
+          "text": "CDN\n边缘节点",
+          "shape": "Circle",
+          "visioShapeId": "cdn-edge",
+          "bounds": {
+            "x": 10.85,
+            "y": 9.6,
+            "w": 1,
+            "h": 1
+          },
+          "groupId": "grp_access",
+          "style": {
+            "fill": "#8FAADC",
+            "fillPattern": "1",
+            "stroke": "#2E75B6",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 10,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "infra-team",
+            "tier": "edge"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "edge"
+          ],
+          "imported": true
+        },
+        {
+          "id": "ingest-service",
+          "name": "ingest-service",
+          "text": "数据接入服务\nIngest Service",
+          "shape": "Rectangle",
+          "visioShapeId": "ingest-service",
+          "bounds": {
+            "x": 5.35,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1
+          },
+          "groupId": "grp_services",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#507E32",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "service",
+            "language": "Go"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "app"
+          ],
+          "imported": true
+        },
+        {
+          "id": "query-service",
+          "name": "query-service",
+          "text": "查询服务\nQuery Service",
+          "shape": "Rectangle",
+          "visioShapeId": "query-service",
+          "bounds": {
+            "x": 10.85,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1
+          },
+          "groupId": "grp_services",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#507E32",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "analytics-team",
+            "tier": "service",
+            "language": "C#/.NET 8"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "app"
+          ],
+          "imported": true
+        },
+        {
+          "id": "report-engine",
+          "name": "report-engine",
+          "text": "报表引擎\nReport Engine",
+          "shape": "Rectangle",
+          "visioShapeId": "report-engine",
+          "bounds": {
+            "x": 13.6,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1
+          },
+          "groupId": "grp_services",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#507E32",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "analytics-team",
+            "tier": "service",
+            "language": "Java"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "app"
+          ],
+          "imported": true
+        },
+        {
+          "id": "scheduler",
+          "name": "scheduler",
+          "text": "任务调度\nScheduler",
+          "shape": "Process",
+          "visioShapeId": "scheduler",
+          "bounds": {
+            "x": 16.35,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1
+          },
+          "groupId": "grp_services",
+          "style": {
+            "fill": "#A9D18E",
+            "fillPattern": "1",
+            "stroke": "#507E32",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#243B14",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "service"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "app"
+          ],
+          "imported": true
+        },
+        {
+          "id": "event-bus",
+          "name": "event-bus",
+          "text": "事件总线\nKafka",
+          "shape": "Parallelogram",
+          "visioShapeId": "event-bus",
+          "bounds": {
+            "x": 19.1,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1
+          },
+          "groupId": "grp_services",
+          "style": {
+            "fill": "#FFC000",
+            "fillPattern": "1",
+            "stroke": "#BF8F00",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#3F2E00",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "service",
+            "throughput": "500 MB/s"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "app"
+          ],
+          "imported": true
+        },
+        {
+          "id": "postgresql",
+          "name": "postgresql",
+          "text": "PostgreSQL\n主数据仓库",
+          "shape": "Process",
+          "visioShapeId": "postgresql",
+          "bounds": {
+            "x": 5.35,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "style": {
+            "fill": "#C55A11",
+            "fillPattern": "1",
+            "stroke": "#843C0C",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "dba-team",
+            "tier": "data",
+            "engine": "PostgreSQL 16",
+            "backup": "PITR 7d"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "data"
+          ],
+          "imported": true
+        },
+        {
+          "id": "redis-cache",
+          "name": "redis-cache",
+          "text": "Redis\n缓存",
+          "shape": "Circle",
+          "visioShapeId": "redis-cache",
+          "bounds": {
+            "x": 10.85,
+            "y": 3.3,
+            "w": 1.1,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "style": {
+            "fill": "#C00000",
+            "fillPattern": "1",
+            "stroke": "#7F0000",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 10,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "dba-team",
+            "tier": "data",
+            "engine": "Redis 7",
+            "mode": "cluster"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "data"
+          ],
+          "imported": true
+        },
+        {
+          "id": "audit-log",
+          "name": "audit-log",
+          "text": "审计存储\nAppend-only",
+          "shape": "Data",
+          "visioShapeId": "audit-log",
+          "bounds": {
+            "x": 8.1,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "style": {
+            "fill": "#ED7D31",
+            "fillPattern": "1",
+            "stroke": "#843C0C",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "security-team",
+            "tier": "data",
+            "retention": "7y"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "data"
+          ],
+          "imported": true
+        },
+        {
+          "id": "data-lake",
+          "name": "data-lake",
+          "text": "数据湖\nS3 / Parquet",
+          "shape": "Parallelogram",
+          "visioShapeId": "data-lake",
+          "bounds": {
+            "x": 13.6,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "style": {
+            "fill": "#ED7D31",
+            "fillPattern": "1",
+            "stroke": "#843C0C",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "data",
+            "retention": "3y"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "data"
+          ],
+          "imported": true
+        },
+        {
+          "id": "prometheus",
+          "name": "prometheus",
+          "text": "监控与告警\nPrometheus",
+          "shape": "Hexagon",
+          "visioShapeId": "prometheus",
+          "bounds": {
+            "x": 19.1,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "style": {
+            "fill": "#7030A0",
+            "fillPattern": "1",
+            "stroke": "#4B1F6F",
+            "strokeWidth": 0.013,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 10,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "sre-team",
+            "tier": "platform",
+            "retention": "90d"
+          },
+          "shapeDataLabels": {},
+          "layers": [
+            "data"
+          ],
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-web-gw",
+          "from": "web-portal",
+          "to": "api-gateway",
+          "kind": "straight",
+          "label": "HTTPS",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.014,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-web-gw"
+        },
+        {
+          "id": "e-mobile-gw",
+          "from": "mobile-app",
+          "to": "api-gateway",
+          "kind": "straight",
+          "label": "gRPC",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.014,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-mobile-gw"
+        },
+        {
+          "id": "e-gw-auth",
+          "from": "api-gateway",
+          "to": "auth-service",
+          "kind": "straight",
+          "label": "verify token",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-gw-auth"
+        },
+        {
+          "id": "e-auth-cdn",
+          "from": "auth-service",
+          "to": "cdn-edge",
+          "kind": "straight",
+          "label": "session",
+          "lineColor": "#999999",
+          "lineWeight": 0.01,
+          "linePattern": 2,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-auth-cdn"
+        },
+        {
+          "id": "e-gw-ingest",
+          "from": "api-gateway",
+          "to": "ingest-service",
+          "kind": "straight",
+          "label": "write API",
+          "lineColor": "#507E32",
+          "lineWeight": 0.014,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-gw-ingest"
+        },
+        {
+          "id": "e-ingest-query",
+          "from": "ingest-service",
+          "to": "query-service",
+          "kind": "rightangle",
+          "label": "dataset",
+          "lineColor": "#70AD47",
+          "lineWeight": 0.012,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "waypoints": [
+            {
+              "x": 6.45,
+              "y": 6.45
+            }
+          ],
+          "visioShapeId": "e-ingest-query"
+        },
+        {
+          "id": "e-query-report",
+          "from": "query-service",
+          "to": "report-engine",
+          "kind": "straight",
+          "label": "aggregate",
+          "lineColor": "#70AD47",
+          "lineWeight": 0.012,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-query-report"
+        },
+        {
+          "id": "e-report-sched",
+          "from": "report-engine",
+          "to": "scheduler",
+          "kind": "straight",
+          "label": "schedule",
+          "lineColor": "#70AD47",
+          "lineWeight": 0.012,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-report-sched"
+        },
+        {
+          "id": "e-sched-bus",
+          "from": "scheduler",
+          "to": "event-bus",
+          "kind": "straight",
+          "label": "publish",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-sched-bus"
+        },
+        {
+          "id": "e-ingest-pg",
+          "from": "ingest-service",
+          "to": "postgresql",
+          "kind": "straight",
+          "label": "SQL",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.014,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-ingest-pg"
+        },
+        {
+          "id": "e-query-redis",
+          "from": "query-service",
+          "to": "redis-cache",
+          "kind": "straight",
+          "label": "cache",
+          "lineColor": "#7F0000",
+          "lineWeight": 0.01,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-query-redis"
+        },
+        {
+          "id": "e-report-lake",
+          "from": "report-engine",
+          "to": "data-lake",
+          "kind": "straight",
+          "label": "Parquet",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "linePattern": 1,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-report-lake"
+        },
+        {
+          "id": "e-auth-audit",
+          "from": "auth-service",
+          "to": "audit-log",
+          "kind": "straight",
+          "label": "login event",
+          "lineColor": "#999999",
+          "lineWeight": 0.01,
+          "linePattern": 2,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-auth-audit"
+        },
+        {
+          "id": "e-bus-prom",
+          "from": "event-bus",
+          "to": "prometheus",
+          "kind": "straight",
+          "label": "metrics",
+          "lineColor": "#7030A0",
+          "lineWeight": 0.01,
+          "linePattern": 2,
+          "beginArrow": "",
+          "endArrow": "triangle",
+          "visioShapeId": "e-bus-prom"
+        }
+      ],
+      "layers": [
+        {
+          "id": "Edge Layer",
+          "name": "Edge Layer",
+          "nameU": "Edge Layer",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": []
+        },
+        {
+          "id": "Application Layer",
+          "name": "Application Layer",
+          "nameU": "Application Layer",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": []
+        },
+        {
+          "id": "Data Layer",
+          "name": "Data Layer",
+          "nameU": "Data Layer",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": []
+        },
+        {
+          "id": "edge",
+          "name": "edge",
+          "nameU": "edge",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": [
+            "web-portal",
+            "mobile-app",
+            "api-gateway",
+            "auth-service",
+            "cdn-edge"
+          ]
+        },
+        {
+          "id": "app",
+          "name": "app",
+          "nameU": "app",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": [
+            "ingest-service",
+            "query-service",
+            "report-engine",
+            "scheduler",
+            "event-bus"
+          ]
+        },
+        {
+          "id": "data",
+          "name": "data",
+          "nameU": "data",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": [
+            "postgresql",
+            "redis-cache",
+            "audit-log",
+            "data-lake",
+            "prometheus"
+          ]
+        }
+      ],
+      "unmapped": [],
+      "shapeOrder": [
+        "web-portal",
+        "mobile-app",
+        "api-gateway",
+        "auth-service",
+        "cdn-edge",
+        "ingest-service",
+        "query-service",
+        "report-engine",
+        "scheduler",
+        "event-bus",
+        "postgresql",
+        "redis-cache",
+        "audit-log",
+        "data-lake",
+        "prometheus",
+        "grp_data",
+        "grp_services",
+        "grp_access",
+        "e-web-gw",
+        "e-mobile-gw",
+        "e-gw-auth",
+        "e-auth-cdn",
+        "e-gw-ingest",
+        "e-ingest-query",
+        "e-query-report",
+        "e-report-sched",
+        "e-sched-bus",
+        "e-ingest-pg",
+        "e-query-redis",
+        "e-report-lake",
+        "e-auth-audit",
+        "e-bus-prom"
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-17T05:19:10.5215287+00:00",
+    "modified": "2026-11-17T05:19:10.5505002+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/demo/architecture.vsdx",
+    "sourceHash": "57470851520f8fa977c9fdb68b5bdc275beb71b89b75c919d253205d203647cd",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-17T05:19:10.5531889+00:00",
+        "action": "create",
+        "target": "architecture.vsdx",
+        "detail": "pages=1, nodes=15, edges=14",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Vsdx.Engine</RootNamespace>
+    <AssemblyName>Vsdx.Engine</AssemblyName>
+    <Description>High-level VSDX create/read/edit/render orchestration.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Vsdx.Model\Vsdx.Model.csproj" />
+    <ProjectReference Include="..\Vsdx.Adapters\Vsdx.Adapters.csproj" />
+    <ProjectReference Include="..\Vsdx.Renderer\Vsdx.Renderer.csproj" />
+    <ProjectReference Include="..\Vsdx.Validator\Vsdx.Validator.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-vsdx/schemas/diagram.schema.json",
+  "title": "Agent VSDX Engine diagram model",
+  "description": "Backend-neutral JSON description of a Visio (.vsdx) diagram. VSDX is the deliverable; this model is the editable intermediate an agent works with.",
+  "type": "object",
+  "required": ["pages"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "description": "Stable diagram identifier (not a Visio id)." },
+    "name": { "type": "string" },
+    "type": {
+      "type": "string",
+      "description": "Diagram family hint used by the skill and by quality checks.",
+      "enum": ["architecture", "microservices", "workflow", "network", "generic"]
+    },
+    "modelVersion": { "type": "string", "default": "1.0" },
+    "pageSize": { "$ref": "#/$defs/pageSize" },
+    "orientation": { "type": "string", "enum": ["landscape", "portrait"] },
+    "background": { "type": "string", "description": "#RRGGBB or 'transparent'." },
+    "style": { "$ref": "#/$defs/diagramStyle" },
+    "metadata": { "$ref": "#/$defs/metadata" },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/page" }
+    }
+  },
+  "$defs": {
+    "pageSize": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0, "default": 11 },
+        "height": { "type": "number", "exclusiveMinimum": 0, "default": 8.5 },
+        "unit": { "type": "string", "enum": ["inches", "cm", "mm", "points"], "default": "inches" }
+      }
+    },
+    "diagramStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "font": { "type": "string" },
+        "fontSize": { "type": "number", "minimum": 4, "maximum": 96 },
+        "palette": { "type": "string" },
+        "gridSize": { "type": "number", "exclusiveMinimum": 0 },
+        "snapToGrid": { "type": "boolean" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "created": { "type": "string", "format": "date-time" },
+        "modified": { "type": "string", "format": "date-time" },
+        "modelVersion": { "type": "string" },
+        "sourceFile": { "type": "string" },
+        "sourceHash": { "type": "string" },
+        "backend": { "type": "string" },
+        "backendVersion": { "type": "string" },
+        "generator": { "type": "string" },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "at": { "type": "string", "format": "date-time" },
+              "action": { "type": "string" },
+              "target": { "type": "string" },
+              "detail": { "type": "string" },
+              "tool": { "type": "string" }
+            }
+          }
+        },
+        "extra": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nameU": { "type": "string" },
+        "visioId": { "type": "integer", "minimum": 0 },
+        "size": { "$ref": "#/$defs/pageSize" },
+        "background": { "type": "string" },
+        "groups": { "type": "array", "items": { "$ref": "#/$defs/group" } },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+        "layers": { "type": "array", "items": { "$ref": "#/$defs/layer" } },
+        "unmapped": { "type": "array", "items": { "$ref": "#/$defs/unmapped" } },
+        "shapeOrder": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "group": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nameU": { "type": "string" },
+        "kind": { "type": "string", "enum": ["container", "group"], "default": "container" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "parentId": { "type": "string" },
+        "visioShapeId": { "type": "string" },
+        "bounds": { "$ref": "#/$defs/bounds" },
+        "style": { "$ref": "#/$defs/shapeStyle" },
+        "autoSize": { "type": "boolean", "default": true },
+        "layers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "bounds"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "description": "Stable agent-facing identifier; preserved across edits." },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "text": { "type": "string" },
+        "shape": {
+          "type": "string",
+          "description": "Visio master name or an alias understood by MasterCatalog.",
+          "examples": ["Rectangle", "rounded", "Circle", "Diamond", "Process", "Hexagon", "data", "Text"]
+        },
+        "visioShapeId": { "type": "string", "description": "Existing Visio shape id; pins a rename to the same shape." },
+        "bounds": { "$ref": "#/$defs/bounds" },
+        "groupId": { "type": "string" },
+        "style": { "$ref": "#/$defs/shapeStyle" },
+        "shapeData": { "type": "object", "additionalProperties": { "type": "string" } },
+        "shapeDataLabels": { "type": "object", "additionalProperties": { "type": "string" } },
+        "layers": { "type": "array", "items": { "type": "string" } },
+        "hyperlink": { "type": "string" },
+        "nativeCells": { "type": "object", "additionalProperties": { "type": "string" } },
+        "angle": { "type": "number" },
+        "imported": { "type": "boolean" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "fromPort": { "type": "string", "enum": ["left", "right", "top", "bottom", "auto"] },
+        "toPort": { "type": "string", "enum": ["left", "right", "top", "bottom", "auto"] },
+        "kind": { "type": "string", "enum": ["straight", "rightAngle", "curved", "dynamic"], "default": "straight" },
+        "label": { "type": "string" },
+        "labelPosition": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 },
+        "lineColor": { "type": "string" },
+        "lineWeight": { "type": "number", "minimum": 0 },
+        "linePattern": { "type": "integer", "minimum": 0 },
+        "beginArrow": { "type": "string", "enum": ["none", "arrow", "triangle"] },
+        "endArrow": { "type": "string", "enum": ["none", "arrow", "triangle"] },
+        "fromPoint": { "$ref": "#/$defs/point" },
+        "toPoint": { "$ref": "#/$defs/point" },
+        "waypoints": { "type": "array", "items": { "$ref": "#/$defs/point" } },
+        "visioShapeId": { "type": "string" },
+        "groupId": { "type": "string" },
+        "layers": { "type": "array", "items": { "type": "string" } },
+        "shapeData": { "type": "object", "additionalProperties": { "type": "string" } },
+        "labelFont": { "type": "string" },
+        "labelColor": { "type": "string" },
+        "labelFontSize": { "type": "number" }
+      },
+      "anyOf": [
+        { "required": ["from", "to"] },
+        { "required": ["fromPoint", "toPoint"] }
+      ]
+    },
+    "layer": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nameU": { "type": "string" },
+        "visible": { "type": "boolean", "default": true },
+        "locked": { "type": "boolean", "default": false },
+        "print": { "type": "boolean", "default": true },
+        "members": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "unmapped": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "visioShapeId": { "type": "string" },
+        "masterNameU": { "type": "string" },
+        "reason": { "type": "string" },
+        "rawXml": { "type": "string" },
+        "preserved": { "type": "boolean" }
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "required": ["x", "y", "w", "h"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "description": "Centre X in page units." },
+        "y": { "type": "number", "description": "Centre Y in page units; the origin is the page's bottom-left." },
+        "w": { "type": "number", "exclusiveMinimum": 0 },
+        "h": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "additionalProperties": false,
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+    },
+    "shapeStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fill": { "type": "string", "description": "#RRGGBB, rgb(...), or a CSS colour name." },
+        "fillPattern": { "type": "string" },
+        "stroke": { "type": "string" },
+        "strokeWidth": { "type": "number", "minimum": 0 },
+        "strokePattern": { "type": "integer", "minimum": 0 },
+        "textColor": { "type": "string" },
+        "font": { "type": "string" },
+        "fontSize": { "type": "number", "minimum": 4, "maximum": 96 },
+        "bold": { "type": "boolean" },
+        "italic": { "type": "boolean" },
+        "hAlign": { "type": "string", "enum": ["left", "center", "right"] },
+        "vAlign": { "type": "string", "enum": ["top", "middle", "bottom"] },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "shadow": { "type": "boolean" },
+        "radius": { "type": "number", "minimum": 0 },
+        "lineJoin": { "type": "string" },
+        "paddingX": { "type": "number", "minimum": 0 },
+        "headingHeight": { "type": "number", "minimum": 0 },
+        "paddingBottom": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

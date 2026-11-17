@@ -1,0 +1,673 @@
+{
+  "id": "enterprise-analytics-platform",
+  "name": "企业智能分析平台架构图",
+  "type": "architecture",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 21.5,
+    "height": 11.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 11,
+    "palette": "enterprise",
+    "gridSize": 0.25,
+    "snapToGrid": true
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Platform Architecture",
+      "size": {
+        "width": 21.5,
+        "height": 11.5,
+        "unit": "inches"
+      },
+      "layers": [
+        {
+          "id": "edge",
+          "name": "Edge Layer",
+          "visible": true
+        },
+        {
+          "id": "app",
+          "name": "Application Layer",
+          "visible": true
+        },
+        {
+          "id": "data",
+          "name": "Data Layer",
+          "visible": true
+        }
+      ],
+      "groups": [
+        {
+          "id": "grp_access",
+          "name": "接入层  Access Layer",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_services",
+          "name": "服务层  Service Layer",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_data",
+          "name": "数据层  Data Layer",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "fontSize": 12,
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web-portal",
+          "name": "web-portal",
+          "type": "edge",
+          "text": "Web 门户\nReact SPA",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 9.6,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp_access",
+          "layers": [
+            "edge"
+          ],
+          "style": {
+            "fill": "#2E75B6",
+            "stroke": "#1F4E79",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "frontend-team",
+            "tier": "edge",
+            "sla": "99.95%"
+          }
+        },
+        {
+          "id": "mobile-app",
+          "name": "mobile-app",
+          "type": "edge",
+          "text": "移动端\niOS / Android",
+          "shape": "rounded",
+          "bounds": {
+            "x": 2.6,
+            "y": 8.05,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp_access",
+          "layers": [
+            "edge"
+          ],
+          "style": {
+            "fill": "#2E75B6",
+            "stroke": "#1F4E79",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "mobile-team",
+            "tier": "edge"
+          }
+        },
+        {
+          "id": "api-gateway",
+          "name": "api-gateway",
+          "type": "edge",
+          "text": "API 网关\nKong",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 5.35,
+            "y": 9.6,
+            "w": 2.4,
+            "h": 1.0
+          },
+          "groupId": "grp_access",
+          "layers": [
+            "edge"
+          ],
+          "style": {
+            "fill": "#F2B705",
+            "stroke": "#BF8F00",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "platform-team",
+            "tier": "edge",
+            "rateLimit": "10k rps"
+          }
+        },
+        {
+          "id": "auth-service",
+          "name": "auth-service",
+          "type": "edge",
+          "text": "认证服务\nOAuth2 / JWT",
+          "shape": "rounded",
+          "bounds": {
+            "x": 8.1,
+            "y": 9.6,
+            "w": 2.2,
+            "h": 0.95
+          },
+          "groupId": "grp_access",
+          "layers": [
+            "edge"
+          ],
+          "style": {
+            "fill": "#5B9BD5",
+            "stroke": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "security-team",
+            "tier": "edge"
+          }
+        },
+        {
+          "id": "cdn-edge",
+          "name": "cdn-edge",
+          "type": "edge",
+          "text": "CDN\n边缘节点",
+          "shape": "circle",
+          "bounds": {
+            "x": 10.85,
+            "y": 9.6,
+            "w": 1.15,
+            "h": 1.0
+          },
+          "groupId": "grp_access",
+          "layers": [
+            "edge"
+          ],
+          "style": {
+            "fill": "#8FAADC",
+            "stroke": "#2E75B6",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": false
+          },
+          "shapeData": {
+            "owner": "infra-team",
+            "tier": "edge"
+          }
+        },
+        {
+          "id": "ingest-service",
+          "name": "ingest-service",
+          "type": "service",
+          "text": "数据接入服务\nIngest Service",
+          "shape": "rounded",
+          "bounds": {
+            "x": 5.35,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1.0
+          },
+          "groupId": "grp_services",
+          "layers": [
+            "app"
+          ],
+          "style": {
+            "fill": "#70AD47",
+            "stroke": "#507E32",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "service",
+            "language": "Go"
+          }
+        },
+        {
+          "id": "query-service",
+          "name": "query-service",
+          "type": "service",
+          "text": "查询服务\nQuery Service",
+          "shape": "rounded",
+          "bounds": {
+            "x": 10.85,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1.0
+          },
+          "groupId": "grp_services",
+          "layers": [
+            "app"
+          ],
+          "style": {
+            "fill": "#70AD47",
+            "stroke": "#507E32",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "analytics-team",
+            "tier": "service",
+            "language": "C#/.NET 8"
+          }
+        },
+        {
+          "id": "report-engine",
+          "name": "report-engine",
+          "type": "service",
+          "text": "报表引擎\nReport Engine",
+          "shape": "rounded",
+          "bounds": {
+            "x": 13.6,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1.0
+          },
+          "groupId": "grp_services",
+          "layers": [
+            "app"
+          ],
+          "style": {
+            "fill": "#70AD47",
+            "stroke": "#507E32",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "analytics-team",
+            "tier": "service",
+            "language": "Java"
+          }
+        },
+        {
+          "id": "scheduler",
+          "name": "scheduler",
+          "type": "service",
+          "text": "任务调度\nScheduler",
+          "shape": "process",
+          "bounds": {
+            "x": 16.35,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1.0
+          },
+          "groupId": "grp_services",
+          "layers": [
+            "app"
+          ],
+          "style": {
+            "fill": "#A9D18E",
+            "stroke": "#507E32",
+            "textColor": "#243B14",
+            "fontSize": 11,
+            "bold": false
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "service"
+          }
+        },
+        {
+          "id": "event-bus",
+          "name": "event-bus",
+          "type": "service",
+          "text": "事件总线\nKafka",
+          "shape": "parallelogram",
+          "bounds": {
+            "x": 19.1,
+            "y": 6.45,
+            "w": 2.2,
+            "h": 1.0
+          },
+          "groupId": "grp_services",
+          "layers": [
+            "app"
+          ],
+          "style": {
+            "fill": "#FFC000",
+            "stroke": "#BF8F00",
+            "textColor": "#3F2E00",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "service",
+            "throughput": "500 MB/s"
+          }
+        },
+        {
+          "id": "postgresql",
+          "name": "postgresql",
+          "type": "data",
+          "text": "PostgreSQL\n主数据仓库",
+          "shape": "process",
+          "bounds": {
+            "x": 5.35,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "layers": [
+            "data"
+          ],
+          "style": {
+            "fill": "#C55A11",
+            "stroke": "#843C0C",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "dba-team",
+            "tier": "data",
+            "engine": "PostgreSQL 16",
+            "backup": "PITR 7d"
+          }
+        },
+        {
+          "id": "redis-cache",
+          "name": "redis-cache",
+          "type": "data",
+          "text": "Redis\n缓存",
+          "shape": "circle",
+          "bounds": {
+            "x": 10.85,
+            "y": 3.3,
+            "w": 1.1,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "layers": [
+            "data"
+          ],
+          "style": {
+            "fill": "#C00000",
+            "stroke": "#7F0000",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": false
+          },
+          "shapeData": {
+            "owner": "dba-team",
+            "tier": "data",
+            "engine": "Redis 7",
+            "mode": "cluster"
+          }
+        },
+        {
+          "id": "audit-log",
+          "name": "audit-log",
+          "type": "data",
+          "text": "审计存储\nAppend-only",
+          "shape": "data",
+          "bounds": {
+            "x": 8.1,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "layers": [
+            "data"
+          ],
+          "style": {
+            "fill": "#ED7D31",
+            "stroke": "#843C0C",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "security-team",
+            "tier": "data",
+            "retention": "7y"
+          }
+        },
+        {
+          "id": "data-lake",
+          "name": "data-lake",
+          "type": "data",
+          "text": "数据湖\nS3 / Parquet",
+          "shape": "parallelogram",
+          "bounds": {
+            "x": 13.6,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "layers": [
+            "data"
+          ],
+          "style": {
+            "fill": "#ED7D31",
+            "stroke": "#843C0C",
+            "textColor": "#FFFFFF",
+            "fontSize": 11,
+            "bold": true
+          },
+          "shapeData": {
+            "owner": "data-platform",
+            "tier": "data",
+            "retention": "3y"
+          }
+        },
+        {
+          "id": "prometheus",
+          "name": "prometheus",
+          "type": "platform",
+          "text": "监控与告警\nPrometheus",
+          "shape": "hexagon",
+          "bounds": {
+            "x": 19.1,
+            "y": 3.3,
+            "w": 2.2,
+            "h": 1.1
+          },
+          "groupId": "grp_data",
+          "layers": [
+            "data"
+          ],
+          "style": {
+            "fill": "#7030A0",
+            "stroke": "#4B1F6F",
+            "textColor": "#FFFFFF",
+            "fontSize": 10,
+            "bold": false
+          },
+          "shapeData": {
+            "owner": "sre-team",
+            "tier": "platform",
+            "retention": "90d"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-web-gw",
+          "from": "web-portal",
+          "to": "api-gateway",
+          "kind": "straight",
+          "label": "HTTPS",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.014,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-mobile-gw",
+          "from": "mobile-app",
+          "to": "api-gateway",
+          "kind": "straight",
+          "label": "gRPC",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.014,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-gw-auth",
+          "from": "api-gateway",
+          "to": "auth-service",
+          "kind": "straight",
+          "label": "verify token",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-auth-cdn",
+          "from": "auth-service",
+          "to": "cdn-edge",
+          "kind": "straight",
+          "label": "session",
+          "lineColor": "#999999",
+          "lineWeight": 0.01,
+          "endArrow": "triangle",
+          "linePattern": 2
+        },
+        {
+          "id": "e-gw-ingest",
+          "from": "api-gateway",
+          "to": "ingest-service",
+          "kind": "straight",
+          "label": "write API",
+          "lineColor": "#507E32",
+          "lineWeight": 0.014,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-ingest-query",
+          "from": "ingest-service",
+          "to": "query-service",
+          "kind": "rightAngle",
+          "label": "dataset",
+          "lineColor": "#70AD47",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-query-report",
+          "from": "query-service",
+          "to": "report-engine",
+          "kind": "straight",
+          "label": "aggregate",
+          "lineColor": "#70AD47",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-report-sched",
+          "from": "report-engine",
+          "to": "scheduler",
+          "kind": "straight",
+          "label": "schedule",
+          "lineColor": "#70AD47",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-sched-bus",
+          "from": "scheduler",
+          "to": "event-bus",
+          "kind": "straight",
+          "label": "publish",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-ingest-pg",
+          "from": "ingest-service",
+          "to": "postgresql",
+          "kind": "straight",
+          "label": "SQL",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.014,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-query-redis",
+          "from": "query-service",
+          "to": "redis-cache",
+          "kind": "straight",
+          "label": "cache",
+          "lineColor": "#7F0000",
+          "lineWeight": 0.01,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-report-lake",
+          "from": "report-engine",
+          "to": "data-lake",
+          "kind": "straight",
+          "label": "Parquet",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.012,
+          "endArrow": "triangle"
+        },
+        {
+          "id": "e-auth-audit",
+          "from": "auth-service",
+          "to": "audit-log",
+          "kind": "straight",
+          "label": "login event",
+          "lineColor": "#999999",
+          "lineWeight": 0.01,
+          "endArrow": "triangle",
+          "linePattern": 2,
+          "labelPosition": 0.18
+        },
+        {
+          "id": "e-bus-prom",
+          "from": "event-bus",
+          "to": "prometheus",
+          "kind": "straight",
+          "label": "metrics",
+          "lineColor": "#7030A0",
+          "lineWeight": 0.01,
+          "endArrow": "triangle",
+          "linePattern": 2
+        }
+      ]
+    }
+  ]
+}

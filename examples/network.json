@@ -1,0 +1,121 @@
+{
+  "id": "datacenter-network-topology",
+  "name": "数据中心网络拓扑",
+  "type": "network",
+  "modelVersion": "1.0",
+  "pageSize": { "width": 15.0, "height": 10.5, "unit": "inches" },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": { "font": "Microsoft YaHei", "fontSize": 10 },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Network Topology",
+      "size": { "width": 15.0, "height": 10.5, "unit": "inches" },
+      "groups": [
+        {
+          "id": "grp_edge",
+          "name": "边缘区  Edge Zone",
+          "kind": "container",
+          "autoSize": true,
+          "style": { "fill": "#FDF2E9", "stroke": "#F4B183", "textColor": "#833C0B", "bold": true, "hAlign": "left" }
+        },
+        {
+          "id": "grp_core",
+          "name": "核心区  Core Zone",
+          "kind": "container",
+          "autoSize": true,
+          "style": { "fill": "#EAF3FB", "stroke": "#9DC3E6", "textColor": "#1F4E79", "bold": true, "hAlign": "left" }
+        },
+        {
+          "id": "grp_secure",
+          "name": "安全域  Security Zone",
+          "kind": "container",
+          "autoSize": true,
+          "style": { "fill": "#F2E9F7", "stroke": "#C5A3D9", "textColor": "#4B1F6F", "bold": true, "hAlign": "left" }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "internet", "text": "互联网\nInternet", "shape": "cloud",
+          "bounds": { "x": 2.4, "y": 8.7, "w": 2.0, "h": 1.0 },
+          "groupId": "grp_edge",
+          "style": { "fill": "#D3D3D3", "stroke": "#808080", "textColor": "#111111" }
+        },
+        {
+          "id": "fw", "text": "防火墙\nFirewall", "shape": "hexagon",
+          "bounds": { "x": 5.6, "y": 8.7, "w": 2.0, "h": 1.0 },
+          "groupId": "grp_edge",
+          "style": { "fill": "#C00000", "stroke": "#7F0000", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "lb", "text": "负载均衡\nLoad balancer", "shape": "process",
+          "bounds": { "x": 8.8, "y": 8.7, "w": 2.2, "h": 1.0 },
+          "groupId": "grp_edge",
+          "style": { "fill": "#ED7D31", "stroke": "#843C0C", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "core-sw", "text": "核心交换机\nCore switch", "shape": "process",
+          "bounds": { "x": 5.6, "y": 5.9, "w": 2.2, "h": 1.0 },
+          "groupId": "grp_core",
+          "style": { "fill": "#2E75B6", "stroke": "#1F4E79", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "dmz-sw", "text": "DMZ 交换机", "shape": "process",
+          "bounds": { "x": 2.4, "y": 5.9, "w": 2.2, "h": 1.0 },
+          "groupId": "grp_core",
+          "style": { "fill": "#5B9BD5", "stroke": "#2E75B6", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "app-sw", "text": "应用区交换机", "shape": "process",
+          "bounds": { "x": 8.8, "y": 5.9, "w": 2.4, "h": 1.0 },
+          "groupId": "grp_core",
+          "style": { "fill": "#5B9BD5", "stroke": "#2E75B6", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "ids", "text": "入侵检测\nIDS", "shape": "hexagon",
+          "bounds": { "x": 12.1, "y": 5.9, "w": 2.0, "h": 1.0 },
+          "groupId": "grp_secure",
+          "style": { "fill": "#7030A0", "stroke": "#4B1F6F", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "app-a", "text": "应用服务器 A\n10.20.1.11", "shape": "rectangle",
+          "bounds": { "x": 2.4, "y": 3.1, "w": 2.4, "h": 0.95 },
+          "groupId": "grp_core",
+          "style": { "fill": "#70AD47", "stroke": "#507E32", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "app-b", "text": "应用服务器 B\n10.20.1.12", "shape": "rectangle",
+          "bounds": { "x": 5.6, "y": 3.1, "w": 2.4, "h": 0.95 },
+          "groupId": "grp_core",
+          "style": { "fill": "#70AD47", "stroke": "#507E32", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "db", "text": "数据库集群\n10.20.2.0/24", "shape": "process",
+          "bounds": { "x": 8.8, "y": 3.1, "w": 2.4, "h": 0.95 },
+          "groupId": "grp_core",
+          "style": { "fill": "#C55A11", "stroke": "#843C0C", "textColor": "#FFFFFF" }
+        },
+        {
+          "id": "backup", "text": "备份存储\nOffsite", "shape": "data",
+          "bounds": { "x": 12.1, "y": 3.1, "w": 2.2, "h": 0.95 },
+          "groupId": "grp_secure",
+          "style": { "fill": "#808080", "stroke": "#4D4D4D", "textColor": "#FFFFFF" }
+        }
+      ],
+      "edges": [
+        { "id": "n1", "from": "internet", "to": "fw", "kind": "straight", "label": "WAN", "endArrow": "triangle", "lineColor": "#808080" },
+        { "id": "n2", "from": "fw", "to": "lb", "kind": "straight", "label": "DMZ", "endArrow": "triangle", "lineColor": "#C00000" },
+        { "id": "n3", "from": "lb", "to": "app-sw", "kind": "straight", "label": "10G", "endArrow": "triangle", "lineColor": "#2E75B6", "fromPort": "bottom", "toPort": "top" },
+        { "id": "n4", "from": "fw", "to": "core-sw", "kind": "straight", "label": "trunk", "endArrow": "triangle", "lineColor": "#2E75B6", "fromPort": "bottom", "toPort": "top" },
+        { "id": "n5", "from": "core-sw", "to": "dmz-sw", "kind": "straight", "endArrow": "triangle", "lineColor": "#2E75B6" },
+        { "id": "n6", "from": "core-sw", "to": "app-sw", "kind": "straight", "endArrow": "triangle", "lineColor": "#2E75B6" },
+        { "id": "n7", "from": "app-sw", "to": "ids", "kind": "straight", "label": "镜像 mirror", "endArrow": "triangle", "lineColor": "#7030A0", "linePattern": 2 },
+        { "id": "n8", "from": "dmz-sw", "to": "app-a", "kind": "straight", "label": "VLAN 20", "endArrow": "triangle", "lineColor": "#507E32", "fromPort": "bottom", "toPort": "top" },
+        { "id": "n9", "from": "core-sw", "to": "app-b", "kind": "straight", "label": "VLAN 21", "endArrow": "triangle", "lineColor": "#507E32", "fromPort": "bottom", "toPort": "top" },
+        { "id": "n10", "from": "app-sw", "to": "db", "kind": "straight", "label": "VLAN 30", "endArrow": "triangle", "lineColor": "#843C0C", "fromPort": "bottom", "toPort": "top" },
+        { "id": "n11", "from": "ids", "to": "backup", "kind": "straight", "label": "syslog", "endArrow": "triangle", "lineColor": "#999999", "linePattern": 2, "fromPort": "bottom", "toPort": "top" }
+      ]
+    }
+  ]
+}

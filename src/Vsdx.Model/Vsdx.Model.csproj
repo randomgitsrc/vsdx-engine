@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Vsdx.Model</RootNamespace>
+    <AssemblyName>Vsdx.Model</AssemblyName>
+    <Description>Backend-neutral JSON diagram model for VSDX.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.IO.Packaging" />
+  </ItemGroup>
+</Project>

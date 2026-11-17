@@ -1,0 +1,167 @@
+# 已知限制与验收边界
+
+> 本文档明确区分**已验证**与**未验证**的能力，并列出不能依赖的行为。
+> 与 `docs/technical-validation.md` 的实测记录配套阅读。
+
+---
+
+## 1. 验证状态
+
+| 层级 | 手段 | 状态 |
+| --- | --- | --- |
+| 文件结构 | ZIP / OPC / XML / Visio 语义逐项检查 | ✅ 通过 |
+| 后端重载 | OfficeIMO.Visio 重新加载并比对结构 | ✅ 通过 |
+| 第三方渲染 | 由 VSDX 渲染 SVG / PNG，人工目视 | ✅ 通过 |
+| **Microsoft Visio 原生打开** | 真实 Visio 应用打开并编辑 | ⬜ **未执行** |
+
+**前三项不能替代第四项。** 本环境未安装 Visio，因此不对"Visio 中完全正确"作任何断言。
+
+---
+
+## 2. 后端限制（OfficeIMO.Visio 3.6.1）
+
+| 编号 | 限制 | 表现 | 本项目的处置 |
+| --- | --- | --- | --- |
+| L1 | `VsdxPackageValidator` 对 `pages.xml` 误报；`FixFile` 会写入重复 content type | `ValidateFile` 对合法包返回 False | 不使用该验证器；`VsdxPackageValidatorService` 替代，并显式检测重复声明 |
+| L2 | PNG 缺省字体无 CJK 覆盖 | 中文渲染成 `□` | `FontResolver` 自动注入字体文件；找不到时给 `render.cjk-no-font` 警告 |
+| L3 | `AddToContainer` 默认按成员重算容器包围盒 | 显式 bounds 被覆盖，色带错位 | 传 `AutoResize=false`；`DiagramLayout.Apply` 在模型层先算一致 bounds |
+| L4 | `VisioConnector.From/To` 为 `internal set` | 直接赋值编译失败 | 统一用 `VisioPage.ReconnectConnector` |
+| L5 | 无稳定 ID 概念 | 重命名变成删除+新增 | 写入 `User.VsdxModelId` 单元格，读取时恢复 |
+| L6 | 无自定义文档属性 API | 模型历史无处存放 | `VisioMetadataBridge` 后置 patch `docProps/custom.xml` |
+| L7 | 嵌套组按兄弟容器写入 | Visio 内非真正层级嵌套 | 保留 `ParentId` 并发出 `write.nested-group` 警告；渲染与结构正确 |
+| L8 | 连接线路由为直线/折线近似 | 密集区域可能穿过节点 | `OrthogonalRouter` 自动避障；`check-layout` 检出残留问题 |
+
+---
+
+## 3. 模型表达能力限制
+
+JSON 模型**不是** VSDX 的等价表示。以下内容无法完整映射：
+
+| Visio 特性 | 状态 |
+| --- | --- |
+| 自定义 Geometry 段（手绘轮廓） | 保留原始几何（`PreservedGeometrySections`），但不进入 JSON 模型 |
+| 主题 / StyleSheet 引用 | 包级主题部分保留；模型只用显式样式 |
+| Data Graphics、注释、签名 | 保留在包内，模型不建模 |
+| 动态连接线的高级路由参数 | 仅建模 `kind` / `waypoints` |
+| 保护的 ShapeSheet 单元格 | 保留，模型不暴露 |
+| 宏（.vsdm） | 不在范围内 |
+
+**原则**：无法映射的内容在包中**保留原样**，并在兼容性报告中说明；不会静默丢弃。
+但"保留"不等于"可通过 JSON 编辑"。
+
+`Page.Unmapped` 用于记录结构上识别到、但无法归一化的对象。
+
+---
+
+## 4. 渲染限制
+
+- 渲染基于 OfficeIMO 的几何投影，**不是** Visio 渲染引擎，复杂效果（渐变、阴影、
+  主题色、Data Graphics）可能与 Visio 有差异
+- 文字度量使用估算模型，极端字距/字体的换行位置可能与 Visio 不同
+- 连线标签避让是启发式的，`--no-text` 可用于只关心几何的场景
+- PNG 需要 CJK 字体文件；SVG 不需要
+
+---
+
+## 5. 增量更新限制
+
+- 仅支持修改：节点增删改、属性、样式、Shape Data、连接线增删改、分组、图层、页面尺寸
+- **不支持**在保留原文件其它内容的前提下修改：母版定义、主题、页面模板
+- `--delete-missing` 会删除模型中不存在的对象；不加此参数时保留并报告
+- 嵌套组层级会扁平化（L7）
+
+---
+
+## 6. 未实现（第一阶段范围外）
+
+| 功能 | 状态 |
+| --- | --- |
+| Word OLE 嵌入 / 提取 / 更新 | 未实现，接口已预留（`docs/architecture.md` 第 10 节） |
+| Microsoft Visio COM 自动化 | 未实现，且不作为运行时依赖 |
+| GUI 图形编辑器 | 未实现 |
+| 在线渲染服务 | 未实现，且不作为核心依赖 |
+| 从图片/自然语言直接生成图形 | 由 Agent + Skill 完成，不在工具内 |
+
+---
+
+## 7. Microsoft Visio 验收清单（待外部环境执行）
+
+在装有 Visio 的 Windows 机器上，按序执行并记录结果：
+
+### 7.1 打开与结构
+
+- [ ] 双击 `demo/architecture.vsdx`，Visio 无修复提示地打开
+- [ ] 页面显示三个分层容器，标题在容器左上角，**未遮挡**成员形状
+- [ ] 15 个节点全部可见，形状类型与设计一致（矩形/六边形/圆形/平行四边形…）
+- [ ] 打开"形状数据"窗口，能看到 `owner` / `tier` / `sla` 等自定义属性
+
+### 7.2 交互编辑
+
+- [ ] 拖动一个节点，容器不破裂、连线跟随
+- [ ] 双击节点可编辑文字，中文正常显示与输入
+- [ ] 选中容器可整体移动，成员随之移动
+- [ ] 图层面板可见 `Edge Layer` / `Application Layer` / `Data Layer`
+
+### 7.3 连接线
+
+- [ ] 每条连线的两端粘附在形状连接点上（拖动形状时线保持连接）
+- [ ] 箭头方向与设计一致
+- [ ] 虚线样式（`linePattern: 2`）在 Visio 中显示为虚线
+- [ ] 连线标签可见且未压在形状上
+
+### 7.4 保存回环
+
+- [ ] 在 Visio 中另存为后，`vsdx-tool export-model` 仍能读取
+- [ ] 在 Visio 中修改一个节点的文字并保存，`vsdx-tool diff` 能检出该修改
+- [ ] 用 `vsdx-tool update` 在 Visio 保存过的文件上继续增量修改，Visio 再次打开无异常
+
+### 7.5 中文
+
+- [ ] 中文节点文字无缺字、无乱码
+- [ ] 字体显示为 `Microsoft YaHei`（或系统等效字体）
+
+### 7.6 v2 版本
+
+- [ ] `demo/architecture_v2.vsdx` 打开正常，"Analytics Service" 已改名
+- [ ] "Audit Service" 存在且连接到 PostgreSQL
+- [ ] 未修改节点的位置、颜色与 v1 一致
+
+### 7.7 结果记录
+
+| 检查项 | 结果 | 备注 |
+| --- | --- | --- |
+| 7.1 打开与结构 | ⬜ | |
+| 7.2 交互编辑 | ⬜ | |
+| 7.3 连接线 | ⬜ | |
+| 7.4 保存回环 | ⬜ | |
+| 7.5 中文 | ⬜ | |
+| 7.6 v2 | ⬜ | |
+
+若任一项失败，请把失败的 `.vsdx` 与操作步骤记录到 issue，并在
+`docs/technical-validation.md` 中更新结论。
+
+---
+
+## 8. 兼容性报告代码
+
+引擎在 `--json` 输出的 `compatibility.issues[].code` 中给出如下代码：
+
+| Code | 含义 |
+| --- | --- |
+| `read.shape-no-master` | 形状无母版，编辑后几何可能不可靠 |
+| `read.master-external` | 包级母版无法通过标准模型编辑，但已保留 |
+| `read.edge-dangling` | 连接线端点指向未知形状 |
+| `read.container-empty` | 容器无可枚举成员 |
+| `read.no-nodes` | 页面有形状但无一能映射为节点 |
+| `write.master-unknown` | 未知 shape 类型，回退为 Rectangle |
+| `write.group-bounds` | 组既无 bounds 也无成员可推导 |
+| `write.nested-group` | 嵌套组按兄弟容器写入（L7） |
+| `write.container-attach` | 成员未能加入容器 |
+| `write.edge-*` | 连线端缺失或写入失败 |
+| `update.retained-unmodelled` | 包内对象不在模型中，已保留 |
+| `update.matched-by-text` | 通过文本匹配到形状 |
+| `render.cjk-no-font` | 含中文但未找到 CJK 字体 |
+| `render.page-not-found` | 指定页面不存在 |
+| `post-save.*` | 保存后校验发现的问题 |
+
+**Agent 必须把这些代码透传给用户**，不得吞掉。

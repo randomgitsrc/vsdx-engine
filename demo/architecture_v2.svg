@@ -1,0 +1,262 @@
+<svg width="2151" height="1152" viewBox="0 0 2150.4 1152" role="img" aria-label="Platform Architecture" xmlns="http://www.w3.org/2000/svg">
+  <g data-officeimo-visio-page="Platform Architecture">
+    <g data-visio-shape-id="grp_data" data-visio-nameu="Container">
+      <path d="M 393.6 916.8 L 1982.4 916.8 L 1982.4 709.44 L 393.6 709.44 Z" data-officeimo-preserved-geometry="true" fill="#FDF2E9" stroke="#F4B183" stroke-width="1.344" />
+      <text x="403.2" y="721.28" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#833C0B" font-weight="700">
+        <tspan x="403.2" dy="0">数据层  Data Platform Layer</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="grp_services" data-visio-nameu="Container">
+      <path d="M 393.6 609.6 L 1982.4 609.6 L 1982.4 411.84 L 393.6 411.84 Z" data-officeimo-preserved-geometry="true" fill="#EDF7ED" stroke="#A9D08E" stroke-width="1.344" />
+      <text x="403.2" y="423.68" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#375623" font-weight="700">
+        <tspan x="403.2" dy="0">服务层  Service Layer</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="grp_access" data-visio-nameu="Container">
+      <path d="M 110.4 448.8 L 1118.4 448.8 L 1118.4 104.64 L 110.4 104.64 Z" data-officeimo-preserved-geometry="true" fill="#EAF3FB" stroke="#9DC3E6" stroke-width="1.344" />
+      <text x="120" y="111.68" font-family="Aptos, Calibri, Arial, sans-serif" font-size="16" text-anchor="start" dominant-baseline="middle" xml:space="preserve" fill="#1F4E79" font-weight="700">
+        <tspan x="120" dy="0">接入层  Access Layer</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="web-portal" data-visio-nameu="Rectangle">
+      <path d="M 139.2 266.4 L 360 266.4 L 360 175.2 L 139.2 175.2 Z" data-officeimo-preserved-geometry="true" fill="#2E75B6" stroke="#1F4E79" stroke-width="1.248" />
+      <text x="249.6" y="210.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="249.6" dy="0">Web 门户</tspan>
+        <tspan x="249.6" dy="17.6">React SPA</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="mobile-app" data-visio-nameu="Rectangle">
+      <path d="M 139.2 420 L 360 420 L 360 328.8 L 139.2 328.8 Z" data-officeimo-preserved-geometry="true" fill="#2E75B6" stroke="#1F4E79" stroke-width="1.248" />
+      <text x="249.6" y="364.133" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="249.6" dy="0">移动端</tspan>
+        <tspan x="249.6" dy="17.6">iOS / Android</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="api-gateway" data-visio-nameu="Hexagon">
+      <path d="M 441.6 268.8 L 614.4 268.8 L 643.2 220.8 L 614.4 172.8 L 441.6 172.8 L 412.8 220.8 Z" data-officeimo-preserved-geometry="true" fill="#F2B705" stroke="#BF8F00" stroke-width="1.248" />
+      <text x="528" y="210.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#3F2E00" font-weight="700">
+        <tspan x="528" dy="0">API 网关</tspan>
+        <tspan x="528" dy="17.6">Kong</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="auth-service" data-visio-nameu="Rectangle">
+      <path d="M 979.2 266.4 L 1190.4 266.4 L 1190.4 175.2 L 979.2 175.2 Z" data-officeimo-preserved-geometry="true" fill="#5B9BD5" stroke="#2E75B6" stroke-width="1.248" />
+      <text x="1084.8" y="210.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1084.8" dy="0">认证服务</tspan>
+        <tspan x="1084.8" dy="17.6">OAuth2 / JWT</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="cdn-edge" data-visio-nameu="Circle">
+      <path d="M 1689.6 220.8 L 1687.964 208.377 L 1683.169 196.8 L 1675.541 186.859 L 1665.6 179.231 L 1654.023 174.436 L 1641.6 172.8 L 1629.177 174.436 L 1617.6 179.231 L 1607.659 186.859 L 1600.031 196.8 L 1595.236 208.377 L 1593.6 220.8 L 1595.236 233.223 L 1600.031 244.8 L 1607.659 254.741 L 1617.6 262.369 L 1629.177 267.164 L 1641.6 268.8 L 1654.023 267.164 L 1665.6 262.369 L 1675.541 254.741 L 1683.169 244.8 L 1687.964 233.223 Z" data-officeimo-preserved-geometry="true" fill="#8FAADC" stroke="#2E75B6" stroke-width="1.248" />
+      <text x="1641.6" y="211.467" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF">
+        <tspan x="1641.6" dy="0">CDN</tspan>
+        <tspan x="1641.6" dy="16">边缘节点</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="ingest-service" data-visio-nameu="Rectangle">
+      <path d="M 422.4 580.8 L 633.6 580.8 L 633.6 484.8 L 422.4 484.8 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#507E32" stroke-width="1.248" />
+      <text x="528" y="522.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="528" dy="0">数据接入服务</tspan>
+        <tspan x="528" dy="17.6">Ingest Service</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="query-service" data-visio-nameu="Rectangle">
+      <path d="M 700.8 580.8 L 912 580.8 L 912 484.8 L 700.8 484.8 Z" data-officeimo-preserved-geometry="true" fill="#2F7D8C" stroke="#1F5A66" stroke-width="1.248" />
+      <text x="806.4" y="522.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="806.4" dy="0">查询/分析服务</tspan>
+        <tspan x="806.4" dy="17.6">Analytics Service</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="report-engine" data-visio-nameu="Rectangle">
+      <path d="M 979.2 580.8 L 1190.4 580.8 L 1190.4 484.8 L 979.2 484.8 Z" data-officeimo-preserved-geometry="true" fill="#70AD47" stroke="#507E32" stroke-width="1.248" />
+      <text x="1084.8" y="522.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1084.8" dy="0">报表引擎</tspan>
+        <tspan x="1084.8" dy="17.6">Report Engine</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="scheduler" data-visio-nameu="Process">
+      <path d="M 1536 580.8 L 1747.2 580.8 L 1747.2 484.8 L 1536 484.8 Z" data-officeimo-preserved-geometry="true" fill="#A9D18E" stroke="#507E32" stroke-width="1.248" />
+      <text x="1641.6" y="522.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#243B14">
+        <tspan x="1641.6" dy="0">任务调度</tspan>
+        <tspan x="1641.6" dy="17.6">Scheduler</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="event-bus" data-visio-nameu="Parallelogram">
+      <path d="M 1846.4 580.8 L 2025.6 580.8 L 1993.6 484.8 L 1814.4 484.8 Z" data-officeimo-preserved-geometry="true" fill="#FFC000" stroke="#BF8F00" stroke-width="1.248" />
+      <text x="1920" y="522.533" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#3F2E00" font-weight="700">
+        <tspan x="1920" dy="0">事件总线</tspan>
+        <tspan x="1920" dy="17.6">Kafka</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="postgresql" data-visio-nameu="Process">
+      <path d="M 422.4 888 L 633.6 888 L 633.6 782.4 L 422.4 782.4 Z" data-officeimo-preserved-geometry="true" fill="#C55A11" stroke="#843C0C" stroke-width="1.248" />
+      <text x="528" y="824.933" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="528" dy="0">PostgreSQL</tspan>
+        <tspan x="528" dy="17.6">主数据仓库</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="redis-cache" data-visio-nameu="Circle">
+      <path d="M 859.2 835.2 L 857.401 821.534 L 852.126 808.8 L 843.735 797.865 L 832.8 789.474 L 820.066 784.199 L 806.4 782.4 L 792.734 784.199 L 780 789.474 L 769.065 797.865 L 760.674 808.8 L 755.399 821.534 L 753.6 835.2 L 755.399 848.866 L 760.674 861.6 L 769.065 872.535 L 780 880.926 L 792.734 886.201 L 806.4 888 L 820.066 886.201 L 832.8 880.926 L 843.735 872.535 L 852.126 861.6 L 857.401 848.866 Z" data-officeimo-preserved-geometry="true" fill="#C00000" stroke="#7F0000" stroke-width="1.248" />
+      <text x="806.4" y="825.867" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF">
+        <tspan x="806.4" dy="0">Redis</tspan>
+        <tspan x="806.4" dy="16">缓存</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="audit-log" data-visio-nameu="Data">
+      <path d="M 1292.8 888 L 1468.8 888 L 1433.6 782.4 L 1257.6 782.4 Z" data-officeimo-preserved-geometry="true" fill="#ED7D31" stroke="#843C0C" stroke-width="1.248" />
+      <text x="1363.2" y="824.933" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1363.2" dy="0">审计存储</tspan>
+        <tspan x="1363.2" dy="17.6">Append-only</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="data-lake" data-visio-nameu="Parallelogram">
+      <path d="M 1014.4 888 L 1190.4 888 L 1155.2 782.4 L 979.2 782.4 Z" data-officeimo-preserved-geometry="true" fill="#ED7D31" stroke="#843C0C" stroke-width="1.248" />
+      <text x="1084.8" y="824.933" font-family="Microsoft YaHei" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1084.8" dy="0">数据湖</tspan>
+        <tspan x="1084.8" dy="17.6">S3 / Parquet</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="prometheus" data-visio-nameu="Hexagon">
+      <path d="M 1840.8 888 L 1999.2 888 L 2025.6 835.2 L 1999.2 782.4 L 1840.8 782.4 L 1814.4 835.2 Z" data-officeimo-preserved-geometry="true" fill="#7030A0" stroke="#4B1F6F" stroke-width="1.248" />
+      <text x="1920" y="825.867" font-family="Microsoft YaHei" font-size="13.333" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF">
+        <tspan x="1920" dy="0">监控与告警</tspan>
+        <tspan x="1920" dy="16">Prometheus</tspan>
+      </text>
+    </g>
+    <g data-visio-shape-id="audit-service" data-visio-nameu="Rectangle">
+      <path d="M 1257.6 580.8 L 1468.8 580.8 L 1468.8 484.8 L 1257.6 484.8 Z" data-officeimo-preserved-geometry="true" fill="#8E6BB5" stroke="#5B4180" stroke-width="1.248" />
+      <text x="1363.2" y="522.533" font-family="Aptos, Calibri, Arial, sans-serif" font-size="14.667" text-anchor="middle" dominant-baseline="middle" fill="#FFFFFF" font-weight="700">
+        <tspan x="1363.2" dy="0">审计服务</tspan>
+        <tspan x="1363.2" dy="17.6">Audit Service</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-web-gw">
+      <path d="M 360 220.8 L 412.8 220.8" fill="none" stroke="#2E75B6" stroke-width="1.344" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 412.8 220.8 L 405.592 224.271 L 405.592 217.329 Z" fill="#2E75B6" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="363.816" y="202" width="45.168" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="386.4" y="210" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="386.4" dy="0">HTTPS</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-mobile-gw">
+      <path d="M 360 374.4 L 412.8 220.8" fill="none" stroke="#2E75B6" stroke-width="1.344" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 412.8 220.8 L 413.739 228.745 L 407.174 226.488 Z" fill="#2E75B6" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="368.482" y="278.8" width="35.837" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="386.4" y="286.8" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="386.4" dy="0">gRPC</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-gw-auth">
+      <path d="M 643.2 220.8 L 979.2 220.8" fill="none" stroke="#BF8F00" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 979.2 220.8 L 971.992 224.271 L 971.992 217.329 Z" fill="#BF8F00" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="777.614" y="202" width="67.171" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="811.2" y="210" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="811.2" dy="0">verify token</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-auth-cdn">
+      <path d="M 1190.4 220.8 L 1593.6 220.8" fill="none" stroke="#999999" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3.84 1.92" />
+      <path data-officeimo-connector-arrow="end" d="M 1593.6 220.8 L 1586.392 224.271 L 1586.392 217.329 Z" fill="#999999" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="1368.379" y="202" width="47.242" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="1392" y="210" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="1392" dy="0">session</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-gw-ingest">
+      <path d="M 528 268.8 L 528 484.8" fill="none" stroke="#507E32" stroke-width="1.344" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 528 484.8 L 524.529 477.592 L 531.471 477.592 Z" fill="#507E32" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="500.29" y="358" width="55.421" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="528" y="366" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="528" dy="0">write API</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-ingest-query">
+      <path d="M 633.6 532.8 L 619.2 532.8 L 700.8 532.8" fill="none" stroke="#70AD47" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 700.8 532.8 L 693.592 536.271 L 693.592 529.329 Z" fill="#70AD47" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="630.734" y="514" width="44.131" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="652.8" y="522" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="652.8" dy="0">dataset</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-query-report">
+      <path d="M 912 532.8 L 979.2 532.8" fill="none" stroke="#70AD47" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 979.2 532.8 L 971.992 536.271 L 971.992 529.329 Z" fill="#70AD47" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="917.198" y="514" width="56.803" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="945.6" y="522" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="945.6" dy="0">aggregate</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-sched-bus">
+      <path d="M 1747.2 532.8 L 1814.4 532.8" fill="none" stroke="#BF8F00" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1814.4 532.8 L 1807.192 536.271 L 1807.192 529.329 Z" fill="#BF8F00" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="1758.734" y="514" width="44.131" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="1780.8" y="522" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="1780.8" dy="0">publish</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-ingest-pg">
+      <path d="M 528 580.8 L 528 782.4" fill="none" stroke="#843C0C" stroke-width="1.344" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 528 782.4 L 524.529 775.192 L 531.471 775.192 Z" fill="#843C0C" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="513.25" y="662.8" width="29.501" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="528" y="670.8" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="528" dy="0">SQL</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-query-redis">
+      <path d="M 806.4 580.8 L 806.4 782.4" fill="none" stroke="#7F0000" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 806.4 782.4 L 802.929 775.192 L 809.871 775.192 Z" fill="#7F0000" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="787.56" y="662.8" width="37.68" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="806.4" y="670.8" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="806.4" dy="0">cache</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-report-lake">
+      <path d="M 1084.8 580.8 L 1084.8 782.4" fill="none" stroke="#843C0C" stroke-width="1.152" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1084.8 782.4 L 1081.329 775.192 L 1088.271 775.192 Z" fill="#843C0C" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="1061.986" y="662.8" width="45.629" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="1084.8" y="670.8" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="1084.8" dy="0">Parquet</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-bus-prom">
+      <path d="M 1920 580.8 L 1920 782.4" fill="none" stroke="#7030A0" stroke-width="0.96" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3.84 1.92" />
+      <path data-officeimo-connector-arrow="end" d="M 1920 782.4 L 1916.529 775.192 L 1923.471 775.192 Z" fill="#7030A0" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="1897.934" y="662.8" width="44.131" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="1920" y="670.8" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="1920" dy="0">metrics</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-report-audit">
+      <path d="M 1190.4 532.8 L 1257.6 532.8" fill="none" stroke="#8E6BB5" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1257.6 532.8 L 1250.392 536.271 L 1250.392 529.329 Z" fill="#8E6BB5" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" data-officeimo-label-adjusted="true" x="1182.581" y="454.48" width="82.838" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text data-officeimo-label-adjusted="true" x="1224" y="462.48" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="1224" dy="0">audit summary</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-audit-sched">
+      <path d="M 1468.8 532.8 L 1536 532.8" fill="none" stroke="#8E6BB5" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1536 532.8 L 1528.792 536.271 L 1528.792 529.329 Z" fill="#8E6BB5" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" data-officeimo-label-adjusted="true" x="1469.275" y="454.48" width="66.25" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text data-officeimo-label-adjusted="true" x="1502.4" y="462.48" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="1502.4" dy="0">compliance</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-audit-pg">
+      <path d="M 1363.2 580.8 L 1363.2 715.2 L 528 715.2 L 528 782.4" fill="none" stroke="#843C0C" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 528 782.4 L 524.529 775.192 L 531.471 775.192 Z" fill="#843C0C" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" x="948.84" y="706" width="60.72" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text x="979.2" y="714" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="979.2" dy="0">audit rows</tspan>
+      </text>
+    </g>
+    <g data-visio-connector-id="e-audit-store">
+      <path d="M 1363.2 580.8 L 1363.2 782.4" fill="none" stroke="#5B4180" stroke-width="1.333" stroke-linecap="round" stroke-linejoin="round" />
+      <path data-officeimo-connector-arrow="end" d="M 1363.2 782.4 L 1359.729 775.192 L 1366.671 775.192 Z" fill="#5B4180" stroke="none" />
+      <rect data-officeimo-text-background="true" data-officeimo-connector-label-background="true" data-officeimo-label-adjusted="true" x="1327.771" y="736.912" width="70.858" height="18.4" fill="#FFFFFF" fill-opacity="0.902" />
+      <text data-officeimo-label-adjusted="true" x="1363.2" y="744.912" font-family="Aptos, Calibri, Arial, sans-serif" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="#111827">
+        <tspan x="1363.2" dy="0">append-only</tspan>
+      </text>
+    </g>
+  </g>
+</svg>

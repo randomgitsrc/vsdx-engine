@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Vsdx.Adapters</RootNamespace>
+    <AssemblyName>Vsdx.Adapters</AssemblyName>
+    <Description>VSDX document adapters (OfficeIMO.Visio backend + raw OPC fallback).</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OfficeIMO.Visio" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Vsdx.Model\Vsdx.Model.csproj" />
+  </ItemGroup>
+</Project>

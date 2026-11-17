@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Vsdx.Validator</RootNamespace>
+    <AssemblyName>Vsdx.Validator</AssemblyName>
+    <Description>Structural and relationship validation for VSDX packages.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="OfficeIMO.Visio" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Vsdx.Model\Vsdx.Model.csproj" />
+    <ProjectReference Include="..\Vsdx.Adapters\Vsdx.Adapters.csproj" />
+  </ItemGroup>
+</Project>

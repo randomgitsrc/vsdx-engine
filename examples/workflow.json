@@ -1,0 +1,326 @@
+{
+  "id": "order-fulfilment-workflow",
+  "name": "订单履约审批流程",
+  "type": "workflow",
+  "modelVersion": "1.0",
+  "pageSize": {
+    "width": 13.5,
+    "height": 9.5,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "background": "#FFFFFF",
+  "style": {
+    "font": "Microsoft YaHei",
+    "fontSize": 10
+  },
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Order Fulfilment",
+      "size": {
+        "width": 13.5,
+        "height": 9.5,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp_intake",
+          "name": "受理阶段  Intake",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EAF3FB",
+            "stroke": "#9DC3E6",
+            "textColor": "#1F4E79",
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_decision",
+          "name": "审核阶段  Review",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#FDF2E9",
+            "stroke": "#F4B183",
+            "textColor": "#833C0B",
+            "bold": true,
+            "hAlign": "left"
+          }
+        },
+        {
+          "id": "grp_fulfil",
+          "name": "履约阶段  Fulfilment",
+          "kind": "container",
+          "autoSize": true,
+          "style": {
+            "fill": "#EDF7ED",
+            "stroke": "#A9D08E",
+            "textColor": "#375623",
+            "bold": true,
+            "hAlign": "left"
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "id": "start",
+          "text": "订单提交\nOrder placed",
+          "shape": "circle",
+          "bounds": {
+            "x": 1.9,
+            "y": 7.6,
+            "w": 1.0,
+            "h": 1.0
+          },
+          "groupId": "grp_intake",
+          "style": {
+            "fill": "#2E75B6",
+            "stroke": "#1F4E79",
+            "textColor": "#FFFFFF",
+            "fontSize": 9
+          }
+        },
+        {
+          "id": "validate",
+          "text": "校验订单\nValidate",
+          "shape": "process",
+          "bounds": {
+            "x": 4.4,
+            "y": 7.6,
+            "w": 2.1,
+            "h": 0.9
+          },
+          "groupId": "grp_intake",
+          "style": {
+            "fill": "#5B9BD5",
+            "stroke": "#2E75B6",
+            "textColor": "#FFFFFF"
+          }
+        },
+        {
+          "id": "stock-check",
+          "text": "库存检查\nStock check",
+          "shape": "decision",
+          "bounds": {
+            "x": 7.6,
+            "y": 7.6,
+            "w": 2.0,
+            "h": 1.2
+          },
+          "groupId": "grp_decision",
+          "style": {
+            "fill": "#F2B705",
+            "stroke": "#BF8F00",
+            "textColor": "#3F2E00"
+          }
+        },
+        {
+          "id": "payment",
+          "text": "支付授权\nAuthorise payment",
+          "shape": "process",
+          "bounds": {
+            "x": 11.0,
+            "y": 7.6,
+            "w": 2.2,
+            "h": 0.9
+          },
+          "groupId": "grp_decision",
+          "style": {
+            "fill": "#F2B705",
+            "stroke": "#BF8F00",
+            "textColor": "#3F2E00"
+          }
+        },
+        {
+          "id": "reject",
+          "text": "拒绝订单\nReject",
+          "shape": "process",
+          "bounds": {
+            "x": 7.6,
+            "y": 5.0,
+            "w": 2.0,
+            "h": 0.9
+          },
+          "groupId": "grp_decision",
+          "style": {
+            "fill": "#C00000",
+            "stroke": "#7F0000",
+            "textColor": "#FFFFFF"
+          }
+        },
+        {
+          "id": "pick-pack",
+          "text": "拣货包装\nPick & pack",
+          "shape": "process",
+          "bounds": {
+            "x": 2.2,
+            "y": 3.0,
+            "w": 2.2,
+            "h": 0.9
+          },
+          "groupId": "grp_fulfil",
+          "style": {
+            "fill": "#70AD47",
+            "stroke": "#507E32",
+            "textColor": "#FFFFFF"
+          }
+        },
+        {
+          "id": "ship",
+          "text": "发货\nShip",
+          "shape": "process",
+          "bounds": {
+            "x": 5.4,
+            "y": 3.0,
+            "w": 2.1,
+            "h": 0.9
+          },
+          "groupId": "grp_fulfil",
+          "style": {
+            "fill": "#70AD47",
+            "stroke": "#507E32",
+            "textColor": "#FFFFFF"
+          }
+        },
+        {
+          "id": "notify",
+          "text": "通知客户\nNotify customer",
+          "shape": "process",
+          "bounds": {
+            "x": 8.6,
+            "y": 3.0,
+            "w": 2.2,
+            "h": 0.9
+          },
+          "groupId": "grp_fulfil",
+          "style": {
+            "fill": "#70AD47",
+            "stroke": "#507E32",
+            "textColor": "#FFFFFF"
+          }
+        },
+        {
+          "id": "end",
+          "text": "完成\nDone",
+          "shape": "circle",
+          "bounds": {
+            "x": 11.6,
+            "y": 3.0,
+            "w": 1.0,
+            "h": 1.0
+          },
+          "groupId": "grp_fulfil",
+          "style": {
+            "fill": "#375623",
+            "stroke": "#1F3A10",
+            "textColor": "#FFFFFF",
+            "fontSize": 9
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "start",
+          "to": "validate",
+          "kind": "straight",
+          "endArrow": "triangle",
+          "lineColor": "#2E75B6"
+        },
+        {
+          "id": "e2",
+          "from": "validate",
+          "to": "stock-check",
+          "kind": "straight",
+          "endArrow": "triangle",
+          "lineColor": "#2E75B6"
+        },
+        {
+          "id": "e3",
+          "from": "stock-check",
+          "to": "payment",
+          "kind": "straight",
+          "label": "有货 in stock",
+          "endArrow": "triangle",
+          "lineColor": "#507E32"
+        },
+        {
+          "id": "e4",
+          "from": "stock-check",
+          "to": "reject",
+          "kind": "rightAngle",
+          "label": "缺货 out of stock",
+          "endArrow": "triangle",
+          "lineColor": "#C00000",
+          "fromPort": "bottom",
+          "toPort": "top"
+        },
+        {
+          "id": "e5",
+          "from": "payment",
+          "to": "ship",
+          "kind": "rightAngle",
+          "label": "已授权",
+          "endArrow": "triangle",
+          "lineColor": "#507E32",
+          "fromPort": "right",
+          "toPort": "bottom",
+          "labelPosition": 0.5,
+          "waypoints": [
+            {
+              "x": 12.55,
+              "y": 5.0
+            },
+            {
+              "x": 12.55,
+              "y": 2.05
+            },
+            {
+              "x": 6.45,
+              "y": 2.05
+            }
+          ]
+        },
+        {
+          "id": "e6",
+          "from": "pick-pack",
+          "to": "ship",
+          "kind": "straight",
+          "endArrow": "triangle",
+          "lineColor": "#507E32"
+        },
+        {
+          "id": "e7",
+          "from": "ship",
+          "to": "notify",
+          "kind": "straight",
+          "endArrow": "triangle",
+          "lineColor": "#507E32"
+        },
+        {
+          "id": "e8",
+          "from": "notify",
+          "to": "end",
+          "kind": "straight",
+          "endArrow": "triangle",
+          "lineColor": "#507E32"
+        },
+        {
+          "id": "e9",
+          "from": "reject",
+          "to": "notify",
+          "kind": "rightAngle",
+          "label": "取消 cancel",
+          "endArrow": "triangle",
+          "lineColor": "#999999",
+          "linePattern": 2,
+          "fromPort": "bottom",
+          "toPort": "top"
+        }
+      ]
+    }
+  ]
+}

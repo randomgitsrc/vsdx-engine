@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Vsdx.Cli</RootNamespace>
+    <AssemblyName>vsdx-tool</AssemblyName>
+    <Description>Command-line interface for Agent VSDX Engine.</Description>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>vsdx-tool</ToolCommandName>
+    <PackageId>AgentVsdx.Engine.Tool</PackageId>
+    <AssemblyName>vsdx-tool</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Vsdx.Engine\Vsdx.Engine.csproj" />
+  </ItemGroup>
+</Project>
