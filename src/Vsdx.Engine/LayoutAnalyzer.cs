@@ -176,7 +176,52 @@ public static class LayoutAnalyzer
                     Severity = "warning",
                     Page = page.Name,
                     Targets = new[] { ea.Id, eb.Id },
-                    Message = $"连线 '{ea.Id}' 与 '{eb.Id}' 交叉"
+                    Message = $"连线 '{ea.Id}' 与 '{eb.Id}' 交叉",
+                    SoftWeight = 2,
+                    RootCause = "列的排列顺序与连接方向不一致",
+                    RecommendedFix = "调整节点列序，或对该连线显式指定 waypoints",
+                    SuggestedLevel = FixLevel.RegionRelayout
+                });
+            }
+        }
+
+        // ---- 6b. Edge detour ratio -------------------------------------------
+        // A connector that wanders far from the straight line between its endpoints reads as
+        // an error to the viewer, even when it never crosses a shape.
+        foreach (var edge in page.Edges)
+        {
+            if (edge.From is null || edge.To is null) continue;
+            if (!nodeById.TryGetValue(edge.From, out var detourFrom)) continue;
+            if (!nodeById.TryGetValue(edge.To, out var detourTo)) continue;
+
+            var path = RoutePoints(detourFrom, detourTo, edge);
+            if (path.Count < 2) continue;
+
+            double routed = 0;
+            for (int k = 0; k < path.Count - 1; k++) routed += Distance(path[k], path[k + 1]);
+
+            // Compare against the straight line between the SAME anchors the route uses.
+            // Measuring centre-to-centre would overstate "direct" and make every route look
+            // shorter than a straight line.
+            double direct = Distance(path[0], path[^1]);
+            if (direct < 0.01) continue;
+
+            double ratio = routed / direct;
+            report.EdgeDetourRatio[edge.Id] = ratio;
+
+            if (ratio > options.MaxDetourRatio)
+            {
+                report.Add(new LayoutIssue
+                {
+                    Code = "edge.detour",
+                    Severity = "warning",
+                    Page = page.Name,
+                    Targets = new[] { edge.Id },
+                    Message = $"连线 '{edge.Id}' 绕行 {ratio:F1} 倍直线距离（{routed:F2}\" vs {direct:F2}\"）",
+                    SoftWeight = 6,
+                    RootCause = "布线器在被遮挡时选择了远端避让，或显式 waypoints 绕得过远",
+                    RecommendedFix = "调整两端节点位置让直连可行，或改写 waypoints",
+                    SuggestedLevel = FixLevel.RegionRelayout
                 });
             }
         }
@@ -197,11 +242,22 @@ public static class LayoutAnalyzer
                         Severity = "error",
                         Page = page.Name,
                         Targets = new[] { group.Id, memberId },
-                        Message = $"节点 '{memberId}' 未被分组 '{group.Id}' 完整包裹"
+                        Message = $"节点 '{memberId}' 未被分组 '{group.Id}' 完整包裹",
+                        RootCause = "容器 bounds 小于成员包围盒",
+                        RecommendedFix = "令容器按成员重算（autoSize），或扩大容器 bounds",
+                        SuggestedLevel = FixLevel.RegionRelayout
                     });
                 }
             }
         }
+
+        // ---- 7b. Group-to-group relations ------------------------------------
+        // Containers are what the reader perceives as "bands" or "zones". Overlapping bands
+        // make the whole diagram look broken, yet this was previously never checked.
+        CheckGroupRelations(page, options, report);
+
+        // ---- 7c. Row alignment and size uniformity ---------------------------
+        CheckRowsAndSizes(nodes, options, page, report);
 
         // ---- 8. Spacing ------------------------------------------------------
         CheckSpacing(nodes, options, page, report);
@@ -244,6 +300,202 @@ public static class LayoutAnalyzer
                 });
             }
         }
+    }
+
+    /// <summary>
+    /// Containers are the bands and zones the reader perceives first. Two overlapping bands
+    /// make the diagram look broken regardless of how neat the nodes inside are, so this is a
+    /// hard constraint. Nested containers are exempt: a child is expected to sit inside its
+    /// parent.
+    /// </summary>
+    private static void CheckGroupRelations(Page page, LayoutAnalyzerOptions options, LayoutReport report)
+    {
+        var groups = page.Groups.Where(g => g.Bounds is not null).ToList();
+        if (groups.Count < 2) return;
+
+        for (int i = 0; i < groups.Count; i++)
+        for (int j = i + 1; j < groups.Count; j++)
+        {
+            var a = groups[i];
+            var b = groups[j];
+
+            // Skip genuinely nested containers: one fully contains the other.
+            bool nested = Encloses(a.Bounds!, b.Bounds!, 0) || Encloses(b.Bounds!, a.Bounds!, 0);
+            if (nested) continue;
+
+            double ix = OverlapExtentX(a.Bounds!, b.Bounds!);
+            double iy = OverlapExtentY(a.Bounds!, b.Bounds!);
+            if (ix <= 0 || iy <= 0) continue;
+
+            double area = ix * iy;
+            if (area <= options.GroupOverlapAreaTolerance) continue;
+
+            report.Add(new LayoutIssue
+            {
+                Code = "group.overlap",
+                Severity = "error",
+                Page = page.Name,
+                Targets = new[] { a.Id, b.Id },
+                Message = $"容器 '{a.Id}' 与 '{b.Id}' 重叠 {ix:F2}\" × {iy:F2}\"",
+                RootCause = "两个容器的 bounds 在垂直或水平方向互相侵入",
+                RecommendedFix = "按成员重算 bounds，或把两个容器分到不同的行/列",
+                SuggestedLevel = FixLevel.FullRedraw
+            });
+        }
+
+        // Stacked bands (horizontally overlapping, vertically separated) need a visible gutter,
+        // otherwise they read as one fused block.
+        for (int i = 0; i < groups.Count; i++)
+        for (int j = i + 1; j < groups.Count; j++)
+        {
+            var a = groups[i];
+            var b = groups[j];
+            if (Encloses(a.Bounds!, b.Bounds!, 0) || Encloses(b.Bounds!, a.Bounds!, 0)) continue;
+            if (OverlapExtentX(a.Bounds!, b.Bounds!) <= 0) continue;
+
+            double gutter = VerticalGutter(a.Bounds!, b.Bounds!);
+            if (gutter < 0 || gutter >= options.MinGroupGutter) continue;
+            if (overlapAlreadyReported(report, a.Id, b.Id)) continue;
+
+            report.Add(new LayoutIssue
+            {
+                Code = "group.gutter",
+                Severity = "warning",
+                Page = page.Name,
+                Targets = new[] { a.Id, b.Id },
+                Message = $"容器 '{a.Id}' 与 '{b.Id}' 间距仅 {gutter:F2}\"",
+                SoftWeight = 5,
+                RootCause = "两个水平色带的垂直间距不足",
+                RecommendedFix = "增大相邻色带之间的行距",
+                SuggestedLevel = FixLevel.RegionRelayout
+            });
+        }
+
+        static bool overlapAlreadyReported(LayoutReport r, string a, string b) =>
+            r.Issues.Any(i => i.Code == "group.overlap"
+                              && i.Targets.Contains(a) && i.Targets.Contains(b));
+    }
+
+    /// <summary>
+    /// Nodes that sit on one visual row should share a baseline and a size. Uneven alignment
+    /// is the single most common reason a technically correct diagram still looks amateur.
+    /// </summary>
+    private static void CheckRowsAndSizes(
+        List<Node> nodes, LayoutAnalyzerOptions options, Page page, LayoutReport report)
+    {
+        if (nodes.Count < 2) return;
+
+        // Cluster nodes into visual rows: a row is a chain of nodes whose Y centres are each
+        // within `rowTolerance` of the next. Fixed buckets would split a genuinely misaligned
+        // row into two "perfect" rows and hide the very defect we are looking for.
+        //
+        // rowTolerance is deliberately wider than AlignTolerance: nodes further apart than
+        // that are still *meant* to be one row (they are simply misaligned), and we want to
+        // report the misalignment rather than treat them as unrelated rows.
+        double rowTolerance = Math.Max(options.AlignTolerance * 4, 0.45);
+        var sorted = nodes.OrderByDescending(n => n.Bounds.Y).ToList();
+        var rows = new List<List<Node>>();
+        foreach (var node in sorted)
+        {
+            var current = rows.LastOrDefault();
+            if (current is not null &&
+                Math.Abs(current.Average(n => n.Bounds.Y) - node.Bounds.Y) <= rowTolerance)
+            {
+                current.Add(node);
+            }
+            else
+            {
+                rows.Add(new List<Node> { node });
+            }
+        }
+        // A single node is a row of one: nothing to align or compare.
+        rows = rows.Where(r => r.Count > 1).ToList();
+
+        foreach (var row in rows)
+        {
+            var ordered = row.OrderBy(n => n.Bounds.X).ToList();
+            double referenceY = ordered[0].Bounds.Y;
+
+            double maxDrift = ordered.Max(n => Math.Abs(n.Bounds.Y - referenceY));
+            if (maxDrift > options.AlignTolerance)
+            {
+                // Report once per row rather than once per node.
+                var worst = ordered.OrderByDescending(n => Math.Abs(n.Bounds.Y - referenceY)).First();
+                report.Add(new LayoutIssue
+                {
+                    Code = "row.misaligned",
+                    Severity = "warning",
+                    Page = page.Name,
+                    Targets = ordered.Select(n => n.Id).ToArray(),
+                    Message = $"同一行的 {ordered.Count} 个节点垂直偏移达 {maxDrift:F2}\"（'{worst.Id}' 最低/最高）",
+                    SoftWeight = 4,
+                    RootCause = "节点 Y 坐标未对齐到统一基线",
+                    RecommendedFix = "把该行节点的 Y 中心统一",
+                    SuggestedLevel = FixLevel.RegionRelayout
+                });
+            }
+
+            // Size uniformity: neighbouring nodes on a row should look like siblings.
+            for (int k = 0; k < ordered.Count - 1; k++)
+            {
+                var a = ordered[k];
+                var b = ordered[k + 1];
+
+                // Round or deliberately compact markers (a circle for an actor, a dot for an
+                // endpoint) are *meant* to differ from boxy siblings. Comparing them would
+                // flag correct designs, so only compare shapes of the same family.
+                if (!AreComparableShapes(a, b)) continue;
+
+                double ratioW = Ratio(a.Bounds.W, b.Bounds.W);
+                double ratioH = Ratio(a.Bounds.H, b.Bounds.H);
+                if (ratioW <= options.SizeUniformityRatio && ratioH <= options.SizeUniformityRatio) continue;
+
+                report.Add(new LayoutIssue
+                {
+                    Code = "row.size-jitter",
+                    Severity = "warning",
+                    Page = page.Name,
+                    Targets = new[] { a.Id, b.Id },
+                    Message = $"同行相邻节点尺寸差异过大 '{a.Id}' {a.Bounds.W:F1}×{a.Bounds.H:F1} vs " +
+                              $"'{b.Id}' {b.Bounds.W:F1}×{b.Bounds.H:F1}",
+                    SoftWeight = 3,
+                    RootCause = "节点尺寸各自手写，未按同一行的基准尺寸统一",
+                    RecommendedFix = "根据文字内容统一该行的节点尺寸",
+                    SuggestedLevel = FixLevel.RegionRelayout
+                });
+            }
+        }
+
+        static double Ratio(double a, double b)
+        {
+            if (a <= 0 || b <= 0) return 1;
+            return Math.Max(a, b) / Math.Min(a, b);
+        }
+
+        // Rounded/compact markers are intentionally smaller than boxy siblings.
+        static bool AreComparableShapes(Node a, Node b) =>
+            !IsCompactMarker(a) && !IsCompactMarker(b);
+
+        // A node is a compact marker when it is close to square AND noticeably smaller than the
+        // median box on the page (circles, dots, terminators).
+        static bool IsCompactMarker(Node n) =>
+            Math.Abs(n.Bounds.W - n.Bounds.H) < 0.25 && Math.Min(n.Bounds.W, n.Bounds.H) < 1.3;
+    }
+
+    private static double OverlapExtentX(Bounds a, Bounds b) =>
+        Math.Min(a.X + a.W / 2, b.X + b.W / 2) - Math.Max(a.X - a.W / 2, b.X - b.W / 2);
+
+    private static double OverlapExtentY(Bounds a, Bounds b) =>
+        Math.Min(a.Y + a.H / 2, b.Y + b.H / 2) - Math.Max(a.Y - a.H / 2, b.Y - b.H / 2);
+
+    /// <summary>Clear vertical gap between two bands; negative when they overlap.</summary>
+    private static double VerticalGutter(Bounds a, Bounds b)
+    {
+        double aTop = a.Y + a.H / 2, aBottom = a.Y - a.H / 2;
+        double bTop = b.Y + b.H / 2, bBottom = b.Y - b.H / 2;
+        if (aBottom >= bTop) return aBottom - bTop;
+        if (bBottom >= aTop) return bBottom - aTop;
+        return -Math.Min(OverlapExtentY(a, b), OverlapExtentY(b, a));
     }
 
     private static void CheckSpacing(List<Node> nodes, LayoutAnalyzerOptions options, Page page, LayoutReport report)
@@ -369,20 +621,32 @@ public static class LayoutAnalyzer
     }
 
     /// <summary>
-    /// Picks the shape border point for a waypoint, preferring the axis the following segment
-    /// runs along so the resulting polyline is orthogonal.
+    /// Picks the shape border point a waypoint connects to. The result is always on the real
+    /// rectangle border: projecting onto an infinite side line would place the anchor outside
+    /// the shape whenever the waypoint is far below or above it, and the measured polyline
+    /// would then be shorter than the one actually drawn.
     /// </summary>
     private static Point AnchorToward(Bounds b, Point waypoint, Point? next)
     {
-        double dx = waypoint.X - b.X, dy = waypoint.Y - b.Y;
-        double halfW = b.W / 2, halfH = b.H / 2;
+        double left = b.X - b.W / 2, right = b.X + b.W / 2;
+        double bottom = b.Y - b.H / 2, top = b.Y + b.H / 2;
 
-        // Vertical run after the waypoint: enter/leave through a horizontal side.
-        if (next is not null && Math.Abs(next.X - waypoint.X) < 1e-6)
-            return new Point(waypoint.X, b.Y + Math.Sign(dy) * halfH);
-        // Horizontal run after the waypoint: enter/leave through a vertical side.
-        if (next is not null && Math.Abs(next.Y - waypoint.Y) < 1e-6)
-            return new Point(b.X + Math.Sign(dx) * halfW, waypoint.Y);
+        // Waypoint clearly outside one band: connect through that side, clamped to the span.
+        if (waypoint.Y < bottom) return new Point(Math.Clamp(waypoint.X, left, right), bottom);
+        if (waypoint.Y > top) return new Point(Math.Clamp(waypoint.X, left, right), top);
+        if (waypoint.X < left) return new Point(left, Math.Clamp(waypoint.Y, bottom, top));
+        if (waypoint.X > right) return new Point(right, Math.Clamp(waypoint.Y, bottom, top));
+
+        // Waypoint within the shape's span on both axes: pick the side from the direction of
+        // the following segment so the polyline stays orthogonal.
+        if (next is not null)
+        {
+            double dx = waypoint.X - b.X, dy = waypoint.Y - b.Y;
+            if (Math.Abs(next.X - waypoint.X) < 1e-6)
+                return new Point(Math.Clamp(waypoint.X, left, right), dy >= 0 ? top : bottom);
+            if (Math.Abs(next.Y - waypoint.Y) < 1e-6)
+                return new Point(dx >= 0 ? right : left, Math.Clamp(waypoint.Y, bottom, top));
+        }
 
         return NearestSidePoint(b, waypoint);
     }
@@ -560,32 +824,88 @@ public sealed class LayoutAnalyzerOptions
     public double NodeClearance { get; init; } = 0.04;
     public double MinNodeGap { get; init; } = 0.18;
     public double MinPageUtilisation { get; init; } = 0.30;
+
+    /// <summary>
+    /// Two containers must not intersect by more than this area (square inches). A visible
+    /// sliver is a defect; floating-point noise is not.
+    /// </summary>
+    public double GroupOverlapAreaTolerance { get; init; } = 0.01;
+
+    /// <summary>Minimum clear gutter expected between stacked container bands.</summary>
+    public double MinGroupGutter { get; init; } = 0.06;
+
+    /// <summary>
+    /// A connector whose routed length exceeds this multiple of the straight-line distance
+    /// between its endpoints is treated as an uncontrolled detour.
+    /// </summary>
+    public double MaxDetourRatio { get; init; } = 2.0;
+
+    /// <summary>Nodes on the same visual row must align their centres within this distance.</summary>
+    public double AlignTolerance { get; init; } = 0.10;
+
+    /// <summary>Adjacent nodes in the same row should share a size within this ratio.</summary>
+    public double SizeUniformityRatio { get; init; } = 1.35;
 }
 
+/// <summary>
+/// A layout report separates constraints by consequence, not by how easy they are to check.
+///
+/// Hard violations mean the diagram is not deliverable — content is clipped, overlapped or
+/// unreachable. Soft violations mean the diagram is readable but not yet professional.
+/// A soft score never compensates for a hard failure.
+/// </summary>
 public sealed class LayoutReport
 {
     public List<LayoutIssue> Issues { get; } = new();
     public Dictionary<string, double> PageUtilisation { get; } = new();
     public Dictionary<string, Bounds> Bounds { get; } = new();
 
+    /// <summary>Measured edge detour ratios, keyed by edge id.</summary>
+    public Dictionary<string, double> EdgeDetourRatio { get; } = new();
+
     public void Add(LayoutIssue issue) => Issues.Add(issue);
 
+    /// <summary>Hard violations: content clipped, overlapped, unreachable or off-page.</summary>
     public IEnumerable<LayoutIssue> Errors => Issues.Where(i => i.Severity == "error");
+
+    /// <summary>Soft violations: readable, but visually unpolished.</summary>
     public IEnumerable<LayoutIssue> Warnings => Issues.Where(i => i.Severity == "warning");
+
+    /// <summary>Observations that do not by themselves lower the score.</summary>
     public IEnumerable<LayoutIssue> Infos => Issues.Where(i => i.Severity == "info");
 
-    public bool IsClean => !Errors.Any() && !Warnings.Any();
+    /// <summary>
+    /// True when no hard constraint is violated. Deliverability depends only on this; the
+    /// soft score is advisory.
+    /// </summary>
+    public bool HardConstraintsPassed => !Errors.Any();
 
-    /// <summary>0..100 heuristic score used by the agent iteration loop.</summary>
+    public bool IsClean => HardConstraintsPassed && !Warnings.Any();
+
+    /// <summary>
+    /// 0..100 soft score. Zero when any hard constraint fails, so a diagram cannot score well
+    /// while being undeliverable. Repeated occurrences of one code are counted with a cap so a
+    /// single systemic defect cannot drive the score to zero by sheer count.
+    /// </summary>
     public int Score
     {
         get
         {
-            int score = 100;
-            score -= Errors.Count() * 12;
-            score -= Warnings.Count() * 4;
-            score -= Infos.Count() * 1;
-            return Math.Clamp(score, 0, 100);
+            if (!HardConstraintsPassed) return 0;
+
+            double penalty = 0;
+            foreach (var group in Warnings.GroupBy(i => i.Code, StringComparer.Ordinal))
+            {
+                int counted = Math.Min(group.Count(), 3);
+                penalty += group.First().SoftWeight * counted;
+            }
+            foreach (var group in Infos.GroupBy(i => i.Code, StringComparer.Ordinal))
+            {
+                int counted = Math.Min(group.Count(), 3);
+                penalty += group.First().SoftWeight * counted * 0.5;
+            }
+
+            return Math.Clamp((int)Math.Round(100 - penalty), 0, 100);
         }
     }
 
@@ -605,6 +925,34 @@ public sealed class LayoutIssue
     public string Page { get; set; } = "";
     public string[] Targets { get; set; } = Array.Empty<string>();
     public string Message { get; set; } = "";
+
+    /// <summary>How much a soft violation costs the score; ignored for hard violations.</summary>
+    public double SoftWeight { get; set; } = 4;
+
+    /// <summary>Inferred cause, so the agent fixes the reason rather than the symptom.</summary>
+    public string? RootCause { get; set; }
+
+    /// <summary>Concrete next action, chosen from the repair levels below.</summary>
+    public string? RecommendedFix { get; set; }
+
+    /// <summary>Smallest repair that can plausibly resolve this issue.</summary>
+    public FixLevel SuggestedLevel { get; set; } = FixLevel.Local;
+}
+
+/// <summary>
+/// Repair scope. Escalating is cheaper than repeated failed local patches, so the default for
+/// anything structural is <see cref="RegionRelayout"/> or above.
+/// </summary>
+public enum FixLevel
+{
+    /// <summary>One element or one label; nothing else should move.</summary>
+    Local,
+
+    /// <summary>One container's contents need to be laid out again as a whole.</summary>
+    RegionRelayout,
+
+    /// <summary>The layout strategy itself is wrong; regenerate from the model.</summary>
+    FullRedraw
 }
 
 /// <summary>Crude but conservative text metrics used for overflow detection.</summary>

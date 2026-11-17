@@ -5,7 +5,7 @@ dotnet test tests/Vsdx.Tests/Vsdx.Tests.csproj -c Release
 ```
 
 ```
-已通过! - 失败: 0，通过: 96，已跳过: 0，总计: 96，持续时间: 3 s
+已通过! - 失败: 0，通过: 110，已跳过: 0，总计: 110
 ```
 
 环境：Ubuntu 24.04 (WSL2) / .NET SDK 8.0.428 / OfficeIMO.Visio 3.6.1 / xUnit 2.9.2
@@ -26,7 +26,8 @@ dotnet test tests/Vsdx.Tests/Vsdx.Tests.csproj -c Release
 | ExternalVsdxTests | 9 | ✅ | 手写 OPC 包读取、导出模型、单对象修改、重读、渲染、校验、复杂包保留原生特性、多页面读取与渲染 |
 | ValidationTests | 11 | ✅ | 合法包、缺文件、非 ZIP、缺 content types、坏 XML、重复 content type、坏连线引用、重复 Shape ID、渲染冒烟、浅校验、逐项报告 |
 | IntegrationTests | 14 | ✅ | 第一轮 15 节点端到端、布局无错误、第二轮完整场景、未改对象保留、第三轮保真、diff 准确、第四轮外部包生命周期、JSON 制品闭环、重叠/穿线/溢出检测、布线避障 |
-| **合计** | **96** | **✅** | |
+| DetectorTests | 14 | ✅ | 容器重叠、嵌套豁免、绕行比、行对齐、尺寸突变、硬软分离、重复封顶、修复指导 |
+| **合计** | **110** | **✅** | |
 
 ---
 
@@ -131,7 +132,7 @@ Assert.True(report.Score >= 80);
 | 轮次 | 要求 | 结果 |
 | --- | --- | --- |
 | 第一轮 | 15 节点 / 3 分层 / 层内+跨层连线 / ≥2 种节点类型 / 分组 / 合理布局 | ✅ `Scenario_Round1_FifteenNodeArchitecture`：15 shape、3 组、14 连线、≥2 形状族、PNG+SVG+JSON 齐全、valid |
-| 第一轮 | 布局无错误 | ✅ score **95**，errors **0** |
+| 第一轮 | 布局无错误 | ✅ 硬约束通过，score **96** |
 | 第二轮 | 改名 / 新增 / 连接 / 移动 / 改组名 | ✅ `Scenario_Round2_FullIncrementalScenario`：精确 `+1 ~2 -0`，old id 消失、新 id 出现、边重定向、组名更新 |
 | 第二轮 | 保留未修改对象 | ✅ `Scenario_Round2_PreservesUntouchedObjects` |
 | 第三轮 | 往返保真 + 差异报告 | ✅ `Scenario_Round3_RoundTripFidelity`（仅 1 项指纹不同）、`Scenario_Round3_DiffReportIsAccurate` |
@@ -161,18 +162,18 @@ VALID
 
 ```
 $ vsdx-tool check-layout --input demo/architecture.vsdx --json
-  score 95, errors 0
+  hardConstraintsPassed true, score 96
 $ vsdx-tool check-layout --input demo/architecture_v2.vsdx --json
-  score 99, errors 0
+  hardConstraintsPassed true, score 94
 ```
 
 三份示例模型：
 
 | 示例 | 形状 | 连线 | 布局分 | 错误 |
 | --- | --- | --- | --- | --- |
-| `examples/architecture.json` | 15 | 14 | 95 | 0 |
-| `examples/workflow.json` | 9 | 9 | 99 | 0 |
-| `examples/network.json` | 11 | 11 | 99 | 0 |
+| `examples/architecture.json` | 15 | 14 | 96 | 0 |
+| `examples/workflow.json` | 9 | 9 | 96 | 0 |
+| `examples/network.json` | 11 | 11 | 98 | 0 |
 
 ---
 

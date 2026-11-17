@@ -142,7 +142,7 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 | `update --input old.vsdx --model new.json --output new.vsdx` | **增量**应用修改 |
 | `render --input out.vsdx --format png\|svg --output preview.png` | 渲染预览 |
 | `validate --input out.vsdx [--json]` | ZIP / XML / OPC / Visio 语义校验 |
-| `check-layout --input out.vsdx [--json]` | 重叠 / 穿线 / 溢出 / 间距 / 分组包裹 |
+| `check-layout --input out.vsdx [--json]` | 硬/软约束分离：重叠、容器相压、穿线、绕行比、行对齐、尺寸突变 |
 | `batch --op <create\|render\|validate\|export-model> --input-dir <dir> --out-dir <dir>` | 批量处理，单项失败不中断 |
 | `diff --before a.vsdx --after b.vsdx [--json]` | 两版本结构对比 |
 | `version --json` | 工具 / 后端 / 模型版本 |
@@ -175,7 +175,10 @@ vsdx-tool batch --op validate --input out/ --json
 - 增量修改：只写模型与包之间有差异的对象；模型未提及的对象默认保留
 - 由 VSDX 渲染 SVG / PNG，含中文（自动挑选 CJK 字体），支持多页面、自定义 DPI、背景、
   透明背景、字体替代
-- 布局质量检查：节点重叠、连线穿节点、文字溢出、间距过密、容器包裹、连线交叉
+- 布局质量检查，**硬约束与软约束分离**：
+  - 硬（不过即不可交付，分数强制为 0）：节点重叠、连线穿节点、容器相压、节点逃出容器
+  - 软（影响专业度）：连线绕行比、行错位、同行尺寸突变、色带间距、间距过密、文字溢出、连线交叉
+  - 每条问题带 `rootCause` / `recommendedFix` / `level`（Local / RegionRelayout / FullRedraw）
 - 正交自动布线：为被遮挡的连线寻找无碰撞路径
 
 **不做（第一阶段）**
@@ -244,6 +247,7 @@ agent-vsdx/
 | [docs/installation.md](docs/installation.md) | 安装、字体配置、离线部署、容器镜像 |
 | [docs/architecture.md](docs/architecture.md) | 分层设计、适配器接口、增量算法、第二阶段扩展点 |
 | [docs/technical-validation.md](docs/technical-validation.md) | P0–P3 实测记录与已知限制 |
+| [docs/phase0-report.md](docs/phase0-report.md) | 专业制图能力升级：诊断、技术选型、目标架构、Phase 1 实施结果 |
 | [docs/api.md](docs/api.md) | C# API 与 CLI 完整参考 |
 | [docs/dependencies.md](docs/dependencies.md) | 依赖清单、版本锁定、许可证 |
 | [docs/limitations.md](docs/limitations.md) | 限制说明、Visio 验收清单、兼容性报告代码 |

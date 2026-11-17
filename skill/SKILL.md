@@ -170,17 +170,33 @@ Machine checks are necessary but not sufficient. Do both.
 vsdx-tool check-layout --input diagram.vsdx --json
 ```
 
-Read `score` and `counts.errors`. Treat **any** error as blocking:
+Read `hardConstraintsPassed` first, then `score`.
 
-| Code | Meaning | Fix |
-| --- | --- | --- |
-| `node.overlap` | Two nodes intersect | Re-space the column or row |
-| `edge.through-node` | A connector crosses an unrelated node | Move the node, or add `waypoints` |
-| `group.member-escapes` | A node pokes out of its container | Usually fixed by `autoSize: true` |
-| `spacing.too-tight` | Neighbours closer than ~0.18" | Widen the column step |
-| `text.overflow-*` | Label does not fit its box | Shorten text, raise `w`/`h`, or lower `fontSize` |
-| `edge.crossing` | Two connectors cross (warning) | Usually acceptable; reduce when easy |
-| `label.overlaps-node` | A label sits on a node | Move the edge or set `labelPosition` |
+**`hardConstraintsPassed: false` means the diagram is not deliverable.** When it is false the
+score is forced to `0`, so a high score can never hide a broken layout. Fix every `error`
+before looking at anything else.
+
+| Code | Severity | Meaning | Fix |
+| --- | --- | --- | --- |
+| `node.overlap` | **hard** | Two nodes intersect | Re-space the column or row |
+| `edge.through-node` | **hard** | A connector crosses an unrelated node | Move the node, or add `waypoints` |
+| `group.overlap` | **hard** | Two container bands overlap | Separate the bands; do not just nudge one node |
+| `group.member-escapes` | **hard** | A node pokes out of its container | Usually fixed by `autoSize: true` |
+| `edge.detour` | soft | Connector wanders > 2× the straight distance | Move endpoints closer, or rewrite `waypoints` |
+| `row.misaligned` | soft | Nodes on one row differ in Y | Give the row a single baseline |
+| `row.size-jitter` | soft | Neighbouring same-family nodes differ a lot in size | Unify the row's node size |
+| `group.gutter` | soft | Two stacked bands are too close | Widen the vertical step |
+| `spacing.too-tight` | soft | Neighbours closer than ~0.18" | Widen the column step |
+| `text.overflow-*` | soft | Label does not fit its box | Shorten text, raise `w`/`h`, or lower `fontSize` |
+| `edge.crossing` | soft | Two connectors cross | Usually acceptable; reduce when easy |
+| `label.overlaps-node` | soft | A label sits on a node | Move the edge or set `labelPosition` |
+
+Every issue also carries `rootCause`, `recommendedFix` and `level`
+(`Local` / `RegionRelayout` / `FullRedraw`). **Follow `level`** — patching one node when the
+diagnosis says `RegionRelayout` is how a diagram gets worse with each attempt.
+
+`edgeDetourRatio` in the JSON gives the measured detour factor per edge, so you can see which
+connector is the outlier rather than guessing.
 
 Then **open the PNG and look at it**. Ask yourself:
 
@@ -258,8 +274,9 @@ Deliver:
 | `diagram.svg` | Vector preview / embedding |
 | `diagram.json` | The model, so the next edit is cheap |
 
-Report the layout score and any compatibility warnings alongside the files. If
-`compatibility.issues` is non-empty, quote the codes — they are meaningful, not noise.
+Report `hardConstraintsPassed`, the layout score, and any compatibility warnings alongside
+the files. If `compatibility.issues` is non-empty, quote the codes — they are meaningful,
+not noise.
 
 ---
 
@@ -281,7 +298,8 @@ Report the layout score and any compatibility warnings alongside the files. If
 2. Design the grid before writing coordinates.
 3. Change only what the user asked for; prove it with `diff`.
 4. Keep node ids stable across edits that do not rename the concept.
-5. Any `check-layout` **error** blocks delivery.
+5. `check-layout` reporting `hardConstraintsPassed: false` blocks delivery. A soft score is
+   advisory and never overrides a hard failure.
 6. Open the PNG and judge it visually before claiming success.
 7. Do not claim Visio-native validation — that requires a real Visio install.
 8. When the engine reports a compatibility issue, surface it. Do not swallow it.

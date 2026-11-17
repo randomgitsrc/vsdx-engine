@@ -62,7 +62,7 @@ nodes["audit-service"] = audit
 #    left-to-right: ingest -> analytics -> report -> audit -> scheduler -> bus.
 # ---------------------------------------------------------------------------
 COL = {1: 2.60, 2: 5.50, 3: 8.40, 4: 11.30, 5: 14.20, 6: 17.10, 7: 20.00}
-SERV, DATA, ACC = 6.45, 3.30, 9.70
+SERV, DATA, ACC = 6.30, 2.90, 10.10
 
 place = {
     # access band
@@ -84,9 +84,9 @@ for node_id, (col, y) in place.items():
 
 # mobile-app sits in the left gutter, below web-portal but off the gateway column.
 nodes["mobile-app"]["bounds"]["x"] = 2.60
-nodes["mobile-app"]["bounds"]["y"] = 8.10
+nodes["mobile-app"]["bounds"]["y"] = 8.60
 
-page["size"] = {"width": 22.4, "height": 12.0, "unit": "inches"}
+page["size"] = {"width": 22.4, "height": 13.2, "unit": "inches"}
 model["pageSize"] = page["size"]
 
 # ---------------------------------------------------------------------------

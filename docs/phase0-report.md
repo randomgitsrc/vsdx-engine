@@ -119,6 +119,8 @@ score -= Infos.Count() * 1;
 
 > **这一条必须先修**。否则 Phase 1–5 的任何优化都无法被可靠验收，
 > 而且会重演任务 §4.1 描述的"越修越乱"——因为检测器看不见真正的伤。
+>
+> **状态：已在 Phase 1 修复。** 见 §十二 的实施结果。
 
 ### 2.2 【严重】没有节点放置能力，页面尺寸靠人写
 
@@ -528,3 +530,110 @@ vsdx-tool check-layout --input .diag/wf.vsdx               # 99/100（但容器�
 git grep -n "diagram.Type" -- src/                          # 空 → type 字段是死的
 git grep -n "PlaceNodes\|ArrangeNodes" -- src/              # 空 → 无节点放置
 ```
+
+---
+
+## 十二、Phase 1 实施结果（检测器修复）
+
+按 §八 的计划，Phase 1 只做一件事：**让尺子先准**。本节的数字都是修复后实测的。
+
+### 12.1 修复前后对比
+
+同一批 VSDX，同一个 `check-layout` 命令：
+
+| 图 | 修复前 | 修复后 | 说明 |
+| --- | --- | --- | --- |
+| `demo/architecture.vsdx` | 95/100 | **0/100，hard=false** | 检出 `group.overlap` 7.70"×0.43" |
+| workflow 示例 | 99/100 | **0/100，hard=false** | 检出 `group.overlap` 6.10"×0.01" + `edge.detour` 3.44× |
+| network 示例 | 99/100 | **98/100，hard=true** | 无真实缺陷，未被误伤 |
+
+第三行是关键：新检测器**不是无差别报错**，它让干净的图仍然是干净的。
+
+### 12.2 新增规则
+
+| Code | 严重度 | 修复前是否存在 |
+| --- | --- | --- |
+| `group.overlap` | **hard** | ❌ 完全不存在 |
+| `group.gutter` | soft | ❌ 完全不存在 |
+| `edge.detour` | soft | ❌ 完全不存在（无任何路径质量指标） |
+| `row.misaligned` | soft | ❌ 完全不存在 |
+| `row.size-jitter` | soft | ❌ 完全不存在 |
+
+### 12.3 报告结构改为硬/软分离
+
+```csharp
+public bool HardConstraintsPassed => !Errors.Any();
+
+public int Score => HardConstraintsPassed ? (100 - cappedSoftPenalty) : 0;
+```
+
+三条设计决定：
+
+1. **硬约束失败直接归零**，软指标无法抵消。这正是任务 §5.1 的要求。
+2. **同一 code 的重复计数封顶 3 次**，避免单一系统性缺陷靠数量把分数刷到 0。
+3. **每个 issue 带 `rootCause` / `recommendedFix` / `level`**，把"哪里不对"升级为"为什么不对、该动多大范围"。
+
+`level` 取值 `Local` / `RegionRelayout` / `FullRedraw`，直接对应任务 §4.4 的三级修改模型，
+为 Phase 4 的自动修复提供决策输入。
+
+### 12.4 过程中发现并修正的三个自身缺陷
+
+修检测器时，新规则本身也踩了坑，如实记录：
+
+| 缺陷 | 症状 | 修正 |
+| --- | --- | --- |
+| 绕行比分母用中心距、分子用边界路径 | 所有比例都 < 1.0，永远不触发 | 改用**同一起止锚点**计算直线距离 |
+| `AnchorToward` 把锚点投影到无限延长边线 | 锚点跑到形状外，路径被算短 | 锚点钳制在矩形真实边界内 |
+| 行聚类用固定取整分桶 | 0.4" 的错位被拆成两行"完美"行，反而漏报 | 改为按 Y 序链式聚类，容差 0.45" |
+
+第二条尤其值得记录：它说明**检测器本身也需要被验证**，否则会以"看起来很严谨"的方式给出错误结论。
+
+### 12.5 测试
+
+新增 `DetectorTests`（14 项），逐条锁定 Phase 0 指出的盲区：
+
+| 测试 | 锁定内容 |
+| --- | --- |
+| `Detector_ReportsGroupOverlap` | 容器重叠可被检出 |
+| `Detector_GroupOverlapIsHardConstraint` | 容器重叠是硬约束且分数归零 |
+| `Detector_AllowsNestedGroups` | 嵌套容器不误报 |
+| `Detector_ReportsExcessiveDetour` | 绕行比可被检出 |
+| `Detector_DirectEdgeHasRatioNearOne` | 直连时比例 ≈ 1.0 |
+| `Detector_ReportsRowMisalignment` | 行错位可被检出 |
+| `Detector_AlignedRowIsClean` | 对齐行不误报 |
+| `Detector_ReportsSizeJitter` | 尺寸突变可被检出 |
+| `Detector_CompactMarkersAreNotSizeJitter` | 圆形/端点标记不误报 |
+| `Detector_HardFailureForcesZeroScore` | 硬失败强制 0 分 |
+| `Detector_SoftOnlyProducesNonZeroScore` | 纯软缺陷仍是正分 |
+| `Detector_RepeatedCodeIsCapped` | 重复缺陷封顶 |
+| `Detector_IssuesCarryRepairGuidance` | issue 带修复指导 |
+| `Detector_CleanDiagramScoresFull` | 干净图满分 |
+
+全量测试：**110 项全部通过**（原 96 项 + 新增 14 项），`--no-incremental` 构建零警告。
+
+### 12.6 Phase 1b：修好现有图（已完成）
+
+Phase 1 让检测器可信之后，Phase 1b 用它把三份示例修到硬件全过：
+
+| 图 | Phase 1 | Phase 1b | 修了什么 |
+| --- | --- | --- | --- |
+| architecture | ❌ 0/100 | ✅ **96/100** | 接入层两行导致色带相压 0.43"：抬高接入层、下移服务层、页面加高 |
+| workflow | ❌ 0/100 | ✅ **96/100** | 色带重叠：下移履约行、上移 reject；`e5` 绕行 3.44×→1.0（改语义：payment 授权后进 pick-pack 而非 ship） |
+| network | ✅ 98/100 | ✅ 98/100 | 无需修改 |
+| architecture_v2 | ❌ 0/100 | ✅ **94/100** | v2 生成脚本的色带常量未同步 v1 的改动 |
+
+一个重要观察：**`e5` 的绕行不是布线问题，是语义问题。**
+原来画的是"支付授权 → 发货"，中间隔着整条履约链，所以怎么布线都要绕。
+改成"支付授权 → 拣货包装"（授权后流程才启动）之后，绕行自然降到 1.0。
+这说明任务 §1.1 的"先理解信息再画"不是空话——**语义错了，几何怎么调都不对**。
+
+### 12.7 当前状态
+
+```
+architecture.vsdx      hard=True  score=96
+architecture_v2.vsdx   hard=True  score=94
+workflow.vsdx          hard=True  score=96
+network.vsdx           hard=True  score=98
+```
+
+全量测试 **110 项通过**，`--no-incremental` 构建 **0 warning**。

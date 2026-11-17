@@ -14,9 +14,9 @@ Design rules encoded here (and enforced by `vsdx-tool check-layout`):
 import json
 
 COL = {1: 2.60, 2: 5.35, 3: 8.10, 4: 10.85, 5: 13.60, 6: 16.35, 7: 19.10}
-ACCESS_Y = 9.60
-SERVICES_Y = 6.45
-DATA_Y = 3.30
+ACCESS_Y = 10.10
+SERVICES_Y = 6.30
+DATA_Y = 2.90
 W, H = 2.20, 1.00
 DW, DH = 2.20, 1.10
 
@@ -41,7 +41,7 @@ nodes = [
     node("web-portal", 1, ACCESS_Y, 2.30, 0.95, "Web 门户\nReact SPA", "rounded",
          "#2E75B6", "#1F4E79", "#FFFFFF", "grp_access", "edge", "frontend-team", "edge",
          {"sla": "99.95%"}),
-    node("mobile-app", 1, 8.05, 2.30, 0.95, "移动端\niOS / Android", "rounded",
+    node("mobile-app", 1, 8.60, 2.30, 0.95, "移动端\niOS / Android", "rounded",
          "#2E75B6", "#1F4E79", "#FFFFFF", "grp_access", "edge", "mobile-team", "edge"),
     node("api-gateway", 2, ACCESS_Y, 2.40, 1.00, "API 网关\nKong", "hexagon",
          "#F2B705", "#BF8F00", "#3F2E00", "grp_access", "edge", "platform-team", "edge",

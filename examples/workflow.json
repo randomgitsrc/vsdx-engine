@@ -4,8 +4,8 @@
   "type": "workflow",
   "modelVersion": "1.0",
   "pageSize": {
-    "width": 13.5,
-    "height": 9.5,
+    "width": 14.2,
+    "height": 10.6,
     "unit": "inches"
   },
   "orientation": "landscape",
@@ -19,8 +19,8 @@
       "id": "page-0",
       "name": "Order Fulfilment",
       "size": {
-        "width": 13.5,
-        "height": 9.5,
+        "width": 14.2,
+        "height": 10.6,
         "unit": "inches"
       },
       "groups": [
@@ -71,7 +71,7 @@
           "shape": "circle",
           "bounds": {
             "x": 1.9,
-            "y": 7.6,
+            "y": 8.1,
             "w": 1.0,
             "h": 1.0
           },
@@ -89,7 +89,7 @@
           "shape": "process",
           "bounds": {
             "x": 4.4,
-            "y": 7.6,
+            "y": 8.1,
             "w": 2.1,
             "h": 0.9
           },
@@ -106,7 +106,7 @@
           "shape": "decision",
           "bounds": {
             "x": 7.6,
-            "y": 7.6,
+            "y": 8.1,
             "w": 2.0,
             "h": 1.2
           },
@@ -123,7 +123,7 @@
           "shape": "process",
           "bounds": {
             "x": 11.0,
-            "y": 7.6,
+            "y": 8.1,
             "w": 2.2,
             "h": 0.9
           },
@@ -140,7 +140,7 @@
           "shape": "process",
           "bounds": {
             "x": 7.6,
-            "y": 5.0,
+            "y": 5.6,
             "w": 2.0,
             "h": 0.9
           },
@@ -157,7 +157,7 @@
           "shape": "process",
           "bounds": {
             "x": 2.2,
-            "y": 3.0,
+            "y": 2.2,
             "w": 2.2,
             "h": 0.9
           },
@@ -174,7 +174,7 @@
           "shape": "process",
           "bounds": {
             "x": 5.4,
-            "y": 3.0,
+            "y": 2.2,
             "w": 2.1,
             "h": 0.9
           },
@@ -191,7 +191,7 @@
           "shape": "process",
           "bounds": {
             "x": 8.6,
-            "y": 3.0,
+            "y": 2.2,
             "w": 2.2,
             "h": 0.9
           },
@@ -208,7 +208,7 @@
           "shape": "circle",
           "bounds": {
             "x": 11.6,
-            "y": 3.0,
+            "y": 2.2,
             "w": 1.0,
             "h": 1.0
           },
@@ -261,26 +261,22 @@
         {
           "id": "e5",
           "from": "payment",
-          "to": "ship",
+          "to": "pick-pack",
           "kind": "rightAngle",
           "label": "已授权",
           "endArrow": "triangle",
           "lineColor": "#507E32",
-          "fromPort": "right",
-          "toPort": "bottom",
+          "fromPort": "bottom",
+          "toPort": "top",
           "labelPosition": 0.5,
           "waypoints": [
             {
-              "x": 12.55,
-              "y": 5.0
+              "x": 11.0,
+              "y": 3.9
             },
             {
-              "x": 12.55,
-              "y": 2.05
-            },
-            {
-              "x": 6.45,
-              "y": 2.05
+              "x": 2.2,
+              "y": 3.9
             }
           ]
         },
@@ -318,7 +314,21 @@
           "lineColor": "#999999",
           "linePattern": 2,
           "fromPort": "bottom",
-          "toPort": "top"
+          "toPort": "left",
+          "waypoints": [
+            {
+              "x": 7.6,
+              "y": 4.4
+            },
+            {
+              "x": 7.05,
+              "y": 4.4
+            },
+            {
+              "x": 7.05,
+              "y": 2.2
+            }
+          ]
         }
       ]
     }

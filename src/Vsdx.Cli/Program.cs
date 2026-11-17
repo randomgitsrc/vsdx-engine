@@ -509,9 +509,11 @@ public static class Program
         {
             Emit(new
             {
-                ok = report.Errors.Any() == false,
+                ok = report.HardConstraintsPassed,
                 command = "check-layout",
                 input = Path.GetFullPath(input),
+                // Deliverability depends only on hard constraints; the score is advisory.
+                hardConstraintsPassed = report.HardConstraintsPassed,
                 score = report.Score,
                 clean = report.IsClean,
                 counts = new
@@ -522,9 +524,17 @@ public static class Program
                 },
                 byCode = report.CountByCode(),
                 utilisation = report.PageUtilisation,
+                edgeDetourRatio = report.EdgeDetourRatio,
                 issues = report.Issues.Select(i => new
                 {
-                    i.Code, i.Severity, i.Page, i.Targets, i.Message
+                    i.Code,
+                    i.Severity,
+                    i.Page,
+                    i.Targets,
+                    i.Message,
+                    i.RootCause,
+                    i.RecommendedFix,
+                    level = i.SuggestedLevel.ToString()
                 })
             });
         }
