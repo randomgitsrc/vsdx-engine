@@ -147,7 +147,9 @@ DesignSpec
 record Palette(
     string Background,
     IReadOnlyDictionary<string, string> RoleFills,   // service/database/gateway/client/queue/...
-    string ContainerFill, string ContainerStroke, string ContainerText,
+    // 容器不是单色：同层多个容器需要彼此可区分，否则改完比改前更难读
+    IReadOnlyList<string> ContainerFills, IReadOnlyList<string> ContainerStrokes,
+    IReadOnlyList<string> ContainerTexts,
     string EdgeStroke, string EdgeLabelText,
     string TextPrimary, string TextSecondary)
 ```
@@ -158,6 +160,14 @@ record Palette(
 | `office` | 明亮饱和，接近 Office 默认色板 |
 | `technical` | 深色低饱和，适合工程图 |
 | `muted` | 低对比柔和，适合印刷 |
+
+**容器色必须是序列，不能是单值**（审查 E-11）：当前 `bandFills` 是 5 个颜色的数组，
+按容器序号轮转，因此同层容器彼此不同色。若 Palette 只提供单个
+`ContainerFill`，T3 移除数组后**同层容器会全部同色**——
+那正好是 §6.4 基线里要修的"三个容器全同一种浅蓝"。
+
+**因此 Palette 的容器色必须是 `IReadOnlyList<string>`，按容器序号轮转**，
+保持"同层可区分"这一现有优点。
 
 ### 3.2 硬约束（来自任务 §3.2）
 
@@ -183,9 +193,10 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 十七项缺陷的修法（与 audit 一一对应）
+## 4. 二十项缺陷的修法（与 audit 一一对应）
 
-> **本节已按 M5 补齐，并按审查 M2/M3 与自查增至 17 项。** 原表只有 9 行；
+> **本节已按 M5 补齐，并按三轮审查增至 20 项。**
+> 其中缺陷 18/19 由第三轮审查发现，缺陷 20 由该轮 E-3 指出。 原表只有 9 行；
 > 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
 > 均已并入 audit 与本节。
 >
@@ -210,33 +221,32 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
 | 16 | **IR `order` 被忽略致流程倒置**（P0） | 转换器消费 `Order`；布局优先用显式 order，其次 `MeanY`，最后声明序 | **T1b** |
 | 17 | **缺"无法表达/渲染必须报告"机制** | 定义渲染器支持白名单；写入后抽样回读；白名单外进 `unmet` | **T2c** |
+| 18 | **Renderer 不消费 `FontFamily`**（P0） | `FontResolver` 读 VSDX 字体名；找不到时降级并报告。**若不做，白名单必须把 font-family 标为"仅 VSDX 有效、预览不体现"** | **T2d** |
+| 19 | **TextBlock `Color`/`Font` 层级错**（P0） | 移入 `Character/Row`，与 Node 一致；验证回读 | **T2e** |
+| 20 | **文字裁切不计入硬约束** | `text.overflow-*` 升级为 error（score 归零） | **T6b** |
 
 **映射关系（已按审查 M5 更正，不再声称"一一对应"）：**
 
-- **17 项缺陷 → 17 行修法**：行数与编号严格对应
-- **17 项缺陷 → 18 个任务**：不是一一对应。`T8`（三套产物 + 目视）与
-  `T9`（全量回归）不对应任何**单一**缺陷，二者是**跨任务的验收门禁**；
-  其余 16 个任务与缺陷一一对应
+**映射关系（脚本核验，非人工估算）：**
 
-  > 上一版只说了 `T9`，漏了 `T8`。脚本核验：
-  > `§4 task refs = 17 个`，`§9 tasks = 18 个`，差集恰为 `{T8, T9}`。
-  >
-  > **另有一处不完全一一对应：** 缺陷 2（Palette）与缺陷 10（BaseSize）
-  > 共用任务 `T1`（`StyleResolver`），因为两者都落在同一套解析器上。
-  > 因此 17 项缺陷实际映射到 **16 个不同任务**，不是 17 个。
-  > 这是合理的合并，但**不应声称"一一对应"**——三个数字并不相等。
+```
+§4 缺陷行数        : 20
+§4 任务引用数      : 20
+§4 不同任务数      : 19   ← 缺陷 2(Palette) 与缺陷 10(BaseSize) 共用 T1
+§9 任务行数        : 21   ← 19 + T8 + T9（两个跨任务门禁）
+```
 
-原表述"16⇄16⇄16 一一对应"是错的——§9 里 `T0.5` 曾缺失、`T8`/`T9` 无对应缺陷，
-数字相等只是巧合。现在是 16 : 16 : 17，且差异有明确解释。
+- **20 项缺陷 → 20 个任务引用**：每行都有明确任务
+- **但有 1 处合并**：缺陷 2 与 10 共用 `T1`（`StyleResolver`），故不同任务 19 个
+- **§9 多出 2 个**：`T8`（三套产物 + 目视）与 `T9`（全量回归）不对应单一缺陷，
+  是**跨任务的验收门禁**
 
-### 4.1 ObjectMapping 键格式（已裁决，不再是待决项）
+> **三轮反复纠正的记录：** 我先写"17⇄17⇄17 一一对应"（假），
+> 再写"17:17:18，只解释 T9"（漏 T8），现在才用脚本数清。
+> **三个数字从不相等，之前的整齐是猜的。**
+> 审查还指出我上一版佐证写"§4 refs=17"，实际当时是 16——连佐证本身也是估的。
 
-> **本节已重写。** 原版提议"单页裸 ID、多页 `pageId/objectId`"，**已被负责人否决**。
-
-**负责人 D2 决定：** 保持裸 ID，前提是 IR 对象 ID 全局唯一（跨页面、跨类型）。
-
-| 步 | 内容 |
-| --- | --- |
+--- | --- |
 | T7a | 补全局唯一性校验 `ir.id-duplicate-global`（当前缺失，见 §14.3） |
 | T7b | 裸 ID 覆盖全部页面与 Node/Container/Edge/TextBlock/Path |
 
@@ -258,7 +268,13 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `src/Vsdx.Engine/LayeredLayoutEngine.cs` 等四个引擎 | 读 `options.Direction`，实现转置 | **中**（触碰已验证布局） |
 | `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | **写页面背景**（`PageSheet`，位于 `pages.xml`） | 中（触碰保真层） |
 | `src/Vsdx.Adapters/VisioTextBlockBridge.cs` | **修字体单元格**：当前写 shape 级裸 `<Cell N="Font">`，该字体未注册 FaceNames，Reader 读不到（M4） | 中 |
-| `src/Vsdx.Protocol/DiagramIr.cs` | **需改动**：`lane` 保留（T0b）、`IrEdge` 加 `Waypoints`（若采纳 §11.2 方案 B）、消费 `IrContainer.Order`（T1b） | 中 |
+| `src/Vsdx.Protocol/DiagramIr.cs` | **需改动**：`lane` 保留（T0b）、消费 `IrContainer.Order`（T1b）。**`IrEdge.Waypoints` 不需要**（D-8 已裁定方案 A） | 中 |
+| `src/Vsdx.Protocol/ProtocolRunner.cs` | **需改动**：spec 路径补 `DiagramSizer.Apply`（T0.5，M1 核心） | 中 |
+| `src/Vsdx.Engine/LayoutStrategies.cs` | **需改动**：`Transpose(Page)` 公共化 + 各引擎消费 `Direction`（T0）；移除逐个 clamp 改整组偏移（T8a） | 中 |
+| `src/Vsdx.Engine/LayoutAnalyzer.cs` | **需改动**：`text.overflow-*` 升级为 error（T6b） | 小 |
+| `src/Vsdx.Engine/TypeScaleDefaults.cs` | **新增**（放 `Vsdx.Model`）：字号档位唯一权威（M11） | 小 |
+| `src/Vsdx.Adapters/VisioBackgroundBridge.cs` | **新增**：写 `pages.xml` 的 `PageSheet`（T10） | 小 |
+| `src/Vsdx.Protocol/DiagramIrConverter.cs` | **需改动**：消费 `IrContainer.Order`（T1b） | 小 |
 | `src/Vsdx.Adapters/OfficeImoDocumentReader.cs` | **读回页面背景** + **读回 Edge 标签字体 / TextBlock 字体**（M4） | **中** |
 | `schemas/phase7/design-spec.schema.json` | 枚举 4 个 palette 名 | 低 |
 | `skill/SKILL.md` | 新增 palette 与样式优先级说明 | 低 |
@@ -438,6 +454,9 @@ text: '企业分析平台'            ✅
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
 | T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
 | T2c | 样式可渲染性报告（任务书 §3.5） | 白名单外样式（如 `shadow`）→ `unmet` 含 `style.renderer-unsupported`；写入后抽样回读断言单元格存在 |
+| T2d | Renderer 消费 FontFamily | 换字体 → PNG **必须不同**（当前 MD5 相同）；找不到字体时降级并进 `unmet` |
+| T2e | TextBlock 字色/字体层级 | `color:#FF0000` 与 `font:Verdana` 回读非 null；三色三字体产出 PNG 互不相同 |
+| T6b | 文字裁切计入硬约束 | `baseSize=24` 时 `hardConstraintsPassed=false`、score=0 |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
 | T4 | 修 `Canvas.Unit`（**两处**：Writer + DesignSpecApplier） | `create` 与 `execute` 的 cm/mm 换算一致；标签与数值一致；`update` 不再二次换算 |
 | T5 | 修 `containerLayouts` 报告 | manual 下进 unmet |
@@ -512,11 +531,18 @@ foreach (var edge in page.Edges)
 **修正后的处理：**
 
 | 场景 | waypoints 行为 | 理由 |
-| --- | --- | --- |
-| `Layout != manual` | 布局期清空，转置无输入 → **不需要转置** | 节点已移动，旧折点已失效 |
-| `Layout == manual` | **保留并转置** | 作者坐标即意图，manual 不清空 |
-
 **`Direction + manual` 已由负责人 D1 裁定：方案 A。**
+
+> **本节已按审查 E-9 修正。** 原文此处保留了一张旧表格，写着
+> 「`Layout == manual` → **保留并转置**」，与下面的裁决直接对立。
+> 该表已删除——它是方案 B 的残留，三轮审查中被点了两次。
+>
+> **waypoints 在两种模式下的实际行为（裁决后）：**
+
+| 模式 | 转置 | waypoints |
+| --- | --- | --- |
+| `layout != manual` | 生效 | 布局期已清空，无需处理 |
+| `layout == manual` | **不生效**（进 `unmet`） | 保持作者原值，不转置 |
 
 > 负责人原文：「**Manual 模式必须保留用户坐标，不得擅自转置。**」
 
@@ -654,7 +680,7 @@ if (spec is not null)
 
 | # | 断言 |
 | --- | --- |
-| 1 | **同一字号下，带 spec 与不带 spec 的框体宽高必须一致** |
+| 1 | **同一字号、同一画布尺寸下**，带 spec 与不带 spec 的框体宽高必须一致。**必须同时固定画布**——审查 E-14 复算：`TypeScale.ForCanvas` 按页面尺寸推导，11×8.5 得 NodeTitle 8.919、20×14 得 14.000，画布不同则该断言必然失败 |
 | 2 | `baseSize` 9→24，框体尺寸必须随之增大 |
 | 3 | 增大后 `text.overflow-*` 计数为零 |
 | 4 | spec 路径的 `stagesCompleted` 必须含尺寸推导阶段 |
@@ -831,6 +857,28 @@ if (!Allowed.Contains(value))
 
 **禁止静默回退。** 当前 `Parse("kaboom")` 返回 Layered 且不报告——必须改。
 
+**闸门 0：先加载 JSON Schema**（审查 E-4 指出，此前完全没有）
+
+`execute` 当前**根本不校验 Schema**——闸门 1 在重造 Schema 已有的约束。
+`schemas/phase7/*.schema.json` 已存在且写明 `enum`/`required`，但无人使用。
+
+```csharp
+// 新增：协议入口先做 Schema 校验
+var schemaErrors = JsonSchemaValidator.Validate(json, "design-spec.schema.json");
+// 校验失败 → status=failed，不进后续流程
+```
+
+**这比手写闸门更可靠**：Schema 是协议的公开契约，改一处即全局生效。
+
+**闸门 2 补充：闸门覆盖不到的 4 类**（审查实测漏网）：
+
+| 漏网项 | 现状 | 应报告 |
+| --- | --- | --- |
+| `containerLayouts` 非法值 | `"svc":"kaboom"` → `applied: 'container svc relaid as kaboom'`，unmet 空 | `input.unknown-enum` |
+| `anchor.mode: "relative"` | 等同 `fixed`，不报告 | `input.not-executed` |
+| `FromPort` / `ToPort` | 路由用了，回读 null | 要么执行、要么报告 |
+| `ConstraintSpec.Target` | 只回显，不限作用域 | `input.not-executed` |
+
 **闸门 3：未消费字段登记**
 
 对"协议接受但**本阶段之后**仍不执行"的字段，显式登记并在 `unmetConstraints` 报告一次。
@@ -973,7 +1021,7 @@ targetW *= factor; targetH *= factor;
 
 | 路径 | 输入 `10×8 cm` | XML `PageWidth` | 是否换算 |
 | --- | --- | --- | --- |
-| `create`（模型→VSDX） | 10 × 8 cm | `10` / `8` | ❌ **不换算**，原样写成英寸 |
+| `create`（模型→VSDX） | 10 × 8 cm | `10` / `8` | ❌ **不换算**，原样写成英寸（XML 中 `U="IN"` 恒真） |
 | `update`（走 `IncrementalEditor`） | unit=cm | 3.937 / 3.150 | ✅ 换算 |
 
 所以现状是**两条路径行为不一致**，而不是"已有一处换算、只需避免重复"。

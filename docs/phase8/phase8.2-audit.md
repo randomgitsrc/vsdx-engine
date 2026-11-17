@@ -194,51 +194,67 @@ text.overflow-horizontal: 'a' 最长行约 5.09" 宽，实际 2.00"
 
 **但那是事后检测，生成时并未阻止。** 产出物仍然落盘，溢出 2.5 倍。
 
-**根因是步骤顺序：**
+**且裁切不计入硬约束**（审查 E-3 指出，我已复现）：
+
+```console
+$ execute --spec '{"typography":{"baseSize":24}}' --json
+  status: succeeded
+  hard: True          ← 硬约束"通过"
+  score: 76
+  hardViolations: 0
+  issueCodes: [text.overflow-horizontal, text.overflow-vertical]
+```
+
+**12 处文字被裁切，系统判定"可交付"。**
+
+这使任务书 §5.3 的验收项"**不发生文本裁切**"**无法证伪**——
+无论裁切多少，`hardConstraintsPassed` 都是 `true`。
+
+**修法（T6b）：** 文字裁切应计入硬约束。
+任务书 §5.3 把它列在"验收要求"里，与"文字可读""对比度合理"并列，
+而这些是不可让步的交付底线，不是风格偏好。
+
+**根因是阶段缺失，不是顺序**（本项已按审查 E-2 更正，原写"步骤顺序"是错的）
+
+初稿认为根因是"字号改得太晚，应提前到 `DiagramSizer.Apply` 之前"。
+**但 spec 路径上 `DiagramSizer.Apply` 根本不存在**——提前到一个不存在的步骤不会生效。
 
 ```csharp
-// DesignSpec.cs
-139:  DiagramLayoutEngine.Apply(...);   // 布局：按当前字号算位置
-166:  DiagramLayout.Apply(...);        // 容器：按成员反算包围盒
-168:  // --- Typography ---            // 字号在这里才改
-178:  node.Style.FontSize = clamped;   // 但框体已经定了
+// ProtocolRunner.cs:66-88
+if (spec is not null)
+{
+    DesignSpecApplier.Apply(diagram, spec);   // ← 只调 Recenter/FitPage（页面级）
+}                                              //   没有 DiagramSizer.Apply（框体级）
+else
+{
+    DiagramSizer.Apply(diagram);               // ← 只在这里
+}
 ```
 
-字号影响文字占位、文字占位影响框体尺寸。**先定尺寸再改字号，等于尺寸失效。**
+`DiagramSizer.Apply` 的全部调用点（`grep -rn` 实测）：
 
-**这与 Phase 8.1 修过的"FitPage 在布局之前"是同一类错误**——步骤顺序错了，
-每一步单独看都对，组合起来产出错误结果。
+| 位置 | 条件 |
+| --- | --- |
+| `ProtocolRunner.cs:77` | **仅 `spec == null` 分支** |
+| `VsdxEngine.cs:58` | `FitToText`，默认 false |
+| `CandidateComparison.cs:103` | `recipe.FitToText` |
+| `Program.cs:550` | repair 命令 |
 
-**修法：** 字号必须在 `DiagramSizer.Apply` **之前**确定，
-或字号改变后重新跑一次尺寸推导。Phase 8.2 §3.1 的统一解析若在布局前完成，
-此问题自然消失——**这也是为什么解析器必须前置，而不只是"把 palette 接上"**。
+**spec 路径上一次都不调用。**
 
-### 2.2d 【P2】`roleColors` 无 `default` 回退，拼错角色静默失效
-
-**实测**（IR 中一个节点角色拼成 `databse`）：
-
-```json
-"roleColors": { "service": "#FF0000", "default": "#00FF00" }
-```
+同一 IR、同一字号（`baseSize=11`），唯一变量是 spec 是否存在：
 
 ```
-a (service)  -> #FF0000   ✅
-b (databse)  -> #FFFFFF   ← 既没用 default，也没报告
-unmet: []
+带 spec     : 节点宽 [2.00, 2.00]     ← DiagramIr 写死的 Bounds(0,0,2.0,0.9)
+不带 spec   : 节点宽 [1.33, 2.33]     ← 按文字推导
 ```
 
-**两个问题叠加：**
+**带 spec 比不带 spec 更差**，因为恰好跳过了尺寸推导。
 
-1. **`default` 键被忽略**——Schema 允许任意键名，代码用 `TryGetValue(role)` 精确匹配，
-   从不查 `default`。调用方写了回退色，以为是兜底，实际无效。
-2. **角色拼写错误无任何提示**——`databse` 不匹配任何角色，节点保持默认白色，
-   且不进 `unmetConstraints`。
+**修法见 plan §12**：补上该阶段，并把 `DesignSpecApplier` 拆成
+"仅样式（尺寸前）"与"布局/画布（尺寸后）"两段。
 
-**后果：** 一个字母的拼写错误会导致整类节点失去配色，而调用方拿到的结果是
-`status=succeeded`。
-
-**修法：** 解析器应支持 `default` 回退，并对"IR 中出现但 roleColors 未覆盖的角色"
-在 `unmetConstraints` 里报告一次（按角色去重，避免刷屏）。
+---
 
 ### 2.3 【P1】容器颜色硬编码，绕过 Theme
 
@@ -403,6 +419,79 @@ IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
 **绕过 IR 转换**，因此从未发现协议入口是断的。
 
 **这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
+
+### 2.15 【P0】Renderer 完全不消费 `FontFamily`
+
+**逐像素实测**（同一 IR，仅换字体）：
+
+```
+e3d355cdcaa3c960405ff927204f4eec  georgia.png    ← Georgia
+e3d355cdcaa3c960405ff927204f4eec  courier.png    ← Courier New
+e3d355cdcaa3c960405ff927204f4eec  bogus.png      ← NoSuchFont-XYZ（不存在的字体）
+```
+
+**三张 PNG 的 MD5 完全相同**，连不存在的字体也一样。
+
+根因：`FontResolver.cs` 只按"是否 CJK"二选一挑一个字体文件，
+**从不读取 VSDX 中的 FontFamily**。
+
+对照组：字号、粗体、斜体**是**生效的——所以不是"渲染器整体失灵"，
+而是**字体族这一个维度被完全忽略**。
+
+**后果：**
+
+1. 任务书 §3.4 要求"不同角色应能产生有意义的视觉区分"，字体族是其中一项
+2. D-4 修好回读后，**用户仍然看不出效果**——文件里字体对了，渲染出来一模一样
+3. T2c 的白名单若把 `font-family` 写成"支持"，那条验收**永远为假**
+
+**这是本阶段最需要负责人知情的一项**：它意味着"视觉样式系统"在字体维度上
+对预览无效，仅对 Visio 原生打开有效（而 L4 未验证）。
+
+---
+
+### 2.16 【P0】TextBlock 的 `Color` / `Font` 写错 XML 层级
+
+**实测**（TextBlock 设 `color:"#FF0000"`, `font:"Verdana"`）：
+
+```xml
+<!-- TextBlock：Color 与 Font 在 shape 级裸 cell -->
+<Shape NameU="TextBlock">
+  <Cell N="Color" V="#FF0000" />        ← 位置错
+  <Cell N="Font"  V="Verdana" />        ← 位置错
+  <Section N="Character">
+    <Row IX="0"><Cell N="Size" .../><Cell N="Style" V="0"/></Row>   ← 只有 Size/Style
+  </Section>
+</Shape>
+
+<!-- Node：正确写法，Font 在 Character/Row 内 -->
+<Section N="Character">
+  <Row IX="0"><Cell N="Font" V="Georgia" /></Row>
+</Section>
+```
+
+Reader 只读 `shape.TextStyle`（`OfficeImoDocumentReader.cs:602-625`），
+而 `TextStyle` 来自 `Character` 段。shape 级裸 `Color`/`Font` **不在其覆盖范围**。
+
+**后果：**
+
+| 样式 | 写入 | 回读 | 渲染 |
+| --- | --- | --- | --- |
+| TextBlock 字号 | ✅ | ✅ | ✅ |
+| TextBlock 粗体/斜体 | ✅ | ✅ | ✅ |
+| **TextBlock 颜色** | ✅ | ❌ null | ❌ 三色同图 |
+| **TextBlock 字体** | ✅ | ❌ null | ❌ 三字体同图 |
+
+**这与缺陷 17 的关系：** 我在 §2.13 拿 `color:"#FF0000"` 作为"缺报告机制"的例子，
+但**没看出根因是写错层级**。缺陷 17 是"没有验证是否成功"，
+缺陷 16 是"确实没成功"——后者更根本。
+
+**修法：** `VisioTextBlockBridge` 的 `Color`/`Font` 移入 `Character/Row`，
+与 Node 保持一致。改动很小（几行），但必须验证回读。
+
+**这也修正了 D-4 的诊断：** 原以为只是"FaceNames 未注册"，
+实际是**层级错了**——注册与否是次要的，位置不对则一切都读不到。
+
+---
 
 ### 2.13 【P1】缺失"无法表达或渲染的样式必须报告"机制
 
@@ -807,6 +896,9 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 15 | 装饰元素独立夹紧致间距塌陷 | P1 | ❌ **遗漏**（Phase 8.1 遗留） |
 | 16 | IR 容器 `order` 被忽略致流程倒置 | **P0** | ❌ **遗漏** |
 | 17 | 缺"无法表达/渲染必须报告"机制 | P1 | ❌ **遗漏**（任务书 §3.5 明确要求） |
+| 18 | **Renderer 不消费 FontFamily** | **P0** | ❌ **遗漏**（三轮审查才发现） |
+| 19 | **TextBlock Color/Font 层级错** | **P0** | ❌ **遗漏**（两轮审查均未发现） |
+| 20 | **文字裁切不计入硬约束** | P1 | ❌ **遗漏**（致任务书 §5.3 不可证伪） |
 
-**17 项缺陷中，初稿漏了 11 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
+**20 项缺陷中，初稿漏了 14 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
