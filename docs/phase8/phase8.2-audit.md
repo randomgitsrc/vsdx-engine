@@ -88,6 +88,19 @@ $ --spec '{"theme":{"palette":"does-not-exist"}}'
 **根因：** `grep -rn "Palette" src/` 只有两处声明（`DesignSpec.cs:83`、`DiagramModel.cs:205`），
 **无任何读取方**。
 
+**加剧因素：Schema 也不设限。**
+
+```json
+"theme.palette": { "type": "string" }
+```
+
+既没有 `enum` 限定四个合法名，也没有 `pattern`。因此一个拼错的
+`"enterpise"` 能通过 Schema、通过执行、拿到 `status=succeeded`，
+调用方没有任何途径发现写错了。
+
+**三方全部失守：Schema 不校验、执行不消费、结果不报告。**
+修 8.2 时三处都要改——只加执行仍会让拼写错误静默通过。
+
 ### 2.2 【P1】Typography 只覆盖 Node
 
 **实测**（`fontFamily=Courier New, baseSize=14`）：
