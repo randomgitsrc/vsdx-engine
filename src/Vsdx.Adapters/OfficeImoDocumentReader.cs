@@ -82,6 +82,127 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
     }
 
     /// <summary>
+    /// Parses every Geometry section in a page part, keyed by Visio shape id.
+    ///
+    /// OfficeIMO does not project geometry onto its shape model, so this reads the XML directly.
+    /// Rows of types the engine does not interpret are kept verbatim rather than dropped: the
+    /// reviewer's requirement is that an unsupported geometry instruction is preserved, not
+    /// converted into something else.
+    /// </summary>
+    private static Dictionary<string, List<PathGeometry>> ReadGeometrySections(
+        string vsdxPath, int pageId, CompatibilityReport compat)
+    {
+        var result = new Dictionary<string, List<PathGeometry>>(StringComparer.Ordinal);
+
+        try
+        {
+            using var zip = System.IO.Compression.ZipFile.OpenRead(vsdxPath);
+            var entry = zip.GetEntry($"visio/pages/page{pageId + 1}.xml");
+            if (entry is null) return result;
+
+            System.Xml.Linq.XNamespace ns = "http://schemas.microsoft.com/office/visio/2012/main";
+            System.Xml.Linq.XDocument doc;
+            using (var stream = entry.Open()) doc = System.Xml.Linq.XDocument.Load(stream);
+
+            foreach (var shape in doc.Descendants(ns + "Shape"))
+            {
+                var shapeId = (string?)shape.Attribute("ID");
+                if (shapeId is null) continue;
+
+                var sections = shape.Elements(ns + "Section")
+                    .Where(sec => (string?)sec.Attribute("N") == "Geometry")
+                    .ToList();
+
+                if (sections.Count == 0) continue;
+
+                var geometries = new List<PathGeometry>();
+                foreach (var section in sections)
+                {
+                    var geometry = new PathGeometry
+                    {
+                        Index = int.TryParse((string?)section.Attribute("IX"), out int ix) ? ix : 0
+                    };
+
+                    var sectionCells = new Dictionary<string, string>(StringComparer.Ordinal);
+                    foreach (var cell in section.Elements(ns + "Cell"))
+                    {
+                        var name = (string?)cell.Attribute("N");
+                        var value = (string?)cell.Attribute("V");
+                        if (name is not null && value is not null) sectionCells[name] = value;
+                    }
+                    if (sectionCells.Count > 0) geometry.SectionCells = sectionCells;
+
+                    foreach (var row in section.Elements(ns + "Row"))
+                    {
+                        var type = (string?)row.Attribute("T");
+                        if (type is null) continue;
+
+                        var pathRow = new PathRow { Type = type };
+                        foreach (var cell in row.Elements(ns + "Cell"))
+                        {
+                            var name = (string?)cell.Attribute("N");
+                            var value = (string?)cell.Attribute("V");
+                            if (name is not null && value is not null) pathRow.Cells[name] = value;
+                        }
+                        geometry.Rows.Add(pathRow);
+                    }
+
+                    geometries.Add(geometry);
+                }
+
+                result[shapeId] = geometries;
+            }
+        }
+        catch (Exception ex)
+        {
+            compat.Warn("read.geometry", $"无法解析自定义几何：{ex.Message}");
+        }
+
+        return result;
+    }
+
+    /// <summary>Builds a FreePath from a shape and its parsed geometry.</summary>
+    private static FreePath ReadFreePath(
+        OfficeIMO.Visio.VisioShape shape, List<PathGeometry> geometry, CompatibilityReport compat)
+    {
+        var path = new FreePath
+        {
+            // Prefer the engine-stamped stable id so a renamed path keeps its identity, the same
+            // way nodes do.
+            Id = StableIdOf(shape) ?? shape.Id,
+            Name = shape.Text,
+            NameU = shape.NameU,
+            VisioShapeId = shape.Id,
+            Text = shape.Text,
+            Bounds = new Bounds(
+                shape.PinX.ToInches(), shape.PinY.ToInches(),
+                shape.Width.ToInches(), shape.Height.ToInches()),
+            Geometry = geometry,
+            Style = ReadStyle(shape)
+        };
+
+        if (shape.LayerNames.Count > 0) path.Layers = shape.LayerNames.ToList();
+
+        // Flag geometry containing instructions the engine does not interpret, so a caller knows
+        // this path is preserved rather than understood.
+        var unknown = geometry
+            .SelectMany(g => g.Rows)
+            .Select(r => r.Type)
+            .Where(t => t is not ("MoveTo" or "LineTo"))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        if (unknown.Count > 0)
+        {
+            compat.Info("read.geometry-verbatim",
+                $"形状 '{shape.Id}' 含未解释的几何指令（{string.Join(", ", unknown)}），已原样保留",
+                shape.Id);
+        }
+
+        return path;
+    }
+
+    /// <summary>
     /// Reads shape→parent links from the page part and resolves them to container headings.
     ///
     /// OfficeIMO.Visio does not project the <c>Parent</c> cell onto <c>VisioShape.Parent</c> on
@@ -166,10 +287,24 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
                 containers[shape.Id] = shape;
         }
 
-        // Pass 2: build nodes.
+        // Pass 2: build nodes and free-form paths.
+        //
+        // A shape with its own Geometry section is not one of the built-in masters; treating it
+        // as a node silently relabels a custom outline as a rectangle. Such shapes become
+        // FreePath entries instead, keeping the raw rows so nothing is lost.
+        var geometryByShape = ReadGeometrySections(vsdxPath, page.Id, compat);
+
         foreach (var shape in page.Shapes)
         {
             if (IsContainerShape(shape)) continue;
+
+            if (geometryByShape.TryGetValue(shape.Id, out var geometry) && geometry.Count > 0)
+            {
+                var path = ReadFreePath(shape, geometry, compat);
+                model.Paths.Add(path);
+                shapeOrder.Add(shape.Id);
+                continue;
+            }
 
             var node = ReadNode(shape, compat);
             model.Nodes.Add(node);

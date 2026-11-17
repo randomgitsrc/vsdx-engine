@@ -54,6 +54,70 @@ public sealed class Page
     public List<UnmappedObject> Unmapped { get; set; } = new();
     /// <summary>Original ordering of Visio shape IDs, so round-trips can preserve z-order.</summary>
     public List<string>? ShapeOrder { get; set; }
+    /// <summary>Free-form geometry that is not one of the built-in masters.</summary>
+    public List<FreePath> Paths { get; set; } = new();
+}
+
+/// <summary>
+/// A shape whose outline is carried by explicit geometry rather than a master.
+///
+/// Phase 8 (P1): such shapes were read back as `Node { Shape = "Rectangle" }`, because the reader
+/// had nowhere to put the geometry. That silently changed a custom outline into a rectangle.
+///
+/// The raw geometry rows are kept verbatim. Rows the engine does not interpret are still stored
+/// and written back unchanged, so an unsupported shape survives a round-trip instead of being
+/// flattened — a requirement the reviewer stated explicitly.
+/// </summary>
+public sealed class FreePath
+{
+    public string Id { get; set; } = "path";
+    public string? Name { get; set; }
+    public string? NameU { get; set; }
+    /// <summary>Visio shape ID in the package.</summary>
+    public string? VisioShapeId { get; set; }
+
+    /// <summary>Shape pin (centre) in inches; Visio Y grows upward.</summary>
+    public Bounds Bounds { get; set; } = new(0, 0, 1, 1);
+
+    /// <summary>Text on the shape, if any.</summary>
+    public string? Text { get; set; }
+
+    public ShapeStyle? Style { get; set; }
+    public double? Angle { get; set; }
+
+    /// <summary>
+    /// Geometry sections, in the order they appear in the package. Each is a list of raw rows.
+    /// The engine understands MoveTo/LineTo; anything else is preserved as-is.
+    /// </summary>
+    public List<PathGeometry> Geometry { get; set; } = new();
+
+    public Dictionary<string, string>? ShapeData { get; set; }
+    public List<string>? Layers { get; set; }
+    public Dictionary<string, string>? NativeCells { get; set; }
+}
+
+/// <summary>One Geometry section: an ordered list of path rows.</summary>
+public sealed class PathGeometry
+{
+    /// <summary>Visio section index (the <c>IX</c> attribute).</summary>
+    public int Index { get; set; }
+
+    /// <summary>NoFill / NoLine / NoShow etc., preserved verbatim.</summary>
+    public Dictionary<string, string>? SectionCells { get; set; }
+
+    public List<PathRow> Rows { get; set; } = new();
+}
+
+/// <summary>
+/// One geometry row. <see cref="Type"/> is the Visio row type (MoveTo, LineTo, ArcTo, EllipticalArcTo,
+/// SplineKnot, PolylineTo, ...). Rows of types the engine does not interpret are still round-tripped.
+/// </summary>
+public sealed class PathRow
+{
+    public string Type { get; set; } = "LineTo";
+
+    /// <summary>Cell values keyed by cell name (X, Y, A, B, C, D, ...).</summary>
+    public Dictionary<string, string> Cells { get; set; } = new();
 }
 
 public sealed class Group

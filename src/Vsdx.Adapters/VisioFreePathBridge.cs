@@ -1,0 +1,234 @@
+using System.IO.Compression;
+using System.Xml.Linq;
+using Vsdx.Model;
+
+namespace Vsdx.Adapters;
+
+/// <summary>
+/// Writes <see cref="FreePath"/> objects into the page part as native Visio shapes with explicit
+/// geometry.
+///
+/// OfficeIMO.Visio has no geometry API, so this writes the &lt;Shape&gt; element itself. Rows are
+/// emitted exactly as they were read, including arc and spline instructions the engine does not
+/// interpret — dropping them would silently turn a custom outline into a polygon.
+///
+/// The element is appended after save so the writer's own ordering and the z-order restoration
+/// still work; <see cref="VisioZOrderBridge"/> runs later and can move these shapes.
+/// </summary>
+public static class VisioFreePathBridge
+{
+    private static readonly XNamespace VisioNs = "http://schemas.microsoft.com/office/visio/2012/main";
+
+    /// <param name="replaceExisting">
+    /// When true, any shape that carries geometry but is not one of the paths being written is
+    /// removed first. The incremental editor needs this: it cannot see indexer-created shapes as
+    /// model objects, so an edited path would otherwise be written alongside its old version.
+    /// </param>
+    public static int Apply(
+        Diagram diagram, string vsdxPath, CompatibilityReport? compat = null,
+        bool replaceExisting = true)
+    {
+        int written = 0;
+
+        for (int pageIndex = 0; pageIndex < diagram.Pages.Count; pageIndex++)
+        {
+            var pageModel = diagram.Pages[pageIndex];
+            if (pageModel.Paths.Count == 0 && !replaceExisting) continue;
+
+            written += ApplyToPage(vsdxPath, pageIndex, pageModel, compat, replaceExisting);
+        }
+
+        return written;
+    }
+
+    private static int ApplyToPage(
+        string vsdxPath, int pageIndex, Page pageModel, CompatibilityReport? compat,
+        bool replaceExisting)
+    {
+        var entryName = $"visio/pages/page{pageIndex + 1}.xml";
+
+        using var zip = ZipFile.Open(vsdxPath, ZipArchiveMode.Update);
+        var entry = zip.GetEntry(entryName);
+        if (entry is null) return 0;
+
+        XDocument doc;
+        using (var stream = entry.Open()) doc = XDocument.Load(stream);
+
+        var shapesContainer = doc.Descendants(VisioNs + "Shapes").FirstOrDefault();
+        if (shapesContainer is null) return 0;
+
+        // Existing ids, so new shapes cannot collide with the writer's shapes.
+        var usedIds = new HashSet<int>(
+            doc.Descendants(VisioNs + "Shape")
+                .Select(s => (string?)s.Attribute("ID"))
+                .Where(id => id is not null && int.TryParse(id, out _))
+                .Select(id => int.Parse(id!)),
+            EqualityComparer<int>.Default);
+
+        int nextId = usedIds.Count == 0 ? 1 : usedIds.Max() + 1;
+        int written = 0;
+
+        // Remove stale geometry shapes so an edited path replaces its previous version instead of
+        // accumulating. A shape is "stale" when it has a Geometry section and no path in the model
+        // claims its id.
+        if (replaceExisting)
+        {
+            foreach (var shape in doc.Descendants(VisioNs + "Shape").ToList())
+            {
+                var id = (string?)shape.Attribute("ID");
+                if (id is null) continue;
+
+                bool hasGeometry = shape.Elements(VisioNs + "Section")
+                    .Any(sec => (string?)sec.Attribute("N") == "Geometry");
+                if (!hasGeometry) continue;
+
+                // Never remove a container or connector: their geometry is engine-generated.
+                var nameU = (string?)shape.Attribute("NameU");
+                if (nameU is "Container" or "Group" or "Connector" or "Dynamic connector") continue;
+
+                // Master-backed shapes are ordinary nodes: their geometry comes from the master
+                // and must not be deleted. Only unnamed "FreePath" shapes are ours.
+                if (shape.Attribute("Master") is not null || shape.Attribute("MasterShape") is not null)
+                    continue;
+                if (nameU is not "FreePath") continue;
+
+                shape.Remove();
+                if (int.TryParse(id, out int n)) usedIds.Remove(n);
+            }
+
+            // Recompute from what actually remains: removal above may have freed ids that the
+            // writer should be able to reuse for the path it is about to write.
+            usedIds = new HashSet<int>(
+                doc.Descendants(VisioNs + "Shape")
+                    .Select(s => (string?)s.Attribute("ID"))
+                    .Where(id => id is not null && int.TryParse(id, out _))
+                    .Select(id => int.Parse(id!)),
+                EqualityComparer<int>.Default);
+            nextId = usedIds.Count == 0 ? 1 : usedIds.Max() + 1;
+        }
+
+        foreach (var path in pageModel.Paths)
+        {
+            // Reuse the original shape id when it is numeric and free, so a round-trip keeps
+            // object identity; otherwise allocate a new one.
+            int id;
+            if (path.VisioShapeId is not null && int.TryParse(path.VisioShapeId, out int original)
+                                              && !usedIds.Contains(original))
+            {
+                id = original;
+            }
+            else
+            {
+                while (usedIds.Contains(nextId)) nextId++;
+                id = nextId;
+            }
+            usedIds.Add(id);
+
+            var shape = BuildShape(path, id, compat);
+            shapesContainer.Add(shape);
+            written++;
+        }
+
+        if (written == 0) return 0;
+
+        entry.Delete();
+        var replacement = zip.CreateEntry(entryName, CompressionLevel.Optimal);
+        using var writer = new StreamWriter(replacement.Open(), new System.Text.UTF8Encoding(false));
+        doc.Save(writer);
+
+        compat?.Info("write.free-path",
+            $"写入了 {written} 个自定义几何形状（原始指令逐行保留）", pageModel.Name);
+
+        return written;
+    }
+
+    private static XElement BuildShape(FreePath path, int id, CompatibilityReport? compat)
+    {
+        var shape = new XElement(VisioNs + "Shape",
+            new XAttribute("ID", id),
+            new XAttribute("NameU", path.NameU ?? "FreePath"),
+            new XAttribute("Type", "Shape"),
+            new XAttribute("LineStyle", "0"),
+            new XAttribute("FillStyle", "0"),
+            new XAttribute("TextStyle", "0"));
+
+        if (!string.IsNullOrEmpty(path.Name))
+            shape.SetAttributeValue("Name", path.Name);
+
+        // Geometry is expressed in local coordinates, so the shape needs a pin and a size.
+        AddCell(shape, "PinX", Num(path.Bounds.X));
+        AddCell(shape, "PinY", Num(path.Bounds.Y));
+        AddCell(shape, "Width", Num(path.Bounds.W));
+        AddCell(shape, "Height", Num(path.Bounds.H));
+        AddCell(shape, "LocPinX", Num(path.Bounds.W / 2));
+        AddCell(shape, "LocPinY", Num(path.Bounds.H / 2));
+
+        if (path.Angle is double angle) AddCell(shape, "Angle", Num(angle));
+
+        if (path.Style is { } style)
+        {
+            if (style.Fill is not null) AddCell(shape, "FillForegnd", style.Fill);
+            if (style.Stroke is not null) AddCell(shape, "LineColor", style.Stroke);
+            if (style.StrokeWidth is double weight) AddCell(shape, "LineWeight", Num(weight));
+            if (style.StrokePattern is int pattern) AddCell(shape, "LinePattern", pattern.ToString());
+            if (style.FillPattern is not null) AddCell(shape, "FillPattern", style.FillPattern);
+        }
+
+        // Cells the model could not express are restored verbatim.
+        if (path.NativeCells is { Count: > 0 })
+            foreach (var (name, value) in path.NativeCells)
+                AddCell(shape, name, value);
+
+        foreach (var geometry in path.Geometry)
+        {
+            var section = new XElement(VisioNs + "Section",
+                new XAttribute("N", "Geometry"),
+                new XAttribute("IX", geometry.Index));
+
+            if (geometry.SectionCells is { Count: > 0 })
+                foreach (var (name, value) in geometry.SectionCells)
+                    section.Add(new XElement(VisioNs + "Cell",
+                        new XAttribute("N", name), new XAttribute("V", value)));
+
+            int rowIndex = 1;
+            foreach (var row in geometry.Rows)
+            {
+                var element = new XElement(VisioNs + "Row",
+                    new XAttribute("T", row.Type),
+                    new XAttribute("IX", rowIndex++));
+
+                foreach (var (name, value) in row.Cells)
+                    element.Add(new XElement(VisioNs + "Cell",
+                        new XAttribute("N", name), new XAttribute("V", value)));
+
+                section.Add(element);
+            }
+
+            shape.Add(section);
+        }
+
+        if (!string.IsNullOrEmpty(path.Text))
+            shape.Add(new XElement(VisioNs + "Text", path.Text));
+
+        // Stable id, mirroring Node's User.VsdxModelId cell so identity survives a rename.
+        shape.Add(new XElement(VisioNs + "Section",
+            new XAttribute("N", "User"),
+            new XElement(VisioNs + "Row",
+                new XAttribute("N", "VsdxModelId"),
+                new XElement(VisioNs + "Cell",
+                    new XAttribute("N", "Value"), new XAttribute("V", path.Id)),
+                new XElement(VisioNs + "Cell",
+                    new XAttribute("N", "Prompt"),
+                    new XAttribute("V", "Agent VSDX Engine stable path id")))));
+
+        return shape;
+    }
+
+    private static void AddCell(XElement shape, string name, string value) =>
+        shape.Add(new XElement(VisioNs + "Cell",
+            new XAttribute("N", name), new XAttribute("V", value)));
+
+    /// <summary>Formats a number the way Visio expects: invariant, no exponent, trimmed.</summary>
+    private static string Num(double value) =>
+        Math.Round(value, 6).ToString(System.Globalization.CultureInfo.InvariantCulture);
+}

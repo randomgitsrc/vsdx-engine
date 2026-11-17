@@ -287,6 +287,10 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
         // so an unmodified shape keeps whatever its master (or its absence) says it looks like.
         VisioGeometryPreserver.RestoreAfterSave(outputVsdxPath, ungeometried, compat);
 
+        // Custom geometry has no representation in the incremental API, so paths are written
+        // straight into the page part, exactly as on create.
+        VisioFreePathBridge.Apply(model, outputVsdxPath, compat);
+
         // Z-order is document order in Visio; restore the author's stacking after the writer has
         // created shapes in its own dependency-satisfying order.
         VisioZOrderBridge.Apply(model, outputVsdxPath, compat);

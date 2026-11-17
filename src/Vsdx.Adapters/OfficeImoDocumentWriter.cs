@@ -155,6 +155,11 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
 
         // Nested containers need a raw XML patch: OfficeIMO.Visio cannot express shape parenting.
         VisioNestingBridge.Apply(diagram, vsdxPath, compat);
+
+        // Custom geometry has no OfficeIMO representation, so paths are written straight into the
+        // page part. Rows are emitted verbatim, including types the engine does not interpret.
+        VisioFreePathBridge.Apply(diagram, vsdxPath, compat);
+
         VisioMetadataBridge.Write(diagram, vsdxPath);
 
         return new WriteResult
