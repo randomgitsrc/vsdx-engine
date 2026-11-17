@@ -1,4 +1,0 @@
-{"irVersion":"1.0","id":"st","title":"ST","nodes":[
- {"id":"a","label":"A","role":"service","style":{"fill":"#0000FF"},"fill":"#0000FF","fontSize":30}],
- "containers":[{"id":"G","label":"G","style":{"fill":"#00FF00"}}],
- "edges":[{"id":"e","from":"a","to":"a","label":"L","lineColor":"#FF00FF","labelFontSize":30}]}
