@@ -11,6 +11,8 @@
 | 任务 | 状态 | 证据 |
 | --- | --- | --- |
 | A. P0 Geometry 注入修复 | ✅ | `p0-geometry-injection.md` + `FidelityTests`（7）+ `FidelityCorpusTests`（18） |
+| 决策1. 安全拒绝机制 | ✅ | `FidelityGuard` + `FidelityGuardTests`（9） |
+| 决策2. 母版链接保留 | ✅ | `VisioMasterBridge` |
 | A2. 最小保真结构对比测试 | ✅ | 同上，已提前到 8.1 |
 | B. ShapeOrder 读取与写入 | ✅ | `ZOrderTests`（7） |
 | C. FreePath 读取/创建/编辑/保留 | ✅ | `FreePathTests`（11） |
@@ -19,7 +21,7 @@
 | F. 纵向切片 + L1–L3 | ✅ | `examples/phase8/slice.*` |
 | G. L4 Visio 原生验证 | ⬜ **阻塞** | 环境探测完成：WSL interop 可用，但**未安装 Visio**（仅 WPS）。见 `l4-verification-status.md` |
 
-**测试：** 297 → **333**（+36）
+**测试：** 297 → **360**（+63）
 **基准：** 18/18 硬约束通过
 **构建：** 0 warning
 
@@ -181,3 +183,61 @@ c.vsdx: {'Circle': [25], 'Diamond': [5], 'Rectangle': [5], 'FreePath': [2]}
 已在测试中显式记录该行为，而非假装通过——避免它以后悄悄变化而无人察觉。
 
 **修复方向（8.2 或更晚）：** 读取时把 `Master` 存入 `Node.NativeCells`，写入时恢复。
+
+---
+
+## 9. 第二轮补充：两项决策落地为机制
+
+第一轮报告写"当前修复已足够，拒绝路径未实现"。这个判断站不住：
+**"足够"不是"有保证"**——剥离逻辑依赖 5 行矩形签名，库一变就会失效。
+本轮把决策 1 和 2 都落成了实际防线。
+
+### 9.1 母版链接曾静默丢失
+
+实测（修复前）：
+
+```
+in : Master="5"
+out: Master=NULL        ← 无任何警告
+```
+
+增量编辑器按模型重建形状，只重建它认识的母版。未识别的母版被实体化为几何——
+视觉正确，但**形状不再是母版实例**，在 Visio 里改母版不会再更新它。
+
+**修复：** `Node.SourceMaster` 保存原始引用（OfficeIMO 只投影解析后的名字，
+拿不到原始属性，所以从 page XML 直接读），`VisioMasterBridge` 保存后重新写回，
+并记录 `write.master-restored`。
+
+**同时把测试收紧了。** 上一轮那个测试把"母版丢失"写成"已知限制，接受"。
+现在改为断言链接**必须保留**——否则它会长期躺在测试里假装通过。
+
+### 9.2 安全拒绝从声明变成机制
+
+| 层 | 机制 | 职责 |
+| --- | --- | --- |
+| 1 | `VisioGeometryPreserver` | 剥离库合成的矩形 |
+| 2 | `VisioMasterBridge` | 恢复母版引用 |
+| 3 | `FidelityGuard` | 结构对比，致命损失则拒绝输出 |
+
+**致命损失（会拒绝）：** 几何行数减少、无母版形状凭空获得几何、母版引用丢失、单元格集合变化。
+
+**非致命（只报告）：** 形状消失、页面消失——因为可能是调用方主动删除。
+`WasIntentionallyRemoved` 检查该形状是否仍在模型里，以区分"用户删了"与"引擎弄丢了"。
+
+**拒绝时删除半成品文件**，不只抛异常。留下文件等于邀请调用方忽略异常直接交付。
+
+### 9.3 顺带修掉的假警告
+
+自定义几何页没有节点是正常的，读取器却报 `read.no-nodes: N shapes but none mapped to nodes`。
+**在正确输入上触发的警告会训练调用方忽略警告。** 现在按 nodes + paths + textBlocks 合计判断。
+
+### 9.4 当前状态
+
+```
+测试     : 360（+9 FidelityGuardTests）
+基准     : 18/18 硬约束通过
+构建     : 0 warning
+纵向切片 : 98/100
+```
+
+**A–F 全部完成。G 仍阻塞于环境。**
