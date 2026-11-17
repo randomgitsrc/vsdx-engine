@@ -156,6 +156,23 @@ vsdx-tool render --input diagram.vsdx --format png --output diagram.png --dpi 12
 vsdx-tool render --input diagram.vsdx --format svg --output diagram.svg
 ```
 
+### Let the engine size the boxes, then look
+
+Hand-writing every `bounds` is what makes a diagram look assembled rather than designed. If
+you do not have a strong reason to pin coordinates, let the engine derive size from text and
+fit the page:
+
+```bash
+vsdx-tool create --input model.json --output diagram.vsdx \
+  --fit-text    # node/container size from label length (+ padding)
+  --fit-page    # page shrinks or grows to the drawing
+  --recenter    # equal margins around the content
+```
+
+It only ever grows a box to fit its text — it never clips a label and never shrinks a box you
+deliberately made large. Font size has a hard legibility floor; if content is too dense the
+engine says "split the diagram" instead of quietly shrinking type.
+
 `render` re-opens the saved package and projects its real geometry, so the preview always
 matches the deliverable. CJK fonts are resolved automatically; pass `--font-file` to force a
 specific face.

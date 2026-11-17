@@ -42,11 +42,27 @@ public sealed class VsdxEngine
     public WriteResult Create(Diagram diagram, string outputPath, WriteOptions? options = null)
     {
         DiagramJson.Normalize(diagram);
+
+        // Text first, then containers, then the page, then connectors. Geometry flows from
+        // content outward; nothing is sized independently of the words it must hold.
+        if (options?.FitToText ?? false) DiagramSizer.Apply(diagram);
+
+        if (options?.Recenter ?? false)
+            foreach (var page in diagram.Pages) DiagramSizer.Recenter(page);
+
+        // "Fit the page to the content" means both directions: a page far larger than the
+        // drawing leaves the diagram looking stranded in a corner. The low-level API stays
+        // grow-only by default; the pipeline opts into trimming.
+        if (options?.FitPage ?? false)
+            foreach (var page in diagram.Pages) DiagramSizer.FitPage(page, shrink: true);
+
+        // Sizing moved shapes, so container bounds and routes must be recomputed afterwards.
         if (options?.AutoLayout ?? true)
         {
             DiagramLayout.Apply(diagram);
             OrthogonalRouter.Route(diagram);
         }
+
         Stamp(diagram, "create", outputPath);
         var result = _writer.Write(diagram, outputPath, options);
 

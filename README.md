@@ -136,7 +136,7 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 
 | 命令 | 作用 |
 | --- | --- |
-| `create --input model.json --output out.vsdx` | 由 JSON 模型创建 VSDX |
+| `create --input model.json --output out.vsdx [--fit-text] [--fit-page] [--recenter]` | 由 JSON 模型创建 VSDX；可选按文字推导尺寸、页面贴合内容 |
 | `inspect --input out.vsdx [--json]` | 读取并报告结构（节点/连线/分组/图层/Shape Data） |
 | `export-model --input out.vsdx --output model.json` | 导出 JSON 模型 |
 | `update --input old.vsdx --model new.json --output new.vsdx` | **增量**应用修改 |

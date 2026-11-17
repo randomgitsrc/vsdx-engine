@@ -66,7 +66,9 @@ public static class DiagramJson
         for (int i = 0; i < diagram.Pages.Count; i++)
         {
             var page = diagram.Pages[i];
-            page.Size ??= diagram.PageSize;
+            // Inherit a *copy*, not the shared instance: the sizer mutates page.Size, and an
+            // aliased object would silently rewrite diagram.PageSize too.
+            page.Size ??= CloneSize(diagram.PageSize);
             page.Background ??= diagram.Background;
             page.NameU ??= page.Name;
 
@@ -127,6 +129,14 @@ public static class DiagramJson
             }
         }
     }
+
+    private static PageSize? CloneSize(PageSize? source) =>
+        source is null ? null : new PageSize
+        {
+            Width = source.Width,
+            Height = source.Height,
+            Unit = source.Unit
+        };
 
     public static string NormalizePort(string port) => port.Trim().ToLowerInvariant() switch
     {

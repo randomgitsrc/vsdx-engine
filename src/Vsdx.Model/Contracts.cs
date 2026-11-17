@@ -163,6 +163,20 @@ public sealed class WriteOptions
     public bool ValidateAfterSave { get; init; } = true;
     /// <summary>Derive container bounds from member geometry before writing.</summary>
     public bool AutoLayout { get; init; } = true;
+
+    /// <summary>
+    /// Resize nodes, containers and the page from their text before laying out.
+    ///
+    /// Off by default so an author who already sized every shape keeps exact control; turn it
+    /// on to let the engine derive geometry from the labels instead.
+    /// </summary>
+    public bool FitToText { get; init; }
+
+    /// <summary>Grow the page to contain the drawing plus a margin.</summary>
+    public bool FitPage { get; init; }
+
+    /// <summary>Shift the drawing so it sits inside the page with equal margins.</summary>
+    public bool Recenter { get; init; }
     public string? Title { get; init; }
     public string? Author { get; init; }
     public bool RequestRecalc { get; init; } = true;

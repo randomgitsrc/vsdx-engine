@@ -79,7 +79,12 @@ public static class Program
         {
             Title = options.Get("title"),
             Author = options.Get("author"),
-            ValidateAfterSave = !options.Has("no-validate")
+            ValidateAfterSave = !options.Has("no-validate"),
+            // Geometric derivation is opt-in so an author who already sized every shape keeps
+            // byte-for-byte control over the output.
+            FitToText = options.Has("fit-text"),
+            FitPage = options.Has("fit-page"),
+            Recenter = options.Has("recenter")
         });
 
         if (json)
@@ -701,6 +706,7 @@ public static class Help
               create        Create a VSDX from a JSON diagram model
                               --input <model.json> --output <file.vsdx>
                               [--title <text>] [--author <text>] [--no-validate] [--json]
+                              [--fit-text] [--fit-page] [--recenter]
 
               inspect       Read a VSDX and report its structure
                               --input <file.vsdx> [--json]
