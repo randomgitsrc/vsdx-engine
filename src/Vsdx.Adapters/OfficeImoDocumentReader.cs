@@ -161,6 +161,40 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
         return result;
     }
 
+    /// <summary>Builds a TextBlock from a text-box shape.</summary>
+    private static TextBlock ReadTextBlock(
+        OfficeIMO.Visio.VisioShape shape, CompatibilityReport compat)
+    {
+        var block = new TextBlock
+        {
+            Id = StableIdOf(shape) ?? shape.Id,
+            Name = shape.Text,
+            Text = shape.Text ?? "",
+            VisioShapeId = shape.Id,
+            Bounds = new Bounds(
+                shape.PinX.ToInches(), shape.PinY.ToInches(),
+                shape.Width.ToInches(), shape.Height.ToInches()),
+            Style = ReadStyle(shape),
+            Imported = true
+        };
+
+        // Recover the semantic role from the stamped name when present, so a re-read block keeps
+        // its typography intent instead of being treated as a generic caption.
+        // The writer stores the model id in Name, so the id carries the role hint. Recognise a
+        // role by id prefix first, then fall back to a generic caption.
+        var hint = (shape.Name ?? "").ToLowerInvariant();
+        block.Role = hint switch
+        {
+            _ when hint.StartsWith("title", StringComparison.Ordinal) => "title",
+            _ when hint.StartsWith("subtitle", StringComparison.Ordinal) => "subtitle",
+            _ when hint.StartsWith("legend", StringComparison.Ordinal) => "legend",
+            _ when hint.StartsWith("note", StringComparison.Ordinal) => "note",
+            _ => "caption"
+        };
+
+        return block;
+    }
+
     /// <summary>Builds a FreePath from a shape and its parsed geometry.</summary>
     private static FreePath ReadFreePath(
         OfficeIMO.Visio.VisioShape shape, List<PathGeometry> geometry, CompatibilityReport compat)
@@ -297,6 +331,14 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
         foreach (var shape in page.Shapes)
         {
             if (IsContainerShape(shape)) continue;
+
+            // Standalone text is not a node: it has no edges and takes no part in layout.
+            if (string.Equals(shape.NameU, "TextBlock", StringComparison.Ordinal))
+            {
+                model.TextBlocks.Add(ReadTextBlock(shape, compat));
+                shapeOrder.Add(shape.Id);
+                continue;
+            }
 
             if (geometryByShape.TryGetValue(shape.Id, out var geometry) && geometry.Count > 0)
             {

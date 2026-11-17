@@ -291,6 +291,8 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
         // straight into the page part, exactly as on create.
         VisioFreePathBridge.Apply(model, outputVsdxPath, compat);
 
+        VisioTextBlockBridge.Apply(model, outputVsdxPath, compat);
+
         // Z-order is document order in Visio; restore the author's stacking after the writer has
         // created shapes in its own dependency-satisfying order.
         VisioZOrderBridge.Apply(model, outputVsdxPath, compat);

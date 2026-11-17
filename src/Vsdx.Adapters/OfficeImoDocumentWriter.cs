@@ -160,6 +160,9 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         // page part. Rows are emitted verbatim, including types the engine does not interpret.
         VisioFreePathBridge.Apply(diagram, vsdxPath, compat);
 
+        // Standalone text is not a connector or container, so it is written as native shapes.
+        VisioTextBlockBridge.Apply(diagram, vsdxPath, compat);
+
         VisioMetadataBridge.Write(diagram, vsdxPath);
 
         return new WriteResult

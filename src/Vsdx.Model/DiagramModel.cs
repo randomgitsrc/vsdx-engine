@@ -56,6 +56,47 @@ public sealed class Page
     public List<string>? ShapeOrder { get; set; }
     /// <summary>Free-form geometry that is not one of the built-in masters.</summary>
     public List<FreePath> Paths { get; set; } = new();
+    /// <summary>Standalone text that is not attached to a node: titles, captions, legends.</summary>
+    public List<TextBlock> TextBlocks { get; set; } = new();
+}
+
+/// <summary>
+/// Text that exists on its own rather than as a node's label.
+///
+/// A diagram needs a title, an optional subtitle, footnotes and a legend. None of those are
+/// nodes: they do not participate in layout, have no edges, and are positioned against the page
+/// rather than against peers. Expressing them as zero-edge nodes would corrupt every layout and
+/// quality metric, so they are a separate collection.
+/// </summary>
+public sealed class TextBlock
+{
+    public string Id { get; set; } = "text";
+    public string? Name { get; set; }
+
+    /// <summary>The text. Newlines are honoured.</summary>
+    public string Text { get; set; } = "";
+
+    /// <summary>
+    /// Semantic role, which drives the default size: title | subtitle | caption | legend | note.
+    /// An explicit <see cref="ShapeStyle.FontSize"/> overrides it.
+    /// </summary>
+    public string? Role { get; set; }
+
+    /// <summary>Visio shape ID in the package.</summary>
+    public string? VisioShapeId { get; set; }
+
+    /// <summary>Position and box in inches. A text block is not resized from its content.</summary>
+    public Bounds Bounds { get; set; } = new(0, 0, 4, 0.5);
+
+    public ShapeStyle? Style { get; set; }
+
+    /// <summary>Horizontal alignment: left | center | right.</summary>
+    public string? Align { get; set; }
+
+    public Dictionary<string, string>? ShapeData { get; set; }
+    public Dictionary<string, string>? NativeCells { get; set; }
+    /// <summary>True when the block came from an external file rather than being authored.</summary>
+    public bool? Imported { get; set; }
 }
 
 /// <summary>
