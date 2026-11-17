@@ -1,0 +1,19 @@
+{
+  "irVersion": "1.0",
+  "id": "demo",
+  "title": "Demo",
+  "kind": "architecture",
+  "containers": [
+    {"id": "grp", "label": "Band A", "kind": "layer"}
+  ],
+  "nodes": [
+    {"id": "a", "label": "Service A", "role": "service", "containerId": "grp"},
+    {"id": "b", "label": "Database B", "role": "database"}
+  ],
+  "edges": [
+    {"id": "e1", "from": "a", "to": "b", "relation": "calls", "label": "reads"}
+  ],
+  "textBlocks": [
+    {"id": "title", "text": "System Overview", "role": "title", "box": {"x": 4, "y": 7.4, "width": 4, "height": 0.6}}
+  ]
+}

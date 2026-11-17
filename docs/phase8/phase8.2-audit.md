@@ -24,7 +24,7 @@
 | 字段 | 结论 | 证据 |
 | --- | --- | --- |
 | `Layout` | ✅ **已实现** | `layered/manual` 产生不同几何；`appliedDesignNotes` 有记录 |
-| `Direction` | ✅ 已实现 | 传入 `LayoutOptions.Direction` |
+| **`Direction`** | ❌ **完全未执行（原判 ✅，已更正）** | 见 §9 |
 | `Spacing.NodeGapX` | ✅ 已实现 | 间距变大 → 图形变宽（Phase 7 已测） |
 | `Spacing.BandGapY` | ✅ 已实现 | 同上 |
 | `Canvas.Mode=auto` | ✅ 已实现 | `Recenter` + `FitPage(shrink)` |
@@ -42,7 +42,7 @@
 | **`Theme.Background`** | ❌ **未执行（原判 ✅，已更正）** | 见 §2.8 |
 | `Theme.RoleColors` | ⚠️ **部分** | 仅作用于 Node；见 §2.2 |
 
-**统计（已更正）：17 项中 8 项已实现，4 项部分，5 项未执行。**
+**统计（二次更正）：17 项中 7 项已实现，4 项部分，6 项未执行。**
 
 > **自我更正：** 初稿把 `Theme.Background` 判为"✅ 已实现"，理由是代码里有
 > `diagram.Background = spec.Theme.Background`。但**只赋给模型字段不等于执行**——
@@ -361,3 +361,74 @@ Stage 3 独立审查前，我自己复核了一遍，发现初稿有三处判断
 `false` 保持 20×14。**功能正确。**
 
 **至此 §1 表中所有 ✅ 项均有回读或实测证据，无一项仅凭代码阅读。**
+
+---
+
+## 9. 【P0，审计遗漏】`Direction` 在全部四种布局策略下完全无效
+
+这是本审计最终发现的最严重缺陷，**初稿完全漏掉了**——因为我看到
+`LayoutOptions.Direction` 存在、`DesignSpecApplier` 传了值，就判为"✅ 已实现"。
+
+### 实测
+
+同一 IR（3 节点链），四种策略 × 两个方向：
+
+```
+layered/leftToRight: xspread=0.00 yspread=4.85
+layered/topToBottom: xspread=0.00 yspread=4.85     ← 完全相同
+flow/leftToRight:    xspread=5.10 yspread=0.00
+flow/topToBottom:    xspread=5.10 yspread=0.00     ← 完全相同
+tree/leftToRight:    xspread=0.00 yspread=3.50
+tree/topToBottom:    xspread=0.00 yspread=3.50     ← 完全相同
+grid/leftToRight:    xspread=5.10 yspread=0.00
+grid/topToBottom:    xspread=5.10 yspread=0.00     ← 完全相同
+```
+
+**`Direction` 对输出零影响。**
+
+### 根因
+
+```console
+$ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngine.cs \
+      src/Vsdx.Engine/FlowAndTreeLayoutEngine.cs src/Vsdx.Engine/SwimlaneLayoutEngine.cs
+（无结果）
+```
+
+`LayoutDirection` 枚举存在、`LayoutOptions.Direction` 字段存在、
+`DesignSpecApplier` 把 `spec.Direction` 传给它——**但没有任何一个布局引擎读取它**。
+
+### 为什么这是 P0
+
+1. 它是**协议字段**：Schema 允许 `"direction":"topToBottom"`，调用方有理由相信它会生效
+2. 它是**绘制方向**：对一张图来说纵横比完全不同，不是细微样式差异
+3. 它**完全静默**：既不生效，也不进 `unmetConstraints`
+
+这比 palette 更隐蔽——palette 至少是"没实现"，而 `Direction` 是"管线全部接好，
+最后一公里断了"。链条上每一环看起来都对。
+
+### 修法
+
+`LayeredLayoutEngine` / `FlowLayoutEngine` / `GridLayoutEngine` / `TreeLayoutEngine`
+的 `Layout()` 需读 `options.Direction`，在 `TopToBottom` 时交换 X/Y 轴
+（或在最后对整个页面做转置）。`ManualLayoutEngine` 不改（用户坐标即意图）。
+
+**验收：** 同一 IR 两个方向必须产生 `xspread`/`yspread` 互换的结果。
+
+---
+
+## 10. 审计最终的缺陷清单
+
+| # | 缺陷 | 严重度 | 初稿是否发现 |
+| --- | --- | --- | --- |
+| 1 | `Direction` 四种策略全无效 | **P0** | ❌ **遗漏** |
+| 2 | `Theme.Palette` 未执行 + 未知值不报告 | **P0** | ✅ |
+| 3 | `Theme.Background` 设置后丢失 | P1 | ❌ 初稿误判为已实现 |
+| 4 | Typography 仅覆盖 Node | P1 | ✅ |
+| 5 | 容器色硬编码绕过 Theme | P1 | ✅ |
+| 6 | `Canvas.Unit` 只写标签不换算 | P1 | ✅ |
+| 7 | `containerLayouts` manual 下静默跳过 | P1 | ✅ |
+| 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | P1 | ✅ |
+| 9 | `typography.min_size` 死代码 | P2 | ❌ 初稿误判为存在 |
+
+**9 项缺陷中，初稿漏了 3 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
+也说明"读代码判断能力"不可靠，只有实测才作数。

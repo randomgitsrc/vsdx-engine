@@ -142,6 +142,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 | # | 缺陷 | 修法 |
 | --- | --- | --- |
+| 0 | **`Direction` 四策略全无效（P0）** | 各引擎读 `options.Direction`，`TopToBottom` 转置轴 |
 | 1 | Palette 未执行 | `StyleResolver` 第 1 层；未知值报告 |
 | 2 | Typography 仅 Node | 所有对象经同一解析器；容器/Edge/TextBlock 接入 |
 | 3 | 容器色硬编码 | 移除 `bandFills` 数组，改由 palette 提供 |
@@ -149,6 +150,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 5 | `containerLayouts` manual 下静默跳过 | 进 `unmetConstraints`，`Reason` 说明 manual 模式不重排 |
 | 6 | `ObjectMapping` 覆盖不全 | 覆盖 Edge/TextBlock/Path + 多页；键改为 `pageId/objectId` |
 | 7 | `typography.min_size` 死代码 | 判断改为 `clamped > size`；容器/Edge/TextBlock 也走此路径 |
+| 8 | `Theme.Background` 不落盘 | Writer 写 `PageSheet/PageBackground`；Reader 还原 |
 
 ### 4.1 ObjectMapping 的键格式（需负责人确认）
 
@@ -168,6 +170,8 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `src/Vsdx.Protocol/StyleResolver.cs` | **新增** —— 解析器 + Palette 定义 | 低 |
 | `src/Vsdx.Protocol/DesignSpec.cs` | `Apply()` 改为调用解析器；移除硬编码容器色；修 unit 换算；修 min_size 判断；containerLayouts 报告 | **中**（核心改动） |
 | `src/Vsdx.Protocol/ExecutionResult.cs` | `BuildMapping` 覆盖全对象 + 多页 | 低 |
+| `src/Vsdx.Engine/LayeredLayoutEngine.cs` 等四个引擎 | 读 `options.Direction`，实现转置 | **中**（触碰已验证布局） |
+| `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | 写页面背景（**唯一需改 Adapter 处**） | 中（触碰保真层） |
 | `src/Vsdx.Protocol/DiagramIr.cs` | 无需改动（字段已够） | — |
 | `src/Vsdx.Adapters/*` | **不改动** | — |
 | `schemas/phase7/design-spec.schema.json` | 枚举 4 个 palette 名 | 低 |
@@ -239,7 +243,12 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `ObjectMapping` | 单页保持裸 id，兼容 |
 | 协议版本 | 不变（1.0）——只加执行，不加字段 |
 
-**唯一破坏性变更：`Canvas.Unit`。** 现状是"标签写 cm、数值仍按英寸"，
+**两处破坏性变更：`Canvas.Unit` 与 `Direction`。**
+
+`Direction` 之前完全不生效，修好后**旧 spec 若声明了 `topToBottom`，产出会真的转置**——
+这是修 bug，但会改变既有产物外观，必须明说并在报告中列出。
+
+**`Canvas.Unit`**： 现状是"标签写 cm、数值仍按英寸"，
 修正后数值会变。这是修 bug，但必须明说。
 
 ---
@@ -260,6 +269,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 | # | 子任务 | 验收 |
 | --- | --- | --- |
+| T0 | 修 `Direction` | 四策略 × 两方向，`xspread`/`yspread` 必须互换 |
 | T1 | `StyleResolver` + 4 套 palette | 单元测试证明三层优先级；palette 只有颜色字段 |
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
@@ -269,6 +279,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | T7 | `ObjectMapping` 全对象 + 多页 | 两页 × 四类对象全覆盖 |
 | T8 | 三套产物 + PNG + 目视 | 提交 VSDX/PNG/spec，附观察记录 |
 | T9 | 全量回归 | 373 测试 + 18 基准 + 0 warning |
+| T10 | `Theme.Background` 落盘 + 回读 | 写 `#FAFAFA` → 读回同值 |
 
 **每个 T 独立提交、独立测试，不合并未验证的大改动**（任务 §7 Stage 5 要求）。
 
