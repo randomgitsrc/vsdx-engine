@@ -6,6 +6,31 @@
 
 ---
 
+## 0. 本计划的修订索引（按独立审查 M1–M12）
+
+> Stage 3 独立审查裁决 **FAIL**，提出 M1–M12。本计划已逐项修订，
+> 下表是"哪条修订落在哪一节"的对照，供复核。
+
+| # | 审查要求 | 本计划落点 |
+| --- | --- | --- |
+| **M1** | spec 路径补 `DiagramSizer.Apply`；修正数据流图；重写缺陷 11 归因 | §1.2 图、§12（整节重写） |
+| **M2** | 重定义 `mode=fixed` 与 `shrinkToFit`；删除"功能正确"判语 | §4 缺陷 13、§2.9（audit）、T4b |
+| **M3** | `DiagramIr.cs:282` 保留 `lane` | §4 缺陷 14、§2.10（audit）、T0b |
+| **M4** | 补 Reader 侧字体回读；T2 改"中" | §5 文件表、T2、§6.2 |
+| **M5** | §4 表补齐 12 行→现 14 行；清混合键；统一 Writer 范围 | §4（整节重写）、§4.1 |
+| **M6** | 验收换真 IR 输入；断言标签一致 | §6.4（整节重写） |
+| **M7** | 机制性闸门而非逐项枚举 | §15（新增） |
+| **M8** | 转置补 ports/padding/PageSize/Orientation；明确 waypoint 时序 | §11.1 表、§11.2（重写）、§11.6 |
+| **M9** | `Canvas.Unit` 规范化契约，避免双重换算 | §17（新增） |
+| **M10** | `Theme.Background` 实现路径与重写顺序 | §18（新增） |
+| **M11** | 统一字号表，指定唯一权威 | §16（新增） |
+| **M12** | 修正评审材料包 | `phase8.2-review-packet.md`（整份重写） |
+
+**M1–M6 是阻断项**（审查：补齐后可转 PASS WITH CONDITIONS）；
+**M7–M12 为条件项**，可在实施中闭环。
+
+---
+
 ## 1. 目标架构
 
 ### 1.1 一句话
@@ -19,16 +44,32 @@
 DesignSpec
   ├─ Theme.Palette ─────┐
   ├─ Theme.RoleColors ──┤
-  ├─ Theme.Background ──┼──▶ StyleResolver ──▶ ResolvedStyle ──▶ 模型对象
-  └─ Typography ────────┘         ▲                                    │
-                                  │                                    ▼
-                          TypeScale（角色字号）              VSDX Writer（已有能力）
-                                                                       │
-                                                                       ▼
-                                                              Reader → Renderer
+  ├─ Theme.Background ──┼──▶ StyleResolver ──▶ ResolvedStyle ──▶ 模型对象（含字号）
+  └─ Typography ────────┘         ▲                                   │
+                                  │                                   ▼
+                          TypeScale（角色字号）          **DiagramSizer.Apply** ← spec 路径当前缺失
+                                                                      │  （字号→文字占位→框体尺寸）
+                                                                      ▼
+                                                         DiagramLayoutEngine.Apply（布局）
+                                                                      │
+                                                                      ▼
+                                                         [Direction 转置]（T0）
+                                                                      │
+                                                                      ▼
+                                                         VSDX Writer → Reader → Renderer
 ```
 
-**关键：** Writer 的样式通路已够用（`SetFontSize`、容器 `TextStyle`、TextBlock 字号都在），
+> **本节原图缺了 `DiagramSizer.Apply`，是错的。** 独立审查（B1）实测证明：
+> 带 spec 时该阶段**根本不在流水线上**（`ProtocolRunner.cs:77` 只在 `spec == null` 分支调用），
+> 于是所有节点保留 `DiagramIr.cs:297` 写死的 `Bounds(0,0,2.0,0.9)`。
+>
+> 同一字号下的对照：带 spec 节点宽 `[2.00, 2.00]`，不带 spec `[1.30, 2.33]`。
+> **带 spec 反而更差**，这是本阶段最该修的缺陷。
+>
+> 我最初把缺陷 11 归因为"字号应用顺序错"，真正的原因是**阶段缺失**——
+> "把字号提前到一个不存在的阶段之前"不会生效。
+
+**关键：** Writer 的样式通路**大部分**够用（`SetFontSize`、容器 `TextStyle`、TextBlock 字号都在），
 缺的只是上游赋值。
 
 **唯一例外：`Theme.Background` 必须改 Writer/Reader** —— 该字段当前设置后从不落盘，
@@ -141,28 +182,49 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 ---
 
-## 4. 十二项缺陷的修法
+## 4. 十四项缺陷的修法（与 audit 一一对应）
 
-| # | 缺陷 | 修法 |
-| --- | --- | --- |
-| 0 | **`Direction` 四策略全无效（P0）** | 各引擎读 `options.Direction`，`TopToBottom` 转置轴 |
-| 1 | Palette 未执行 | `StyleResolver` 第 1 层；未知值报告 |
-| 2 | Typography 仅 Node | 所有对象经同一解析器；容器/Edge/TextBlock 接入 |
-| 3 | 容器色硬编码 | 移除 `bandFills` 数组，改由 palette 提供 |
-| 4 | `Canvas.Unit` 不换算 | 按单位换算到英寸后再写入；**不再写错标签** |
-| 5 | `containerLayouts` manual 下静默跳过 | 进 `unmetConstraints`，`Reason` 说明 manual 模式不重排 |
-| 6 | `ObjectMapping` 覆盖不全 | 覆盖 Edge/TextBlock/Path + 多页；键改为 `pageId/objectId` |
-| 7 | `typography.min_size` 死代码 | 判断改为 `clamped > size`；容器/Edge/TextBlock 也走此路径 |
-| 8 | `Theme.Background` 不落盘 | Writer 写 `PageSheet/PageBackground`；Reader 还原 |
+> **本节已按 M5 补齐，并按审查 M2/M3 增至 14 项。** 原表只有 9 行；
+> 独立审查又发现两项（`mode=fixed` 名存实亡、`swimlane` 协议不可达），
+> 均已并入 audit 与本节。
+>
+> **编号规则：** 与 `phase8.2-audit.md` §10 缺陷清单**逐号对应**，不加不减。
 
-### 4.1 ObjectMapping 的键格式（需负责人确认）
+| # | 缺陷（对应 audit §10） | 修法 | 任务 |
+| --- | --- | --- | --- |
+| 1 | `Direction` 四策略全无效 | 各引擎读 `options.Direction`；Transpose 覆盖全部空间数据 | T0 |
+| 2 | `Palette` 未执行 + 未知值不报告 + Schema 不约束 | `StyleResolver` 第 1 层；未知值进 `unmet`；Schema 加 `enum` | T1 |
+| 3 | `Theme.Background` 设置后丢失 | Writer 写 `PageSheet/PageBackground`；Reader 还原 | T10 |
+| 4 | Typography 仅覆盖 Node | 所有对象经同一解析器；**含 Reader 侧字体回读**（M4） | T2 |
+| 5 | 容器色硬编码 | 移除 `bandFills` 数组，改由 palette 提供 | T3 |
+| 6 | `Canvas.Unit` 不换算（**注意：Writer 硬传 Inches，标签未写入文件**，不存在"标签与数值不一致"） | 规范化单位契约；**与 `OfficeImoIncrementalEditor.cs:62` 协调，避免双重换算**（M9） | T4 |
+| 7 | `containerLayouts` manual 下静默跳过 | 进 `unmetConstraints`，说明 manual 不重排 | T5 |
+| 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | 补全局唯一性校验（T7a）；裸 ID 覆盖全页全类型（T7b） | T7 |
+| 9 | `typography.min_size` 死代码 | 判断改为 `clamped > size`；全对象走此路径 | T6 |
+| 10 | `BaseSize` 抹平字体层级 | 改为缩放基准 `scale = BaseSize / TypeScale.NodeTitle` | T1 |
+| 11 | 字号在布局后应用 → 文字溢出 | **根因是阶段缺失，不是顺序**：spec 路径补 `DiagramSizer.Apply`（M1） | T0.5 |
+| 12 | `roleColors` 无 `default` 回退 | 支持 `default` 键；未覆盖角色进 `unmet`（按角色去重） | **T2b** |
+| 13 | **`mode=fixed` 名存实亡**（P0） | `fixed` 时忽略 `shrinkToFit`，或收缩后进 `unmet`（M2） | **T4b** |
+| 14 | **`swimlane` 协议不可达**（P1） | `DiagramIr.cs:282` 保留 `lane`，不改写为 `container`（M3） | **T0b** |
 
-当前 `Dictionary<string,string>`，键为裸 id。
+**14 项缺陷 ⇄ 14 行修法 ⇄ 14 个任务**（T0 拆 T0b、T2 拆 T2b、T4 拆 T4b），一一对应。
 
-**提议：** 单页时保持裸 id（**向后兼容**），多页时用 `pageId/objectId`。
-理由：现有调用方按裸 id 取值，直接改格式会破坏兼容性（违反任务 §4.9）。
+### 4.1 ObjectMapping 键格式（已裁决，不再是待决项）
 
-**若同一页内 id 重复**（IR 已在校验层拒绝），故无需处理。
+> **本节已重写。** 原版提议"单页裸 ID、多页 `pageId/objectId`"，**已被负责人否决**。
+
+**负责人 D2 决定：** 保持裸 ID，前提是 IR 对象 ID 全局唯一（跨页面、跨类型）。
+
+| 步 | 内容 |
+| --- | --- |
+| T7a | 补全局唯一性校验 `ir.id-duplicate-global`（当前缺失，见 §14.3） |
+| T7b | 裸 ID 覆盖全部页面与 Node/Container/Edge/TextBlock/Path |
+
+**若 T7a 无法成为协议保证**，退回结构化方案：
+`ObjectMappings` 列表（`pageId`/`objectId`/`objectKind`/`modelId`），
+保留现有 `ObjectMapping` 作为兼容投影。
+
+**不采用动态混合键。** 理由（负责人原话）：避免"增加页面后既有键格式改变"。
 
 ---
 
@@ -177,7 +239,7 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | 写页面背景（**唯一需改 Adapter 处**） | 中（触碰保真层） |
 | `src/Vsdx.Protocol/DiagramIr.cs` | 无需改动（字段已够） | — |
 | `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | **写页面背景**（仅此一处） | 中（触碰保真层） |
-| `src/Vsdx.Adapters/OfficeImoDocumentReader.cs` | **读回页面背景** | 中 |
+| `src/Vsdx.Adapters/OfficeImoDocumentReader.cs` | **读回页面背景** + **读回 Edge 标签字体 / TextBlock 字体**（M4） | **中** |
 | `schemas/phase7/design-spec.schema.json` | 枚举 4 个 palette 名 | 低 |
 | `skill/SKILL.md` | 新增 palette 与样式优先级说明 | 低 |
 | `docs/phase8/capability-matrix.md` | 更新样式相关行 | 低 |
@@ -221,15 +283,41 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `ObjectMappingCoversAllPages` | 两页都有条目 |
 | `UnitConversionIsCorrect` | cm→英寸数值正确，标签与数值一致 |
 
-### 6.4 真实产物
+### 6.4 真实产物（M6：必须用真正的 IR 输入）
 
-生成**三套** DesignSpec × 同一 IR 的 VSDX + PNG，人工目视（任务 §5.3/§5.6）：
+> **本节已按 M6 重写。** 原版说用 `benchmarks/architecture/complex.json` 等作三套样本，
+> **那是错的**：那些文件是 `Diagram` 模型格式（顶层有 `modelVersion`，无 `irVersion`），
+> 不是 `DiagramIr`。
 
-| 产物 | IR |
+**实测后果：** 把模型文件当 IR 传给 `execute`，IR 校验层解析出空节点集，
+15 个节点的中文标签全部丢失（`'Web 门户\nReact SPA'` → `'web'`）。
+
+**验收会对着 15 个 id 方块判"通过"。**
+
+#### 正确做法
+
+新建真正的 IR 文件：
+
+| 产物 | 输入（新建） | 内容要求 |
+| --- | --- | --- |
+| 分层架构图 | `examples/phase8/arch.ir.json` | 3 容器 × 3-5 节点，含 gateway/database/service 角色 |
+| 流程图 | `examples/phase8/flow.ir.json` | 判断节点 + 分支 + 连线标签 |
+| 综合图 | `examples/phase8/overview.ir.json` | 标题 + 容器 + 连线标签 + 注释 + 自定义路径 |
+
+每份 IR 分别配 **3 套 DesignSpec**（enterprise / technical / muted），
+产出 9 组 VSDX + PNG。
+
+#### 验收断言（可证伪）
+
+| # | 断言 |
 | --- | --- |
-| 分层架构图 | `benchmarks/architecture/complex.json` |
-| 流程图 | `benchmarks/workflow/complex.json` |
-| 综合图 | `examples/phase8/slice.json`（含标题/容器/连线标签/注释） |
+| 1 | **PNG 中标签文本与 IR 源一致**（如 `Web 门户` 而非 `web`），抽查比例 > 90% |
+| 2 | 三套 spec 产出的 PNG 在**非背景区域**有可见差异 |
+| 3 | 字号层级在 PNG 中可辨（标题 > 区域 > 节点 > 标签） |
+| 4 | `text.overflow-*` 计数为零 |
+| 5 | 硬约束全部通过 |
+
+第 1 条是 M6 新增的**输入正确性闸门**——没有它，验收可能在错误输入上"通过"。
 
 ### 6.5 回归
 
@@ -275,9 +363,12 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 
 | # | 子任务 | 验收 |
 | --- | --- | --- |
-| T0 | 修 `Direction` | 四策略 × 两方向，`xspread`/`yspread` 必须互换 |
+| T0 | 修 `Direction` | 四策略 × 两方向，`xspread`/`yspread` 必须互换；转置覆盖 §11.1 全部空间数据 |
+| T0b | `DiagramIr` 保留 `lane` | 声明 lane 的 IR → `applied` 含 `layout=Swimlane` **且几何与 layered 不同** |
+| T4b | `mode=fixed` 语义 | 请求 20×14 → 实得 20×14，或 `unmet` 有明确 entry |
 | T1 | `StyleResolver` + 4 套 palette | 单元测试证明三层优先级；palette 只有颜色字段 |
-| T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color |
+| T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
+| T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
 | T4 | 修 `Canvas.Unit` | cm/mm 换算正确，标签与数值一致 |
 | T5 | 修 `containerLayouts` 报告 | manual 下进 unmet |
@@ -323,8 +414,44 @@ page.Size W/H 互换                  ✅
 | `Node.Angle` / `FreePath.Angle` | 旋转角 | 角度未镜像，图形朝向错误 |
 | `Edge.FromPoint` / `ToPoint` | 自由端点 | 端点留在原坐标 |
 | `Edge.Waypoints` | 折点列表 | 当前是**清空**而非转置 |
+| **`Edge.FromPort` / `ToPort`** | 端口语义 | `left` ↔ `bottom` 的语义随轴变，必须重映射 |
+| **`ShapeStyle.PaddingX` / `HeadingHeight` / `PaddingBottom`** | 容器内边距 | X/Y 轴方向不同，转置后应对调 |
+| **`Diagram.PageSize`** | 顶层页面尺寸 | 与 `Page.Size` 是两处，都要换 |
+| **`Diagram.Orientation`** | landscape / portrait | 转置后应对调，否则语义与几何矛盾 |
 
-### 11.2 Waypoints 应当转置而非清空
+### 11.2 【M8】Waypoints 的真实时序问题
+
+> **本节已按独立审查 M8 重写。** 原版只说"应当转置而非清空"，
+> 但审查指出更硬的时序障碍：转置发生在布局**之后**，
+> 而 waypoints 在布局**期间**就被清空了，**转置时已无输入可转**。
+
+```csharp
+// LayoutStrategies.cs:138-142 —— 布局阶段，无条件清空
+foreach (var edge in page.Edges)
+    edge.Waypoints = null;
+```
+
+**实测：** 模型给 3 个 waypoint，走 `execute` 后读回 `waypoints: None`。
+
+**因此：**
+
+1. 转置逻辑里"转置 waypoints"的代码**永远拿不到数据**
+2. §11.6 原验收断言 4（"Waypoints 逐点转置"）**不可达**，
+   除非手工构造模型绕过布局——那是**假绿**
+
+**修正后的处理：**
+
+| 场景 | waypoints 行为 | 理由 |
+| --- | --- | --- |
+| `Layout != manual` | 布局期清空，转置无输入 → **不需要转置** | 节点已移动，旧折点已失效 |
+| `Layout == manual` | **保留并转置** | 作者坐标即意图，manual 不清空 |
+
+**`Direction + manual` 是有意义的组合**：作者手绘的结构，
+请求纵向排列时应整体转置，而折点必须跟着转。
+
+**验收改为：** 在 `layout=manual` + 显式 waypoints 下，
+`direction=topToBottom` 后 waypoints 逐点转置且非空。
+
 
 现有实现选择清空，理由是"旧 waypoints 描述的是转置前的几何"。
 
@@ -370,53 +497,98 @@ public static void Transpose(Page page);
 | 1 | 四策略 × 两方向：`xspread`/`yspread` 互换 |
 | 2 | TextBlock 位置跟随转置 |
 | 3 | Path Bounds 与**内部 Geometry 坐标**同时转置 |
-| 4 | Waypoints 逐点转置（非清空） |
+| 4 | **`layout=manual`** 下 Waypoints 逐点转置（非清空）；非 manual 下允许清空 |
 | 5 | 自由端点 `FromPoint`/`ToPoint` 转置 |
 | 6 | `Angle` 镜像 |
+| 6b | `Edge.FromPort`/`ToPort` 语义重映射（left↔bottom） |
+| 6c | `Diagram.Orientation` 与 `Diagram.PageSize` 同步转置 |
 | 7 | Manual 模式不转置，且 `unmetConstraints` 有记录 |
 | 8 | 转置两次回到原状态（幂等性反向验证） |
 
 ---
 
-## 12. 字号必须早于布局确定（T0.5）
+## 12. 【M1 重写】spec 路径缺失尺寸推导阶段（T0.5）
 
-### 12.1 问题
+> **本节已按独立审查 M1 重写。** 原版把问题归因为"字号应用顺序错"，
+> 结论是"把字号提前到 `DiagramSizer.Apply` 之前"。
+> **但在 spec 路径上该阶段根本不存在**，提前到一个不存在的步骤不会生效。
 
-审计 §2.2c 实测：`baseSize` 24 时框体仍是 2.00"，文字溢出 2.5 倍。
-
-**根因是步骤顺序：**
+### 12.1 真正的根因：阶段缺失，不是顺序
 
 ```csharp
-139: DiagramLayoutEngine.Apply(...);   // 按当前字号算位置
-166: DiagramLayout.Apply(...);        // 按成员反算容器
-168: // Typography 在这里才改字号
-178: node.Style.FontSize = clamped;   // 框体已经定了
+// ProtocolRunner.cs:66-88
+if (spec is not null)
+{
+    DesignSpecApplier.Apply(diagram, spec);   // ← 只调 Recenter/FitPage（页面级）
+}                                              //   没有 DiagramSizer.Apply（框体级）
+else
+{
+    DiagramSizer.Apply(diagram);               // ← 只在这里
+    DiagramLayoutEngine.Apply(...);
+    ...
+}
 ```
 
-**字号 → 文字占位 → 框体尺寸**。先定尺寸再改字号，尺寸必然失效。
+`DiagramSizer.Apply` 的全部调用点（`grep -rn` 实测）：
 
-### 12.2 修法
+| 位置 | 条件 |
+| --- | --- |
+| `ProtocolRunner.cs:77` | **仅 `spec == null` 分支** |
+| `VsdxEngine.cs:58` | `FitToText`，默认 false |
+| `CandidateComparison.cs:103` | `recipe.FitToText` |
+| `Program.cs:550` | repair 命令 |
 
-样式解析（含字号）必须在 `DiagramSizer.Apply` **之前**完成：
+**spec 路径上一次都不调用。**
+
+### 12.2 实测后果
+
+同一 IR、**同一字号**（`baseSize=11`），唯一变量是 spec 是否存在：
 
 ```
-DesignSpec → StyleResolver → 字号写入模型 → DiagramSizer.Apply → 布局 → 写入 VSDX
-                              ↑
-                     必须在这里，不能更晚
+带 spec（baseSize=11）: 节点宽 [2.00, 2.00]     ← DiagramIr.cs:297 写死的 Bounds(0,0,2.0,0.9)
+不带 spec             : 节点宽 [1.30, 2.33]     ← 按文字推导
 ```
 
-这也是 `StyleResolver` 必须**前置**而非"事后接上 palette"的原因。
+**带 spec 比不带 spec 更差**——因为恰好跳过了尺寸推导。
 
-### 12.3 验收（独立项）
+进一步：`baseSize` 9→24 时框体**纹丝不动**（仍 2.00），
+`check-layout` 报 `text.overflow-horizontal: 最长行约 5.09"，实际 2.00"`，
+而 `execute` 返回 `status=succeeded`。
+
+### 12.3 修法
+
+**在 spec 路径补上该阶段**，位置在样式解析之后、布局之前：
+
+```csharp
+if (spec is not null)
+{
+    var application = DesignSpecApplier.ApplyStyleOnly(diagram, spec);  // 仅样式+字号
+    DiagramSizer.Apply(diagram);                                        // ← 新增：按字号推导框体
+    DiagramLayoutEngine.Apply(diagram, options, strategy);              // 再布局
+}
+```
+
+需要把 `DesignSpecApplier.Apply()` 拆成两段：
+
+| 阶段 | 职责 | 时机 |
+| --- | --- | --- |
+| `ApplyStyleOnly` | palette / roleColors / typography / 字号 → 模型 | **尺寸推导之前** |
+| `ApplyLayoutAndCanvas` | 布局、Recenter、FitPage、约束求值 | 尺寸推导之后 |
+
+**这不是"调整顺序"，是"把缺的环节装回去"。**
+
+### 12.4 验收（独立项，可证伪）
 
 | # | 断言 |
 | --- | --- |
-| 1 | `baseSize` 9→24，框体尺寸必须随之增大 |
-| 2 | 增大后 `text.overflow-*` 为零 |
-| 3 | 字号在 `DiagramSizer.Apply` 之前已写入模型（可用探针断言） |
+| 1 | **同一字号下，带 spec 与不带 spec 的框体宽高必须一致** |
+| 2 | `baseSize` 9→24，框体尺寸必须随之增大 |
+| 3 | 增大后 `text.overflow-*` 计数为零 |
+| 4 | spec 路径的 `stagesCompleted` 必须含尺寸推导阶段 |
+| 5 | 修后带 spec 与不带 spec 的节点宽差 < 0.05" |
 
-**T0.5 与 T1 有依赖：** T1 的解析器若不前置，T0.5 无法通过。
-因此实施顺序为 **T0 → T0.5 → T1**，但 T0.5 的验收独立于 T1。
+第 1 条与第 5 条是审查新增的**对照式断言**——只有它们能证明"阶段真的装回去了"，
+单纯断言"框变大了"无法区分"装回阶段"与"把 2.0 改成 5.0"。
 
 ---
 
@@ -487,8 +659,8 @@ double For(double tier) => tier * scale;
 
 | # | 事项 |
 | --- | --- |
-| 1 | **核查** `IrValidator` 当前是否只做页内唯一性检查 |
-| 2 | 若仅页内唯一 → **补全局唯一性校验**（`ir.id-duplicate-global`） |
+| 1 | ~~核查~~ **已核查完毕（结论见 §14.3）：当前仅页内唯一，跨页不检查** |
+| 2 | **补全局唯一性校验**（`ir.id-duplicate-global`）—— T7a 的实施项 |
 | 3 | 覆盖全部页面与 Node / Container / Edge / TextBlock / Path |
 | 4 | 加测试断言：两页各有同名 id 时校验拒绝 |
 
@@ -533,3 +705,237 @@ $ export-model →
 
 **T7a 的兼容性影响需评估：** 现有 IR 若存在跨页重复 id，加上校验后会从
 `partial` 变成 `failed`。这属修 bug，但须在报告中披露。
+
+---
+
+## 15. 【M7】机制性闸门：一次性封闭"接受但不执行不报告"
+
+### 15.1 问题
+
+审查指出：本计划的模式是**逐项枚举缺陷**（12→14 项），
+而非建立机制性闸门。因此下一轮审计必然再发现同类残留。
+
+审查实测的残留（修完 14 项后仍存在）：
+
+| 残留 | 表现 |
+| --- | --- |
+| 拼错字段 `typografy` | 被 `System.Text.Json` 静默忽略 |
+| `specVersion: "99.0"` | 不校验，照常执行 |
+| `layout: "kaboom"` | 回退到 Layered，不报告 |
+| `IrContainer.Order` | 协议接受，从不执行 |
+| `anchor.mode: "relative"` | 接受，等同 fixed |
+| `Edge.FromPort` / `ToPort` | 接受，未完整执行 |
+| `IrMetadata` 各字段 | 接受，不落盘 |
+| `Spacing` @ `layout=manual` | 接受，无效果，不报告 |
+| `ConstraintSpec.Target` | 接受，未用于作用域 |
+
+### 15.2 机制性修法（三条闸门）
+
+**闸门 1：未知成员检测**
+
+`JsonSerializerOptions` 增加 `UnmappedMemberHandling.Disallow`（或自定义 converter
+收集未知键），反序列化后：
+
+```csharp
+public sealed class IrParseResult
+{
+    public DiagramIr? Value { get; init; }
+    public List<string> UnknownMembers { get; init; } = new();
+}
+```
+
+未知成员进 `ExecutionResult.UnrecognizedInputs`。
+
+**闸门 2：枚举白名单**
+
+所有字符串枚举字段（`layout` / `direction` / `palette` / `role` / `kind` /
+`canvas.mode` / `unit` / `align` / `row.type`）统一校验：
+
+```csharp
+if (!Allowed.Contains(value))
+    unmet.Add(new UnmetConstraint { Code = "input.unknown-enum", ... });
+```
+
+**禁止静默回退。** 当前 `Parse("kaboom")` 返回 Layered 且不报告——必须改。
+
+**闸门 3：未消费字段登记**
+
+对"协议接受但本阶段不执行"的字段（`IrContainer.Order`、`IrMetadata` 等），
+**显式登记**并在 `unmetConstraints` 报告一次：
+
+```csharp
+private static readonly string[] NotYetExecuted = { "containers[].order", "metadata.*" };
+// 若 IR 中该字段有非默认值 → 报告 "accepted but not executed"
+```
+
+**这比"以后再说"诚实**：调用方立刻知道哪些字段当前无效果。
+
+### 15.3 `ExecutionResult` 扩展
+
+```csharp
+public sealed class ExecutionResult
+{
+    // 已有
+    public List<UnmetConstraint> UnmetConstraints { get; set; }
+    // 新增：无法识别的输入
+    public List<UnrecognizedInput> UnrecognizedInputs { get; set; } = new();
+}
+
+public sealed class UnrecognizedInput
+{
+    public string Path { get; set; } = "";       // 如 "theme.typografy"
+    public string Reason { get; set; } = "";     // "unknown member" / "unknown enum value"
+}
+```
+
+### 15.4 验收（三条都可证伪）
+
+| # | 输入 | 期望 |
+| --- | --- | --- |
+| 1 | `"typografy": {...}` | `UnrecognizedInputs` 含 `theme.typografy` |
+| 2 | `"specVersion": "99.0"` | 进 `unmet`（版本不支持） |
+| 3 | `"layout": "kaboom"` | 进 `unmet`（未知枚举），**不回退** |
+
+**三条全过才说明"这一类问题被机制挡住"，而不是又补了三个 if。**
+
+---
+
+## 16. 【M11】统一字号表，指定唯一权威
+
+### 16.1 问题
+
+当前存在**三处**字号定义，互不引用：
+
+| 位置 | 内容 |
+| --- | --- |
+| `Vsdx.Engine/TextLayout.cs` `TypeScale` | 6 档默认值（20/12/11/10/9/9） |
+| `Vsdx.Adapters/VisioTextBlockBridge.cs` `SizeForRole` | 硬编码 20/12/9/10/8 |
+| `DesignSpec.cs` §2.3 映射 | 文档中的映射表 |
+
+**三者数值不完全一致**（如 `caption` 在 Bridge 是 9、在 TypeScale 是 `NodeCaption=10`）。
+
+### 16.2 依赖方向约束
+
+`Vsdx.Adapters` **不能引用** `Vsdx.Engine`（依赖反转，Phase 8.1 已确立）。
+
+**因此不能简单地把 TypeScale 移到 Engine 让 Adapters 引用。**
+
+### 16.3 方案：权威常量下沉到 `Vsdx.Model`
+
+把字号档位定义为 `Vsdx.Model` 中的纯数据常量：
+
+```csharp
+// src/Vsdx.Model/TypeScaleDefaults.cs
+public static class TypeScaleDefaults
+{
+    public const double DiagramTitle = 20;
+    public const double RegionTitle  = 12;
+    public const double NodeTitle    = 11;
+    public const double NodeCaption  = 10;
+    public const double EdgeLabel    = 9;
+    public const double Annotation   = 9;
+    public const double MinReadable  = 8;
+}
+```
+
+- `Vsdx.Engine.TextScale` 引用它作为默认值
+- `Vsdx.Adapters.VisioTextBlockBridge.SizeForRole` 引用它
+- 两者**都不再各自定义数字**
+
+**依赖方向正确：** Engine → Model ← Adapters。
+
+### 16.4 验收
+
+| # | 断言 |
+| --- | --- |
+| 1 | `caption` 在 Bridge 路径与 TypeScale 路径产出**同一字号** |
+| 2 | `grep -c "20" VisioTextBlockBridge.cs` 不再出现裸数字字号 |
+| 3 | Adapters 项目引用中**无** `Vsdx.Engine` |
+
+---
+
+## 17. 【M9】`Canvas.Unit` 规范化契约，避免双重换算
+
+### 17.1 问题
+
+审查实测：`OfficeImoIncrementalEditor.cs:62` **已经在做**单位换算：
+
+```csharp
+double factor = MasterCatalog.UnitFactor(pageModel.Size.Unit);
+targetW *= factor; targetH *= factor;
+```
+
+因此若在 `DesignSpecApplier` 里再乘一次，**`update` 路径会双重换算**。
+
+### 17.2 契约
+
+**唯一换算点：`OfficeImoIncrementalEditor`（已有）。**
+
+`DesignSpecApplier` 的职责改为**把 spec 的单位规范化为英寸**后写入
+`page.Size`（且 `Unit` 字段也写 `"inches"`），使下游 `UnitFactor("inches") == 1`。
+
+```csharp
+// DesignSpecApplier
+double ToInches(double v) => spec.Canvas.Unit switch
+{
+    "cm" => v / 2.54,
+    "mm" => v / 25.4,
+    _    => v
+};
+page.Size.Width  = ToInches(w);
+page.Size.Height = ToInches(h);
+page.Size.Unit   = "inches";        // ← 关键：规范化后不再标注 cm
+```
+
+**这样 `update` 时 `UnitFactor("inches")` 返回 1，无双重换算。**
+
+### 17.3 验收（双程）
+
+| # | 步骤 | 期望 |
+| --- | --- | --- |
+| 1 | `10×8cm` → `execute` | 页面 `3.937 × 3.150` 英寸 |
+| 2 | 紧接 `update` | **仍为 `3.937 × 3.150`**（不变） |
+| 3 | 读回 `unit` 字段 | `"inches"`（已规范化） |
+
+第 2 步是 M9 的核心——单程测试无法发现双重换算。
+
+---
+
+## 18. 【M10】`Theme.Background` 的实现路径与重写顺序
+
+### 18.1 两条候选路径
+
+| 路径 | 做法 | 风险 |
+| --- | --- | --- |
+| A. `PageSheet` 单元格 | 写 `<PageSheet><Cell N="PageBackground" V="#FAFAFA"/></PageSheet>` | 低：不动 shape 层 |
+| B. 背景页 | 新增一个背景 shape / 独立 page | **高**：与 z-order、三处 `pageN.xml` 重写冲突 |
+
+### 18.2 选定路径 A
+
+理由：背景是**页面属性**，不是图形对象。路径 B 会让背景进入 `ShapeOrder`，
+与 `VisioNestingBridge` / `VisioFreePathBridge` / `VisioTextBlockBridge`
+的重写顺序产生竞争。
+
+### 18.3 重写顺序（关键）
+
+当前保存后依次执行：
+
+```
+1. VisioNestingBridge.Apply      （改 pageN.xml）
+2. VisioFreePathBridge.Apply     （改 pageN.xml）
+3. VisioTextBlockBridge.Apply    （改 pageN.xml）
+4. VisioZOrderBridge.Apply       （重排 Shape 顺序）
+5. VisioMasterBridge.Apply       （改 Master 属性）
+6. [新增] VisioBackgroundBridge  （改 PageSheet）
+```
+
+**背景桥必须最后**，因为前面每个桥都会 `entry.Delete()` + 重建，
+若背景先写会被覆盖掉。
+
+### 18.4 验收
+
+| # | 断言 |
+| --- | --- |
+| 1 | 写 `#FAFAFA` → 回读同值 |
+| 2 | `examples/phase8/mixed-fidelity.vsdx` 往返后逐字段不变（既有保真不回退） |
+| 3 | 背景写入后 `ShapeOrder` 长度不变（证明未引入背景形状） |

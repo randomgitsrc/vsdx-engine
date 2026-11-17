@@ -1,129 +1,134 @@
-# Phase 8.2 评审材料包（Stage 4 提交）
+# Phase 8.2 评审材料包（Stage 4 提交，第二版）
 
 **日期：** 2026-11-17
-**状态：** 等待负责人批准，**尚未开始产品代码实施**
+**状态：** Stage 3 独立审查已完成并裁决 **FAIL**；已按 M1–M12 修订。
+**产品代码：未修改。** 等待负责人二次批准后方可进入 Stage 5。
+
+> **本文件已按审查 M12 重写。** 上一版是决策前版本：把 D2/D3 当待决问题、
+> 声称"不触碰 LayoutStrategies"、缺陷数写 10、列了不存在的材料项。均已修正。
 
 ---
 
-## 材料清单
+## 材料清单（实际存在的三项 + 本说明）
 
 | # | 文件 | 说明 |
 | --- | --- | --- |
-| 1 | `phase8.2-audit.md` | Stage 1 现状审计（含字段执行矩阵、**12 项缺陷**、3 处自我更正） |
-| 2 | `phase8.2-plan.md` | Stage 2 实施计划（目标架构、优先级契约、文件级改动、测试计划） |
-| 3 | `phase8.2-independent-review.md` | Stage 3 独立审查报告 |
-| 4 | 本文件 | 提交说明与待决事项 |
+| 1 | `phase8.2-audit.md` | Stage 1 现状审计（**14 项缺陷**、字段执行矩阵、5 处自我更正） |
+| 2 | `phase8.2-plan.md` | Stage 2 实施计划（18 节，含 M1–M12 修订） |
+| 3 | `phase8.2-independent-review.md` | **Stage 3 独立审查，裁决 FAIL，M1–M12** |
+| 4 | 本文件 | 提交说明 |
 
 ---
 
-## 一、审计结论摘要
+## 一、独立审查结论
 
-对 `DesignSpec` 17 个字段逐个**实际执行并回读**，结论：**7 项已实现、4 项部分、6 项未执行**。
+**裁决：FAIL。** 必须修改项 M1–M12。
 
-审计过程中修正了自己初稿的三处误判：
+审查同时明确认可：审计 14 项中它独立复验了 11 项成立（另 3 项为它自己新增），
+三处自我更正全部成立，"代码有赋值 ≠ 执行"的方法论正确。
 
-| 项 | 初稿 | 实际 |
+**FAIL 的理由集中在计划的两处核心主张：**
+
+1. **"Writer 已支持、只缺接线"** 对 Edge 标签与 TextBlock 字体**不成立**
+   （写进去但读不回来），且会摧毁计划自己的旗舰验收（M4）。
+2. **"字号提前即解决溢出"** —— 真正缺口是**阶段缺失**（spec 路径根本没有
+   `DiagramSizer.Apply`），按原 §12 实施仍会溢出（M1）。
+
+---
+
+## 二、审查新增的三项 P0/P1（原审计未发现）
+
+| 项 | 内容 | 我的独立复现 |
 | --- | --- | --- |
-| `Theme.Background` | ✅ 已实现 | ❌ 赋值但不落盘，回读为 null |
-| `typography.min_size` | 报告存在 | ❌ 判断写反，死代码 |
-| `RoleColors` 多页 | 只影响首页 | ✅ 两页均生效 |
+| **B1** | spec 路径缺 `DiagramSizer.Apply` | ✅ 同字号下带 spec `[2.00,2.00]` vs 不带 `[1.30,2.33]` |
+| **A9/B8** | `mode=fixed` 名存实亡 | ✅ 请求 20×14 得 4.00×3.45，`unmet=[]` |
+| **B6** | `swimlane` 经协议不可达 | ✅ `applied` 称 Swimlane，几何与 layered 逐点相同 |
 
-**方法教训：** "字段存在""代码有赋值"都不是证据。只有当值真正消费时才作数。
+**这三项已并入 audit（缺陷 13、14 与 §2.9/§2.10）与 plan（T4b、T0b）。**
 
 ---
 
-## 二、缺陷清单（12 项）
+## 三、缺陷总数演进（如实记录）
 
-| # | 缺陷 | 严重度 |
+| 阶段 | 数量 | 说明 |
 | --- | --- | --- |
-| 1 | `Direction` 四种布局策略全无效 | **P0** |
-| 2 | `Theme.Palette` 未执行 + 未知值不报告 + Schema 不约束 | **P0** |
-| 3 | `Theme.Background` 设置后丢失 | P1 |
-| 4 | Typography 仅覆盖 Node | P1 |
-| 5 | 容器色硬编码绕过 Theme | P1 |
-| 6 | `Canvas.Unit` 只写标签不换算 | P1 |
-| 7 | `containerLayouts` manual 下静默跳过 | P1 |
-| 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | P1 |
-| 9 | `typography.min_size` 死代码 | P2 |
-| 10 | `BaseSize` 抹平字体层级 | P1 |
-| 11 | 字号在布局后应用 → 文字溢出 | P1 |
-| 12 | `roleColors` 无 default 回退 | P2 |
+| 审计初稿 | 10 | — |
+| 自查后 | 12 | +溢出、+default |
+| 审查后 | **14** | +`mode=fixed`、+`swimlane` |
 
-**其中 6 项是初稿漏掉的**（Direction、Background、min_size、BaseSize、溢出、default），
-印证了"读代码判断能力"不可靠。
+**初稿漏 8 项、误判 3 项。** 这个数字本身说明"读代码判断能力"的不可靠程度。
 
 ---
 
-## 三、核心判断
+## 四、三项决策的落实（已裁决，非待决）
 
-**写作层（Writer）能力已经够用，缺的是解析层。**
+### D1 — `Direction`：接受修复，无兼容开关
 
-审计确认：
-- Edge 标签字号：`OfficeImoDocumentWriter:378` 已支持 `SetFontSize`
-- TextBlock 字号：已验证 VSDX 中正确写入 20pt / 8pt
-- 容器 TextStyle：已支持
+已落实为 T0。审查要求重点核查空间变换完整性，plan §11 已按 M8 补齐：
+`FromPort`/`ToPort`、`ShapeStyle.PaddingX`/`HeadingHeight`/`PaddingBottom`、
+`Diagram.PageSize`、`Diagram.Orientation`，并修正了 waypoints 时序
+（`LayoutStrategies.cs:142` 在布局期清空，转置时应只在 `manual` 下保留）。
 
-缺的是 `DesignSpecApplier` 从不设置这些值。**因此 Phase 8.2 主要是接线，不是造能力。**
+### D2 — `ObjectMapping`：保持裸 ID + 全局唯一
 
----
+已落实。**实测确认全局唯一性当前不成立**（`ProtocolRunner.cs:238` 的 `nodeIds`
+是 `ValidatePage` 局部变量）。因此 T7a（补全局校验）是 T7b 的前置条件。
+若 T7a 不能加，退回结构化 `ObjectMappings` 列表，**不采用混合键**。
 
-## 四、计划要点
+### D3 — `BaseSize`：作为 `NodeTitle` 的绝对目标字号
 
-引入**一个** `StyleResolver`，把四处互不相识的 if 合并为一条优先级管线：
-
-```
-Palette Defaults → Role Overrides → Explicit Object Styles
-字号：ObjectStyle.FontSize ?? TypeScale[role] → max(_, MinReadable) 并报告
-```
-
-**不触碰** Writer / Reader / FidelityGuard / LayoutStrategies / 协议版本。
+已落实为 `scale = BaseSize / TypeScale.NodeTitle`，逐档核算（§13.2）。
 
 ---
 
-## 五、待负责人决策（3 项）
+## 五、待你确认的事项（2 项，取代原 3 项）
 
-### D1. `Direction` 修复属破坏性变更
+### C1. M1–M6 修订是否足够转为 PASS WITH CONDITIONS
 
-修好后，旧 spec 若声明 `topToBottom` 会**真的转置**（此前完全无效）。
-这是修 bug，但会改变既有产物外观。
+审查明确：**补齐 M1–M6 可转 PASS WITH CONDITIONS**，M7–M12 可作条件项在实施中闭环。
 
-**请确认：接受此变更，还是需要兼容开关？**
+我已修订全部 12 项。请确认是否接受此判断。
 
-### D2. `ObjectMapping` 键格式
+### C2. 两处仍然破坏性的变更
 
-当前单页用裸 id。提议：**单页保持裸 id（兼容），多页用 `pageId/objectId`**。
-
-**请确认此格式。**
-
-### D3. `BaseSize` 语义
-
-当前是"绝对字号"，导致层级被抹平。提议改为**缩放基准**：
-`scale = baseSize / TypeScale.NodeTitle`，保留档位关系。
-
-**这会改变 `baseSize` 的既有行为**（同值输入产生不同输出）。**请确认。**
-
----
-
-## 六、工时估计
-
-| 子任务 | 估计 |
+| 变更 | 影响 |
 | --- | --- |
-| T0 修 Direction（含 Transpose 补齐） | 小 |
-| T1 StyleResolver + 4 palette | 中 |
-| T2 接入四种对象 | 小 |
-| T3 移除容器硬编码 | 小 |
-| T4–T6 单位 / containerLayouts / min_size | 小 |
-| T7 ObjectMapping | 小 |
-| T8 三套产物 + 目视 | 中 |
-| T9–T10 回归 + 背景落盘 | 小 |
+| `Direction` 生效 | 旧 spec 声明 `topToBottom` 会真的转置（此前完全无效） |
+| `mode=fixed` 语义修正 | 旧 spec 的 `fixed` 将真的得到请求尺寸（此前被静默缩小） |
 
-**总计：中等偏小。** 因为写入能力已存在，主要是解析与接线。
+两者都是修 bug，但会改变既有产物。**需在发布说明中披露。**
 
 ---
 
-## 七、未做的事（明确边界）
+## 六、工时估计（已按审查调整）
 
-- 未修改任何产品代码
-- 未开始 Stage 5 实施
-- L4 保持未验证（任务 §5.7 明确不作为阻塞）
-- 外部 Stencil / 图片 / 多区域协调等按任务 §6 保留至后续阶段
+| 任务 | 原估 | 调整后 | 理由 |
+| --- | --- | --- | --- |
+| T0 `Direction` | 小 | **中** | 需覆盖 10 类空间数据 + 时序 |
+| T2 Typography | 小 | **中** | 含 Reader 字体回读（M4） |
+| T1 `StyleResolver` | 中 | 中 | — |
+| T0.5 尺寸阶段 | 未识别 | **中** | 需拆分 `DesignSpecApplier`（M1） |
+| T0b `lane` | 未识别 | 小 | — |
+| T4b `mode=fixed` | 未识别 | 小 | — |
+| M7 机制闸门 | 未识别 | **中** | 三条闸门 + Result 扩展 |
+| M11 字号归一 | 未识别 | 小 | 下沉到 Model |
+
+**总计：从中等偏小上调为中等。** 主要因为审查发现的两处结构性缺口。
+
+---
+
+## 七、未做的事（边界不变）
+
+- 产品代码零改动
+- 未开始 Stage 5
+- L4 未验证（任务 §5.7 明确不作为阻塞）
+- 外部 Stencil / 图片 / 多区域协调等按任务 §6 保留
+
+---
+
+## 八、审查自身的局限（引用其 §F）
+
+审查明确声明：无 Visio（L4 未验证）、回读有盲区（靠解包 XML 补了三项）、
+未审计 `LayoutAnalyzer` / `RepairController` / 渲染器、B 节非完备清单。
+
+**因此 14 项不是"全部缺陷"，只是"当前已发现并验证的缺陷"。**

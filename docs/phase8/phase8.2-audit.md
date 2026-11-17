@@ -28,7 +28,7 @@
 | `Spacing.NodeGapX` | ✅ 已实现 | 间距变大 → 图形变宽（Phase 7 已测） |
 | `Spacing.BandGapY` | ✅ 已实现 | 同上 |
 | `Canvas.Mode=auto` | ✅ 已实现 | `Recenter` + `FitPage(shrink)` |
-| `Canvas.Mode=fixed` | ✅ 已实现 | 页面精确为请求值 |
+| **`Canvas.Mode=fixed`** | ❌ **名存实亡（原判 ✅，已更正）** | 见 §2.9 |
 | `Canvas.Width/Height` | ✅ 已实现 | 实测 10×8 生效 |
 | **`Canvas.Unit`** | ❌ **未执行** | 见下 §2.4：`cm`/`mm` 与 `inches` 结果完全相同 |
 | `Canvas.ShrinkToFit` | ✅ 已实现 | 分支存在且生效 |
@@ -267,8 +267,18 @@ unit=mm     -> page 10.00 x 8.00 in     ← 应为 0.39 x 0.31
 代码只做了 `page.Size.Unit = spec.Canvas.Unit;`（第 256 行），
 **没有任何换算**。`grep "UnitFactor\|2.54\|25.4" DesignSpec.cs` 无结果。
 
-危险之处：`page.Size.Unit` 会被写成 `"cm"`，下游若按其解释会得到错误尺寸——
-**标签与数值不一致**，比不写更糟。
+**但"标签写错"的说法不准确**（独立审查 A9/B8 纠正）：
+
+Writer 在 `OfficeImoDocumentWriter.cs:50` **硬传 `VisioMeasurementUnit.Inches`**，
+实测解包 XML 后既无 `U="CM"` 也无 `U="IN"`。**单位标签根本没写进文件。**
+
+因此危险不在"标签与数值不一致"，而在：
+1. `spec.Canvas.Unit` 被**完全忽略**，`10cm` 与 `10in` 产出相同
+2. `page.Size.Unit` 在模型里是 `"cm"`，进 Writer 后仍按英寸处理——
+   **模型状态与执行结果不一致**
+
+**且存在双重换算风险：** `OfficeImoIncrementalEditor.cs:62` 已在按 `UnitFactor` 换算，
+若在 `DesignSpecApplier` 再乘一次，`update` 路径会换算两遍（M9）。
 
 ### 2.5 【P1】`ContainerLayouts` 在 manual 下静默跳过
 
@@ -338,6 +348,64 @@ if (clamped < size)          // ← 永远为假
 静态阅读会以为功能存在，只有实际构造"低于下限"的输入才会发现它从不触发。
 
 ---
+
+### 2.10 【P1】`swimlane` 经协议入口不可达，却报告"已应用"
+
+**实测**（IR 声明两个 `kind="lane"` 的容器，分别跑两种布局）：
+
+```
+swimlane: applied=['layout=Swimlane']   geometry [(1.85,3.65), (1.85,1.23)]
+layered : applied=['layout=Layered']    geometry [(1.85,3.65), (1.85,1.23)]
+                                          ↑ 逐点相同
+```
+
+**`applied` 声称用了 Swimlane，产出却与 Layered 完全一致。**
+
+根因：
+
+```csharp
+// DiagramIr.cs:282
+Kind = container.Kind is "lane" ? "container" : (container.Kind ?? "container"),
+```
+
+IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
+`g.Kind == "lane"` 识别泳道，找不到就回退到 `LayeredLayoutEngine`。
+
+**为什么既有 `SwimlaneTests` 是绿的：** 它直接构造 `Group { Kind = "lane" }`，
+**绕过 IR 转换**，因此从未发现协议入口是断的。
+
+**这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
+
+### 2.9 【P0】`mode=fixed` 在默认配置下不成立
+
+**实测：**
+
+```
+请求 canvas: { mode:"fixed", width:20, height:14 }   （默认 shrinkToFit=true）
+实得: 4.00 x 3.45
+unmet: []
+```
+
+**缩小了 78%，且报告成功。**
+
+根因：`fixed` 分支里仍执行 `FitPage(page, shrink: true)`（`DesignSpec.cs:258-262`），
+而 `ShrinkToFit` 默认 `true`。因此 **`mode=fixed` 在默认配置下等于 `auto`**。
+
+只有显式写 `shrinkToFit: false` 才能得到请求尺寸。
+
+**问题在于语义矛盾：**
+
+| 声明 | 调用方预期 | 实际 |
+| --- | --- | --- |
+| `mode: "fixed"` | 页面就是 20×14 | 可能被缩到任意小 |
+| `shrinkToFit: true`（默认） | 不要留白 | 覆盖了 fixed |
+
+**修法（M2）：** 二选一，且必须报告：
+
+1. `mode=fixed` 时忽略 `shrinkToFit`（fixed 优先），或
+2. `shrinkToFit` 生效但**进 `unmetConstraints`** 说明"请求尺寸被收缩为 X×Y"
+
+推荐方案 1，因为 `fixed` 的字面语义更强。若采纳方案 2，必须报告。
 
 ### 2.8 【P1】`Theme.Background` 设置了模型字段，但从不落盘
 
@@ -492,7 +560,7 @@ Stage 3 独立审查前，我自己复核了一遍，发现初稿有三处判断
 | `Direction` | 传入 `LayoutOptions.Direction`（代码路径完整） |
 | `Spacing.*` | gap 0.3→1.2 使节点展开 2.30→3.20（实测） |
 | `Canvas.Mode/Width/Height` | 页面精确为 10×8（实测） |
-| `Canvas.ShrinkToFit` | true→4.00×3.45，false→20×14（实测） |
+| `Canvas.ShrinkToFit` | true→4.00×3.45，false→20×14（实测）。**但默认 true 时 `mode=fixed` 失去意义**，见 §2.9 |
 | `HardConstraints` | 未满足进 `unmetConstraints`（实测） |
 | `SoftConstraints` | `isHard=false` 且不阻断（实测） |
 | `RoleColors` | 节点取到 `#FF0000`，多页均生效（实测） |
@@ -572,6 +640,8 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 10 | `BaseSize` 抹平字体层级 | **P1** | ❌ **遗漏** |
 | 11 | 字号在布局后应用 → 文字溢出 | **P1** | ❌ **遗漏** |
 | 12 | `roleColors` 无 default 回退 | P2 | ❌ **遗漏** |
+| 13 | `mode=fixed` 名存实亡 | **P0** | ❌ **遗漏，且初稿判为"✅ 已实现"** |
+| 14 | `swimlane` 经协议不可达 | P1 | ❌ **遗漏** |
 
-**12 项缺陷中，初稿漏了 6 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
+**14 项缺陷中，初稿漏了 8 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
