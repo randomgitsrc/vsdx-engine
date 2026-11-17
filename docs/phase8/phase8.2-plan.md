@@ -384,13 +384,12 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `src/Vsdx.Engine/LayeredLayoutEngine.cs` 等四个引擎 | 读 `options.Direction`，实现转置 | **中**（触碰已验证布局） |
 | `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | **写页面背景**（`PageSheet`，位于 `pages.xml`） | 中（触碰保真层） |
 | `src/Vsdx.Adapters/VisioTextBlockBridge.cs` | **修字体单元格**：当前写 shape 级裸 `<Cell N="Font">`，该字体未注册 FaceNames，Reader 读不到（M4） | 中 |
-| `src/Vsdx.Protocol/DiagramIr.cs` | **需改动**：`lane` 保留（T0b）、消费 `IrContainer.Order`（T1b）。**`IrEdge.Waypoints` 不需要**（D-8 已裁定方案 A） | 中 |
 | `src/Vsdx.Protocol/ProtocolRunner.cs` | **需改动**：spec 路径补 `DiagramSizer.Apply`（T0.5，M1 核心） | 中 |
 | `src/Vsdx.Engine/LayoutStrategies.cs` | **需改动**：`Transpose(Page)` 公共化 + 各引擎消费 `Direction`（T0）；移除逐个 clamp 改整组偏移（T8a） | 中 |
 | `src/Vsdx.Engine/LayoutAnalyzer.cs` | **需改动**：`text.overflow-*` 升级为 error（T6b） | 小 |
 | `src/Vsdx.Model/TypeScaleDefaults.cs` | **新增**：字号档位唯一权威（M11）。放 `Vsdx.Model` 因 `Adapters` 不能引用 `Engine` | 小 |
 | `src/Vsdx.Adapters/VisioBackgroundBridge.cs` | **新增**：写 `pages.xml` 的 `PageSheet`（T10） | 小 |
-| `src/Vsdx.Protocol/DiagramIr.cs` | **需改动**：`DiagramIrConverter` 类在此文件内（`:232`），消费 `IrContainer.Order`（T1b）。**注意：没有 `DiagramIrConverter.cs` 这个文件** | 小 |
+| `src/Vsdx.Protocol/DiagramIr.cs` | **需改动**：`lane` 保留（T0b）；`DiagramIrConverter` 类在此文件内（`:232`）消费 `IrContainer.Order`（T1b）。**`IrEdge.Waypoints` 不需要**（D-8 已裁定方案 A）；**没有 `DiagramIrConverter.cs` 这个文件** | 中 |
 | `src/Vsdx.Renderer/OfficeImoVsdxRenderer.cs` | **需改动**：把 VSDX 字体名传给 `Resolve`（T2d 的实际改动点，`:37`） | **中** |
 | `src/Vsdx.Renderer/FontResolver.cs` | **需改动**：新增按 family name 解析字体文件（读 TTF name 表，T2d） | **中** |
 | `src/Vsdx.Engine/LocalRelayout.cs` | **需改动**：重排后碰撞检查（T5b，缺陷 22） | 小 |
@@ -663,7 +662,7 @@ text: '企业分析平台'            ✅
 
 > **本节已第三次被审查点名**（r2 M12 → r3 C3 → r4 C3）：行号在变，
 > 「两处」那句话一字未改，且 §7 表只有 2 行。
-> 根因是我每次只改正文不改表格，或反之。现已同步为**表 5 行 + 正文三处 + 显式清单**。
+> 根因是我每次只改正文不改表格，或反之。现已同步为**兼容性表 7 个数据行（其中 3 行"行为改变"）+ 正文三处 + 显式清单**。
 
 ---
 
@@ -754,7 +753,7 @@ TTF/OTF 的 `name` 表是**公开二进制格式**（tag + 偏移 + 长度），
 
 **无新依赖，无进程调用。** 若某字体文件解析失败则跳过并继续下一个候选，
 全部失败时降级并进 `unmet`（`style.font-unresolved`）。
-| T2e | TextBlock 字色/字体层级 | `color:#FF0000` 与 `font:Verdana` 回读非 null；三色三字体产出 PNG 互不相同 |
+| T2e | TextBlock 字色/字体层级 | `color:#FF0000` 与 `font:Verdana` 回读非 null；三色产出 PNG 互不相同。**"三字体 PNG 不同"依赖 T2d**（渲染器读字体），T2e 单独只保证回读 |
 
 **T2e 的正确修法：移动 + 注册，两步必须同提交**（审查 r4 §C.3 纠正了我原方案）
 
@@ -867,9 +866,6 @@ foreach (var edge in page.Edges)
 2. §11.6 原验收断言 4（"Waypoints 逐点转置"）**不可达**，
    除非手工构造模型绕过布局——那是**假绿**
 
-**修正后的处理：**
-
-| 场景 | waypoints 行为 | 理由 |
 **`Direction + manual` 已由负责人 D1 裁定：方案 A。**
 
 > **本节已按审查 E-9 修正。** 原文此处保留了一张旧表格，写着

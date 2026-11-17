@@ -57,8 +57,9 @@ desktop.ini
 # Reviewer / agent scratch directories. These hold throwaway CLI fixtures
 # (IR JSON, generated VSDX, exported models) produced while verifying behaviour.
 # They must never be committed: `git add -A` will otherwise sweep them in.
-.review-scratch/
-.review-scratch-r2/
+# Reviewer scratch dirs, one per review round. Use a pattern rather than listing
+# each round: forgetting to add r5 is exactly how 297 files got committed once.
+.review-scratch*/
 .p9/
 .scratch/
 *.review.json
