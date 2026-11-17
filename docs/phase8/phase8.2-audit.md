@@ -54,7 +54,94 @@
 
 ## 2. 已确认的缺陷
 
-### 2.1 【P0】`Theme.Palette` 完全未执行，且未知值不报告
+### 缺陷 1 【P0】`Direction` 在全部四种布局策略下完全无效
+
+这是本审计最终发现的最严重缺陷，**初稿完全漏掉了**——因为我看到
+`LayoutOptions.Direction` 存在、`DesignSpecApplier` 传了值，就判为"✅ 已实现"。
+
+### 实测
+
+同一 IR（3 节点链），四种策略 × 两个方向：
+
+```
+layered/leftToRight: xspread=0.00 yspread=4.85
+layered/topToBottom: xspread=0.00 yspread=4.85     ← 完全相同
+flow/leftToRight:    xspread=5.10 yspread=0.00
+flow/topToBottom:    xspread=5.10 yspread=0.00     ← 完全相同
+tree/leftToRight:    xspread=0.00 yspread=3.50
+tree/topToBottom:    xspread=0.00 yspread=3.50     ← 完全相同
+grid/leftToRight:    xspread=5.10 yspread=0.00
+grid/topToBottom:    xspread=5.10 yspread=0.00     ← 完全相同
+```
+
+**`Direction` 对输出零影响。**
+
+### 根因
+
+```console
+$ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngine.cs \
+      src/Vsdx.Engine/FlowAndTreeLayoutEngine.cs src/Vsdx.Engine/SwimlaneLayoutEngine.cs
+（无结果）
+```
+
+`LayoutDirection` 枚举存在、`LayoutOptions.Direction` 字段存在、
+`DesignSpecApplier` 把 `spec.Direction` 传给它——**但没有任何一个布局引擎读取它**。
+
+### 为什么这是 P0
+
+1. 它是**协议字段**：Schema 允许 `"direction":"topToBottom"`，调用方有理由相信它会生效
+2. 它是**绘制方向**：对一张图来说纵横比完全不同，不是细微样式差异
+3. 它**完全静默**：既不生效，也不进 `unmetConstraints`
+
+这比 palette 更隐蔽——palette 至少是"没实现"，而 `Direction` 是"管线全部接好，
+最后一公里断了"。链条上每一环看起来都对。
+
+### 修法
+
+`LayeredLayoutEngine` / `FlowLayoutEngine` / `GridLayoutEngine` / `TreeLayoutEngine`
+的 `Layout()` 需读 `options.Direction`，在 `TopToBottom` 时交换 X/Y 轴
+（或在最后对整个页面做转置）。`ManualLayoutEngine` 不改（用户坐标即意图）。
+
+**验收：** 同一 IR 两个方向必须产生 `xspread`/`yspread` 互换的结果。
+
+---
+
+## 10. 审计最终的缺陷清单
+
+| # | 缺陷 | 严重度 | 初稿是否发现 |
+| --- | --- | --- | --- |
+| 1 | `Direction` 四种策略全无效 | **P0** | ❌ **遗漏** |
+| 2 | `Theme.Palette` 未执行 + 未知值不报告 | **P0** | ✅ |
+| 3 | `Theme.Background` 设置后丢失 | P1 | ❌ 初稿误判为已实现 |
+| 4 | Typography 仅覆盖 Node | P1 | ✅ |
+| 5 | 容器色硬编码绕过 Theme | P1 | ✅ |
+| 6 | `Canvas.Unit` 只写标签不换算 | P1 | ✅ |
+| 7 | `containerLayouts` manual 下静默跳过 | P1 | ✅ |
+| 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | P1 | ✅ |
+| 9 | `typography.min_size` 死代码 | P2 | ❌ 初稿误判为存在 |
+| 10 | `BaseSize` 抹平字体层级 | **P1** | ❌ **遗漏** |
+| 11 | 字号在布局后应用 → 文字溢出 | **P1** | ❌ **遗漏** |
+| 12 | `roleColors` 无 default 回退 | P2 | ❌ **遗漏** |
+| 13 | `mode=fixed` 名存实亡 | **P0** | ❌ **遗漏，且初稿判为"✅ 已实现"** |
+| 14 | `swimlane` 经协议不可达 | P1 | ❌ **遗漏** |
+| 15 | 装饰元素独立夹紧致间距塌陷 | P1 | ❌ **遗漏**（Phase 8.1 遗留） |
+| 16 | IR 容器 `order` 被忽略致流程倒置 | **P0** | ❌ **遗漏** |
+| 17 | **样式静默丢失 + `lossless` 谎报** | **P0**（原判 P1，已升级） | ❌ **遗漏**（任务书 §3.5 明确要求） |
+| 18 | **Renderer 不消费 FontFamily** | **P0** | ❌ **遗漏**（三轮审查才发现） |
+| 19 | **TextBlock Color/Font 层级错** | **P0** | ❌ **遗漏**（两轮审查均未发现） |
+| 20 | **文字裁切不计入硬约束** | P1 | ❌ **遗漏**（致任务书 §5.3 不可证伪） |
+| 21 | **非法枚举静默回退并谎报已执行** | P1 | ❌ **遗漏**（审查 E-4） |
+| 22 | **`LocalRelayout` 不检查越界碰撞** | P1 | ❌ **遗漏**（本轮发现） |
+| 23 | **默认路径不写字体，混排无保障** | **P1** | ❌ **遗漏**（任务书 §5.2 明确要求） |
+| 24 | **对比度无任何校验** | P1 | ❌ **遗漏**（任务书 §5.3 明确要求） |
+| 25 | **语义角色不可往返致样式失效** | **P0** | ❌ **遗漏**（任务书 §5.4 要求样式稳定） |
+
+**25 项缺陷中，初稿漏了 19 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
+也说明"读代码判断能力"不可靠，只有实测才作数。
+
+---
+
+### 缺陷 2 【P0】`Theme.Palette` 完全未执行，且未知值不报告
 
 **实测（同一 IR，两个 spec）：**
 
@@ -101,836 +188,7 @@ $ --spec '{"theme":{"palette":"does-not-exist"}}'
 **三方全部失守：Schema 不校验、执行不消费、结果不报告。**
 修 8.2 时三处都要改——只加执行仍会让拼写错误静默通过。
 
-### 2.2 【P1】Typography 只覆盖 Node
-
-**实测**（`fontFamily=Courier New, baseSize=14`）：
-
-| 对象 | font | size |
-| --- | --- | --- |
-| Node `a` | `Courier New` | 14 |
-| Group `grp` | **None** | **12**（硬编码） |
-| TextBlock `title` | **None** | 20（来自 role，非 spec） |
-| Edge `e1` 标签 | **null** | **null** |
-
-**关键点：写入器本身是支持的。**
-
-```csharp
-// OfficeImoDocumentWriter.cs:378
-if (edge.LabelFontSize is double fs) connector.SetFontSize(fs);
-```
-
-缺的是 `DesignSpecApplier` 从不设置 `edge.LabelFontSize`：
-
-```console
-$ grep -c "LabelFont" src/Vsdx.Protocol/DesignSpec.cs
-0
-```
-
-容器同理：`container.TextStyle.Size` 在写入器里被硬编码为 12。
-
-**因此这不是"不能做"，是"没接线"。** 工作量小，但必须有统一解析，否则会成为第五处 if。
-
-### 2.2b 【P1】`Typography.BaseSize` 抹平了字体层级
-
-任务 §3.3 明确要求"不能只提供一个全局 FontSize，需要支持不同角色的字体层级"。
-
-当前 `BaseSize` 的实现恰恰是"一个全局 FontSize"：
-
-```csharp
-foreach (var node in page.Nodes)
-{
-    node.Style.FontSize = Math.Max(size, MinReadableSize);   // 每个节点同一个值
-}
-```
-
-**实测（两家对照）：**
-
-```
-无 spec       : node sizes = [('a', None), ('b', None), ('c', None)]
-baseSize=14   : node sizes = [('a', 14),   ('b', 14),   ('c', 14)  ]
-```
-
-**注意第一行**：无 spec 时 `fontSize` 是 `None`——`TypeScale` 并不给节点写字号字段，
-它只用来**反算节点尺寸**（字号影响文字→影响框体大小）。因此"层级"体现在几何，不在样式字段。
-
-**而 `baseSize` 一旦给值，就把三个角色全部设成同一个 14**，
-此时字号字段有了值，但**层级消失了**——所有节点同样大小。
-
-所以准确说法是：`baseSize` 不是"覆盖了现有层级"，而是**引入了本不存在的平坦字号**，
-且跳过 TypeScale 的推导链路。两者机制不同，无法共存。
-
-更矛盾的是：`DiagramSizer` 里**已经**有按画布与密度推导的完整 TypeScale
-（`TypeScale.ForCanvas(width, height, nodeCount)`，6 个档位），
-而 `DesignSpecApplier` 完全绕过它，另起一套。
-
-**因此存在两套字号机制并存，且互相不通信：**
-
-| 路径 | 来源 | 结果 |
-| --- | --- | --- |
-| 无 spec | `TypeScale.ForCanvas` | 有层级（title 20 / region 12 / node 11 …） |
-| 有 `baseSize` | 直接赋值 | **无层级**（全部同值） |
-
-即"声明了 typography 反而比不声明更难读"，与设计意图相反。
-
-**修法：** `BaseSize` 应解读为**基准**（缩放因子），而非绝对值。
-建议：`scale = baseSize / TypeScale.NodeTitle`，作用于整个 TypeScale，
-保留档位关系。这是 Phase 8.2 §3.1 统一解析的核心任务之一。
-
-### 2.2c 【P1】字号在布局之后应用，框体不会重算 → 文字溢出
-
-**实测：**
-
-```
-baseSize=9  -> box 2.00 x 0.90, fontSize 9
-baseSize=24 -> box 2.00 x 0.90, fontSize 24     ← 框完全没变
-```
-
-检测器确实抓到了：
-
-```
-$ check-layout b24.vsdx
-text.overflow-horizontal: 'a' 最长行约 5.09" 宽，实际 2.00"
-```
-
-**但那是事后检测，生成时并未阻止。** 产出物仍然落盘，溢出 2.5 倍。
-
-**且裁切不计入硬约束**（审查 E-3 指出，我已复现）：
-
-```console
-$ execute --spec '{"typography":{"baseSize":24}}' --json
-  status: succeeded
-  hard: True          ← 硬约束"通过"
-  score: 76
-  hardViolations: 0
-  issueCodes: [text.overflow-horizontal, text.overflow-vertical]
-```
-
-**12 处文字被裁切，系统判定"可交付"。**
-
-这使任务书 §5.3 的验收项"**不发生文本裁切**"**无法证伪**——
-无论裁切多少，`hardConstraintsPassed` 都是 `true`。
-
-**两个入口的判据一致**（审查 E-3 曾疑为不一致，实测排除）：
-
-```console
-$ check-layout o.vsdx
-  score=96/100
-  text.overflow-horizontal (1)
-    [warning] ...                    ← 是 warning，不是 error
-```
-
-**`execute` 与 `check-layout` 都一致地把它当 warning。** 问题不在两者分歧，
-而在于**两者共同把"文字被裁切"判为可交付**。
-
-**修法（T6b）：** 文字裁切应计入硬约束。
-任务书 §5.3 把它列在"验收要求"里，与"文字可读""对比度合理"并列，
-而这些是不可让步的交付底线，不是风格偏好。
-
-**根因是阶段缺失，不是顺序**（本项已按审查 E-2 更正，原写"步骤顺序"是错的）
-
-初稿认为根因是"字号改得太晚，应提前到 `DiagramSizer.Apply` 之前"。
-**但 spec 路径上 `DiagramSizer.Apply` 根本不存在**——提前到一个不存在的步骤不会生效。
-
-```csharp
-// ProtocolRunner.cs:66-88
-if (spec is not null)
-{
-    DesignSpecApplier.Apply(diagram, spec);   // ← 只调 Recenter/FitPage（页面级）
-}                                              //   没有 DiagramSizer.Apply（框体级）
-else
-{
-    DiagramSizer.Apply(diagram);               // ← 只在这里
-}
-```
-
-`DiagramSizer.Apply` 的全部调用点（`grep -rn` 实测）：
-
-| 位置 | 条件 |
-| --- | --- |
-| `ProtocolRunner.cs:77` | **仅 `spec == null` 分支** |
-| `VsdxEngine.cs:58` | `FitToText`，默认 false |
-| `CandidateComparison.cs:103` | `recipe.FitToText` |
-| `Program.cs:550` | repair 命令 |
-
-**spec 路径上一次都不调用。**
-
-同一 IR、同一字号（`baseSize=11`），唯一变量是 spec 是否存在：
-
-```
-带 spec     : 节点宽 [2.00, 2.00]     ← DiagramIr 写死的 Bounds(0,0,2.0,0.9)
-不带 spec   : 节点宽 [1.33, 2.33]     ← 按文字推导
-```
-
-**带 spec 比不带 spec 更差**，因为恰好跳过了尺寸推导。
-
-**修法见 plan §12**：补上该阶段，并把 `DesignSpecApplier` 拆成
-"仅样式（尺寸前）"与"布局/画布（尺寸后）"两段。
-
----
-
-### 2.3 【P1】容器颜色硬编码，绕过 Theme
-
-```csharp
-// DesignSpec.cs:202-215
-var bandFills = new[] { "#EAF3FB", "#EDF7ED", "#FDF2E9", "#F2E9F7", "#EAF6F6" };
-var bandStrokes = new[] { "#9DC3E6", "#A9D08E", "#F4B183", "#C5A3D9", "#93CCCC" };
-var bandText = new[] { "#1F4E79", "#375623", "#833C0B", "#4B1F6F", "#1F5C5C" };
-...
-group.Style.Fill ??= bandFills[slot];
-```
-
-容器色**完全不经过 Theme**。换 palette 后容器仍固定为这五组颜色。
-这正是任务 §2.2-C 指出的问题。
-
-### 2.4 【P1】`Canvas.Unit` 只写标签不换算
-
-**实测：**
-
-```
-unit=inches -> page 10.00 x 8.00 in
-unit=cm     -> page 10.00 x 8.00 in     ← 应为 3.94 x 3.15
-unit=mm     -> page 10.00 x 8.00 in     ← 应为 0.39 x 0.31
-```
-
-代码只做了 `page.Size.Unit = spec.Canvas.Unit;`（第 256 行），
-**没有任何换算**。`grep "UnitFactor\|2.54\|25.4" DesignSpec.cs` 无结果。
-
-**但"标签写错"的说法不准确**（审查 A.1#4 / B7 纠正——**不是** A9/B8；
-A9/B8 指的是 `mode=fixed`，我一度引错了条目号）。
-
-Writer 在 `OfficeImoDocumentWriter.cs:50` **硬传 `VisioMeasurementUnit.Inches`**。
-实测解包**两个** part：
-
-```
-visio/pages/page1.xml : U="IN"=False  U="CM"=False
-visio/pages/pages.xml : U="IN"=True   U="CM"=False     ← 在这里
-```
-
-**`U="IN"` 确实写进了文件，只是在 `pages.xml` 而非 `page1.xml`。**
-
-我上一版写成"既无 `U="CM"` 也无 `U="IN"`"，是**只解包一个 part 就下了全包结论**——
-把一次范围过窄的观察当成了全文结论。这与我批评过的"读代码判断能力"是同一类毛病，
-只是换成了"读一个文件判断整个包"。
-
-**准确表述：** Writer 硬传 Inches，故 `pages.xml` 中是 `U="IN"`；
-`spec.Canvas.Unit` 从不影响该值，`10cm` 与 `10in` 产出相同。
-
-因此危险不在"标签与数值不一致"，而在：
-1. `spec.Canvas.Unit` 被**完全忽略**，`10cm` 与 `10in` 产出相同
-2. `page.Size.Unit` 在模型里是 `"cm"`，进 Writer 后仍按英寸处理——
-   **模型状态与执行结果不一致**
-
-**且存在双重换算风险：** `OfficeImoIncrementalEditor.cs:62` 已在按 `UnitFactor` 换算，
-若在 `DesignSpecApplier` 再乘一次，`update` 路径会换算两遍（M9）。
-
-### 2.5 【P1】`ContainerLayouts` 在 manual 下静默跳过
-
-**实测：**
-
-```console
-$ --spec '{"layout":"manual","containerLayouts":{"grp":"grid"}}'
-  applied: ['layout=manual', 'container.bands', 'canvas.auto']
-  unmet  : []
-```
-
-`containerLayouts` 既没出现在 `applied`，也没进 `unmet` —— **第三种情况之外的第五种：被忽略且不留痕迹**。
-
-根因：`DesignSpecApplier` 把 `containerLayouts` 放在 `if (layout != manual)` 分支内（第 139-160 行）。
-manual 模式整体跳过该分支。
-
-**注意：** manual 模式下"不重新布局"是合理的语义，但**必须报告**该覆盖未生效。
-
-### 2.6 【P1】`ExecutionResult.ObjectMapping` 覆盖不全
-
-**实测**（IR 含 2 节点 + 1 容器 + 1 连线 + 1 文本块）：
-
-```console
-mapping entries: ['a', 'b', 'grp']
-```
-
-**缺 `e1`（Edge）与 `title`（TextBlock）。**
-
-```csharp
-// ExecutionResult.cs — BuildMapping
-foreach (var node in ir.Nodes) ...
-foreach (var container in ir.Containers) ...
-// 没有 edges，没有 textBlocks，没有 paths
-```
-
-**量化（`examples/phase8/arch.ir.json`，单页）：**
-
-```
-mapping size: 13
-  nodes   10 : covered 10    ✅
-  groups   3 : covered  3    ✅
-  edges    9 : covered  0    ❌ 全部缺失
-  texts    4 : covered  0    ❌ 全部缺失
-```
-
-**9 条边与 4 个文本块，映射覆盖率为 0%。**
-
-且实现只看 `diagram.Pages.FirstOrDefault()`——**多页时第二页及以后完全不映射**，
-实测多页 IR 的 `objectMapping` 是**空对象** `{}`（不是"缺第二页"）。
-
-任务 §2.2-F 明确要求："是否仅映射第一页、Node 和 Container，而未完整覆盖多页、Edge、
-TextBlock、Path" —— **答案：是**。
-
-**ID 冲突问题：** 当前 `Dictionary<string,string>` 用裸 id 作键。
-若两页各有 `node-1`，后写者覆盖前者，且无任何提示。
-任务要求"必须确定对象映射契约"。
-
-### 2.7 【P2】`MinReadableSize` 夹紧时不报告
-
-**实测**（`baseSize=4, minReadableSize=9`）：`unmet=[]`，无任何记录。
-
-代码确实夹紧了（`Math.Max(size, MinReadableSize)`），但**静默修改调用方的输入**。
-任务 §3.3 要求"不能偷偷缩小字号以制造通过结果" —— 反向同理：
-把 4pt 悄悄提到 9pt 而不说，调用方以为 4pt 被接受了。
-
-同一位置**确实有**报告代码，但它是**死代码**：
-
-```csharp
-var clamped = Math.Max(size, spec.Typography.MinReadableSize);
-if (clamped < size)          // ← 永远为假
-{
-    unmet.Add(new UnmetConstraint { Code = "typography.min_size", ... });
-}
-```
-
-`Math.Max(size, min) >= size` 恒成立，故 `clamped < size` 恒为假，
-该分支**从不执行**。判断方向写反了（应为 `clamped > size`）。
-
-**这是一个比"未报告"更隐蔽的缺陷**：代码看起来处理了这种情况，
-静态阅读会以为功能存在，只有实际构造"低于下限"的输入才会发现它从不触发。
-
----
-
-### 2.10 【P1】`swimlane` 经协议入口不可达，却报告"已应用"
-
-**实测**（IR 声明两个 `kind="lane"` 的容器，分别跑两种布局）：
-
-```
-swimlane: applied=['layout=Swimlane']   geometry [(1.85,3.65), (1.85,1.23)]
-layered : applied=['layout=Layered']    geometry [(1.85,3.65), (1.85,1.23)]
-                                          ↑ 逐点相同
-```
-
-**`applied` 声称用了 Swimlane，产出却与 Layered 完全一致。**
-
-根因：
-
-```csharp
-// DiagramIr.cs:282
-Kind = container.Kind is "lane" ? "container" : (container.Kind ?? "container"),
-```
-
-IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
-`g.Kind == "lane"` 识别泳道，找不到就回退到 `LayeredLayoutEngine`。
-
-**为什么既有 `SwimlaneTests` 是绿的：** 它直接构造 `Group { Kind = "lane" }`，
-**绕过 IR 转换**，因此从未发现协议入口是断的。
-
-**这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
-
-### 2.21 【P0】语义角色不可往返 → 角色样式第二次保存即失效
-
-**任务书 §5.4 要求"再次保存后样式仍然稳定"。实测不稳定。**
-
-**实测**（同一 `arch.ir.json`，`roleColors: {service:"#FF0000", database:"#00FF00"}`）：
-
-```
-第一次 execute → export-model:
-  auth  role=None  fill=#FF0000    ← 颜色在
-  order role=None  fill=#FF0000
-  web   role=None  fill=#FFFFFF    ← client 角色未定义，正常
-
-  ⚠️ 但 role 已经是 None —— IR 里声明的是 client/gateway/service
-```
-
-`Node.Type` **在回读时从未被恢复**：
-
-```csharp
-// ReadNode 只设这些
-Id = StableIdOf(shape) ?? shape.Id,
-Shape = MasterCatalog.ToModelKind(shape.MasterNameU),
-VisioShapeId = shape.Id,
-// 没有 Type = ...
-```
-
-**后果链：**
-
-1. 首次 `execute`：IR 的 `role` → `Node.Type` → `roleColors` 命中 → 上色 ✅
-2. 回读：`Node.Type` 丢失 → `role=None`
-3. 再次应用 spec：`roleColors` 找不到角色 → **不上色**，节点回退默认白色
-4. 结果：**同一张图，第二次处理比第一次更差**
-
-**这直接推翻"样式可继续修改"这一前提**：任务书要求交付"可以继续修改的 VSDX"，
-但修改一次之后角色样式就没了。
-
-**且它是静默的**：`status=succeeded`、`hard=True`，没有任何提示。
-
-**修法（T2g）：**
-
-1. `ReadNode` 从已有的 `User.VsdxModelId` 旁再存一个 `User.VsdxRole`，
-   或复用 Shape Data 的 `role` 行
-2. 读取时恢复 `Node.Type`
-3. 验收：`execute → export-model → update → export-model`，
-   四步后每个节点的 `type` 与 `fill` 都必须与第一步一致
-
-**这条也解释了缺陷 2（Palette 不执行）为何长期未被发现**——
-角色色只在首次生成时可见，任何回读流程都会掩盖它。
-
----
-
-### 2.20 【P1】对比度能力已实现，但无任何校验
-
-**任务书 §5.3 要求"颜色与文字对比合理"，但审计与计划此前均未覆盖。**
-
-**现状：能力有，校验无。**
-
-`ColorUtil.ReadableTextColor` 实现正确（按 WCAG 对比度择优）：
-
-```csharp
-public static string ReadableTextColor(string background) =>
-    Contrast(background, "#FFFFFF") >= Contrast(background, "#111111") ? "#FFFFFF" : "#111111";
-```
-
-且已在三处调用（`DesignSpec` roleColors、`ShapeStyler`、`Writer`）。
-
-**但 `LayoutAnalyzer` 中没有任何对比度检查：**
-
-```console
-$ grep -c "contrast|Contrast|luminance" src/Vsdx.Engine/LayoutAnalyzer.cs
-0
-```
-
-**实测：**
-
-```console
-$ --spec '{"roleColors":{"service":"#FFFF99"}}'
-  n1: fill=#FFFF99  textColor=#111111    ← 对比度约 16:1
-  quality: hard=True  score=95           ← 无任何提示
-```
-
-`#FFFF99` 是浅黄，配近黑文字对比度过高（刺眼），而系统"正确地"选了黑字
-——按算法没错，但**没有判断结果是否落在合理区间**。
-
-**两类失败都没有被发现：**
-
-| 情形 | 现状 |
-| --- | --- |
-| 对比度过低（浅底 + 浅字，读不清） | 不报告（`ReadableTextColor` 会避免，但调用方显式设 `textColor` 时可绕过） |
-| 对比度过高（深底 + 纯黑或浅底 + 近黑） | **完全不检测** |
-
-**修法（T1d）：**
-
-1. `LayoutAnalyzer` 新增 `text.low-contrast` / `text.harsh-contrast` 检查
-   （WCAG 阈值：正文 ≥ 4.5:1，且 < 21:1 上限避免刺眼）
-2. 显式 `textColor` 覆盖时同样校验——绕过自动选择的路径必须被检查
-3. 无法解析颜色时进 `unmet`（`style.color-unparsed`）
-
-**验收：** 显式设 `#FFFF99` 底 + `#FFFF00` 字（对比度 1.05:1）→
-`text.low-contrast` 必须出现；设 `#000000` 底 + `#111111` 字 → 同样必须报告。
-
----
-
-### 2.19 【P1】默认路径完全不写字体，中英文混排无从谈起
-
-**任务书 §5.2 明确要求覆盖"中英文混排"**，但审计与计划此前**完全未提及**。
-
-**实测（同一 IR 含纯中文 / 中英混排 / 纯英文三种节点，不传 spec）：**
-
-```console
-$ execute --ir mixed.ir.json --output o.vsdx
-  quality: hard=True score=97          ← 一切正常
-
-$ 解包检查
-  FaceNames  : []                      ← 没有注册任何字体
-  Font cells : []                      ← 也没有给任何 shape 设字体
-```
-
-**默认路径下一个字体都没写。** Visio 只能回退到文档默认字体。
-
-对照：显式传 `typography.fontFamily` 才写入：
-
-```
-with fontFamily spec -> FaceNames: ['Microsoft YaHei']
-                        Font cells: ['Microsoft YaHei', ...]
-```
-
-**这解释了为什么缺陷 18（渲染器不读字体）长期未被发现**——
-大多数图根本没有字体可读。修复缺陷 18 的前提是先修本项，
-否则渲染器读到的永远是"未设置"。
-
-**两个后果：**
-
-1. **中英文混排无保障**：中文与拉丁共用回退字体，字重与行高可能不匹配，
-   且不同机器回退结果不同（不可复现）
-2. **"字体是视觉样式的一部分"这一前提不成立**：除非调用方显式指定，
-   否则引擎不控制字体
-
-**修法（T1c）：**
-
-| 项 | 做法 |
-| --- | --- |
-| 默认字体 | `DesignSpec` 未指定时，从 `TypeScale` 的同源默认值取一个 CJK-capable 字族 |
-| 混排处理 | 中英混排节点允许 `latinFont`/`cjkFont` 分开指定；未指定时用同一字族的合理搭配 |
-| 报告 | 无法解析字体时进 `unmet`（`style.font-unresolved`） |
-| 验收 | 中文/混排/英文三类节点各产出 PNG，与"全中文"版本对比，混排不得出现方框或字重跳变 |
-
----
-
-### 2.18 【P1】`LocalRelayout` 只验证"没动别人"，不验证"没撞别人"
-
-**实测**（`overview.ir.json` + `containerLayouts:{"back":"grid"}`）：
-
-```console
-$ execute --json
-  status: partial
-  hard: False
-  score: 0
-  codes: [edge.crossing, node.overlap, page.margins, row.misaligned, spacing.too-tight]
-```
-
-**`node.overlap` 硬失败。** 而 `appliedDesignNotes` 仍写
-`container back relaid as grid`——报告"重排成功"。
-
-**根因（`LocalRelayout.cs`）：**
-
-```csharp
-// 它验证的是"容器外节点没被移动"
-foreach (var (id, before) in untouched) { ... IsolationBroken = true ... }
-// 但从不检查"重排后的成员是否与那些节点重叠"
-// grep -c "Overlaps|overlap" LocalRelayout.cs  →  0
-```
-
-**这是一个方向性遗漏：**
-
-| 检查项 | 现状 |
-| --- | --- |
-| 容器外节点是否被移动 | ✅ 有（`IsolationBroken`） |
-| 重排后是否与容器外节点重叠 | ❌ **无** |
-| 重排后容器尺寸是否仍容纳成员 | ⚠️ 仅扩大，不重算位置 |
-
-**后果：** 容器内重排把成员推出原范围 → 撞上邻区 → 硬失败，
-但 `result.Ok == true`，`applied` 报告成功。
-
-**这与缺陷 5（容器色）同类但更隐蔽**：它不改变外观，只让"局部重排"这个
-安全操作变成可能破坏全局的操作。
-
-**修法（T5b）：** `LocalRelayout` 重排后应对**全部页面节点**做碰撞检查
-（不只是 `untouched` 的位移检查），发现重叠则回退该次重排并报告。
-
----
-
-### 2.17 【P1】非法枚举值被静默替换为默认值，且报告"已执行"
-
-**实测：**
-
-```console
-$ --spec '{"containerLayouts":{"back":"kaboom"}}'
-  status: succeeded
-  applied: ['container back relaid as kaboom']    ← 声称按 kaboom 做了
-  unmet: []
-```
-
-**`kaboom` 不是任何已知策略。** `DiagramLayoutEngine.Parse()` 的 `_ =>` 分支
-回退到 `Layered`，然后 `applied` 把原始字符串原样回显。
-
-**同类问题（审查 E-4 列出，其中 3 项我已逐一实测）：**
-
-| 输入 | 实际行为 | 报告 |
-| --- | --- | --- |
-| `containerLayouts: "kaboom"` | 回退 Layered | `applied: relaid as kaboom` ❌ |
-| `layout: "kaboom"` | 回退 Layered | `applied: layout=Layered`（不报错） |
-| `anchor.mode: "relative"` | 等同 fixed | 不报告 |
-| `FromPort`/`ToPort` | **实测回读 `None`**（写入后丢失） | 不报告 |
-| `ConstraintSpec.Target` | 只回显 | 不报告作用域 |
-| `anchor.mode: "relative"` | **实测与 `fixed` 完全相同** | 不报告 |
-
-**共同模式：枚举解析用"默认回退"而非"拒绝"。**
-
-回退本身不是错——错在**回退后不说明**。调用方传了 `kaboom`，
-系统应当说"未知策略，已回退为 Layered"，而不是声称执行了 `kaboom`。
-
-**修法：** 所有枚举解析统一为 `TryParse` 语义——失败时记录原值进
-`unmetConstraints`（`input.unknown-enum`），再执行回退。
-
----
-
-### 2.15 【P0】Renderer 完全不消费 `FontFamily`
-
-**逐像素实测**（同一 IR，仅换字体）：
-
-```
-e3d355cdcaa3c960405ff927204f4eec  georgia.png    ← Georgia
-e3d355cdcaa3c960405ff927204f4eec  courier.png    ← Courier New
-e3d355cdcaa3c960405ff927204f4eec  bogus.png      ← NoSuchFont-XYZ（不存在的字体）
-```
-
-**三张 PNG 的 MD5 完全相同**，连不存在的字体也一样。
-
-根因：`FontResolver.cs` 只按"是否 CJK"二选一挑一个字体文件，
-**从不读取 VSDX 中的 FontFamily**。
-
-对照组：字号、粗体、斜体**是**生效的——所以不是"渲染器整体失灵"，
-而是**字体族这一个维度被完全忽略**。
-
-**后果：**
-
-1. 任务书 §3.4 要求"不同角色应能产生有意义的视觉区分"，字体族是其中一项
-2. D-4 修好回读后，**用户仍然看不出效果**——文件里字体对了，渲染出来一模一样
-3. T2c 的白名单若把 `font-family` 写成"支持"，那条验收**永远为假**
-
-**这是本阶段最需要负责人知情的一项**：它意味着"视觉样式系统"在字体维度上
-对预览无效，仅对 Visio 原生打开有效（而 L4 未验证）。
-
----
-
-### 2.16 【P0】TextBlock 的 `Color` / `Font` 写错 XML 层级
-
-**实测**（TextBlock 设 `color:"#FF0000"`, `font:"Verdana"`）：
-
-```xml
-<!-- TextBlock：Color 与 Font 在 shape 级裸 cell -->
-<Shape NameU="TextBlock">
-  <Cell N="Color" V="#FF0000" />        ← 位置错
-  <Cell N="Font"  V="Verdana" />        ← 位置错
-  <Section N="Character">
-    <Row IX="0"><Cell N="Size" .../><Cell N="Style" V="0"/></Row>   ← 只有 Size/Style
-  </Section>
-</Shape>
-
-<!-- Node：正确写法，Font 在 Character/Row 内 -->
-<Section N="Character">
-  <Row IX="0"><Cell N="Font" V="Georgia" /></Row>
-</Section>
-```
-
-Reader 只读 `shape.TextStyle`（`OfficeImoDocumentReader.cs:602-625`），
-而 `TextStyle` 来自 `Character` 段。shape 级裸 `Color`/`Font` **不在其覆盖范围**。
-
-**后果：**
-
-| 样式 | 写入 | 回读 | 渲染 |
-| --- | --- | --- | --- |
-| TextBlock 字号 | ✅ | ✅ | ✅ |
-| TextBlock 粗体/斜体 | ✅ | ✅ | ✅ |
-| **TextBlock 颜色** | ✅ | ❌ null | ❌ 三色同图 |
-| **TextBlock 字体** | ✅ | ❌ null | ❌ 三字体同图 |
-
-**这与缺陷 17 的关系：** 我在 §2.13 拿 `color:"#FF0000"` 作为"缺报告机制"的例子，
-但**没看出根因是写错层级**。缺陷 17 是"没有验证是否成功"，
-缺陷 16 是"确实没成功"——后者更根本。
-
-**修法：** `VisioTextBlockBridge` 的 `Color`/`Font` 移入 `Character/Row`，
-与 Node 保持一致。改动很小（几行），但必须验证回读。
-
-**D-4 的诊断需要两次修正，两次都不完整：**
-
-| 版本 | 判断 | 问题 |
-| --- | --- | --- |
-| 第一版 | "FaceNames 未注册" | 只说了一半 |
-| 第二版（本段原文） | "层级错了，注册与否是次要的" | **说反了**——注册同样必要 |
-
-**实测（三个变体，`validate` 均通过）：**
-
-| 变体 | font | textColor | fontSize |
-| --- | --- | --- | --- |
-| 现状 | `None` | `None` | 18 ✅ |
-| 只移入 `Character/Row` | `None` | `None` | **`None`** ❌ |
-| 移入 + 注册 `FaceNames` | `Verdana` | `#FF0000` | 18 ✅ |
-
-**只移动会让结果比现状更差**——连原本正确的 `fontSize` 也丢失。
-
-原因：`Character/Row` 的 `Font` 单元格存**字体索引**（指向 `FaceNames` 数组），
-不是名字字符串。写 `V="Verdana"` 解析失败，整个 `Character` 段失效。
-
-**结论：位置与注册都是必要条件，缺一不可，且必须在同一提交内完成。**
-
----
-
-### 2.13 【P0】样式静默丢失，且 `lossless` 主动掩盖
-
-任务书 §3.5 明文要求：
-
-> **无法表达或渲染的样式必须报告。**
-
-**实测：比"没有机制"更糟——有机制，但它报告了错误的结论。**
-
-`StyleStyle` 有四个字段**从未被任何代码消费**：
-
-```console
-$ grep -rn "Opacity|Shadow|Radius|LineJoin" src/Vsdx.Model/DiagramModel.cs
-300:    public double? Opacity { get; set; }
-301:    public bool? Shadow { get; set; }
-302:    public double? Radius { get; set; }
-303:    public string? LineJoin { get; set; }
-
-$ grep -rn "Opacity|Shadow|Radius|LineJoin" src/Vsdx.Protocol/*.cs src/Vsdx.Adapters/*.cs
-（无结果）
-```
-
-**写入后全部丢失，而兼容性报告说没丢：**
-
-```
-$ create --input a.json （style 含 opacity:0.5, shadow:true, radius:0.3, lineJoin:round）
-  compatibility: lossless          ← 主动声称无损
-
-$ export-model
-  opacity  : None
-  shadow   : None
-  radius   : None
-  lineJoin : None
-```
-
-**`lossless` 是主动的虚假声明**，不只是沉默。这比"没有报告机制"严重一个量级：
-调用方看到 `lossless: True` 会认为这四个样式已经生效。
-
-给一个 TextBlock 设置 `italic: true, color: "#FF0000", fontSize: 14`：
-
-```console
-$ execute --json
-  status: succeeded
-  unmet : []
-```
-
-**没有任何"该样式是否真的写进 VSDX / 是否能被渲染"的检查。**
-
-具体缺口：
-
-| 环节 | 现状 | 应有行为 |
-| --- | --- | --- |
-| 样式 → VSDX | 写了就假设成功 | 应回读确认关键单元格存在 |
-| VSDX → Renderer | 渲染器能力未知 | 支持的样式集应显式声明，不支持的进 `unmet` |
-| 未知样式值 | 静默接受 | 应报告 |
-
-**这与缺陷 4（Typography 仅 Node）不同**：那项是"没接线"，本项是
-**缺少"确认接线成功"的验证环节**——即使所有样式都接上，仍无法回答
-"这个样式真的进文件了吗、渲染器认得吗"。
-
-**修法（T2c）：**
-
-1. 定义"Renderer 支持的样式属性白名单"（fill / stroke / fontSize / bold / italic / color / align）
-2. 写入后抽样回读，断言关键单元格存在且值正确
-3. 白名单外的样式进 `unmetConstraints`（`style.renderer-unsupported`）
-
-**验收：** 设置一个白名单外的样式（如 `shadow: true`）→ `unmet` 必须含对应条目。
-
----
-
-### 2.12 【P0】IR 声明了容器顺序，但布局完全忽略 → 流程倒置
-
-**实测**（`examples/phase8/flow.ir.json`）：
-
-IR 用 `order` 声明容器次序：`intake(2) → review(1) → fulfil(0)`，
-语义上订单从受理→审核→履约，**受理应在最上**。
-
-实际产出：
-
-```
-fulfil   y=5.55   ← 最上
-review   y=3.43
-intake   y=1.30   ← 最下
-```
-
-**顺序完全颠倒**，流程从底部开始读。
-
-**根因链（已按审查更正引用的代码路径）：**
-
-1. `IrContainer.Order` 在 `DiagramIrConverter` 中**从未被消费**
-2. **`flow.ir.json` 中 `role=decision` 的节点使其走 `FlowLayoutEngine`**，
-   容器排序是 `OrderBy(g => g.Bounds?.Y ?? 0)`（`FlowAndTreeLayoutEngine.cs:92`）
-   ——**不是** `LayeredLayoutEngine` 的 `MeanY` 逻辑
-3. IR 节点无 `anchor` → 全部 `Bounds(0,0,2.0,0.9)`（`DiagramIr.cs:297`）
-4. 容器 `Bounds` 由成员反算，成员全在同一点 → 各容器 `Bounds.Y` 相同
-5. `OrderBy` 对相等键**保持输入顺序**（稳定排序），输入顺序即字典/插入序，
-   与 `order` 无关
-
-**更正说明：** 初稿引用了 `LayeredLayoutEngine:117-121` 作为根因位置。
-审查指出该 IR 实际选择 Flow 引擎，两处排序逻辑不同。
-**结论不变**（`order` 被忽略 → 顺序错），但**引用路径已改对**。
-
-**修复要点（对两个引擎都成立）：**
-两个引擎都必须**优先消费显式 `order`**，缺失时再退回几何推断。
-
-**这是缺陷 6（`IrContainer.Order` 接受不执行）的一个具体后果**，
-但后果比"字段无效"严重得多：**产出语义颠倒的图**，且 `status=succeeded`、`hard=True`、`score=100`。
-
-**为什么 `score=100`：** 质量检测只看几何合法性（不重叠、不越界、连线不穿节点），
-**不检查容器顺序是否符合语义**——后者需要语义知识，不属于检测器职责。
-
-**修法：**
-
-1. `DiagramIrConverter` 消费 `IrContainer.Order`（写入 `Group.Bounds.Y` 或新字段）
-2. `LayeredLayoutEngine` 容器排序优先用显式 `order`，缺失时再退回 `MeanY`
-3. 两者都缺失时，按 IR 声明顺序（`OrderBy(ID)` 至少稳定，而非字典序）
-
-**验收：** `flow.ir.json` 产出中 `intake` 的 Y 必须最大（最上）。
-
----
-
-### 2.11 【P1】装饰元素逐个独立夹紧，相对间距被压没
-
-**实测**（新建的 `examples/phase8/arch.ir.json`）：
-
-IR 中 title 在 y=11.4、subtitle 在 y=10.8（间距 0.6"）。
-页面因内容收缩到 9.4" 高，两者都在页外。经 `ClampDecorationsToPage` 后：
-
-```
-title    y=8.55  h=0.60
-subtitle y=8.65  h=0.40     ← 间距从 0.6" 塌到 0.1"，视觉上重叠
-```
-
-**根因**（`LayoutStrategies.cs` 的 `ClampDecorationsToPage`）：
-对每个装饰元素**独立**执行 `Clamp(value, half, limit)`。
-当多个元素同时越界到同一侧时，各自被压到同一个边界值上，
-**相对间距归零**。
-
-渲染结果：标题与副标题叠在一起，不可读。
-
-**这是 Phase 8.1 引入的 clamp 逻辑的缺陷**——当时只测了"单个文本块不越界"，
-没测"多个装饰元素同时越界时相对位置是否保持"。
-
-**修法：** 先对整组装饰元素施加**统一偏移**（保持相对间距），
-仅在整组仍超出页面时才逐个夹紧。
-
-**验收：** IR 中 title/subtitle 间距 0.6"，页面收缩后间距仍须 ≥ 0.5"。
-
----
-
-### 2.9 【P0】`mode=fixed` 在默认配置下不成立
-
-**实测：**
-
-```
-请求 canvas: { mode:"fixed", width:20, height:14 }   （默认 shrinkToFit=true）
-实得: 4.00 x 3.45
-unmet: []
-```
-
-**缩小了 78%，且报告成功。**
-
-根因：`fixed` 分支里仍执行 `FitPage(page, shrink: true)`（`DesignSpec.cs:258-262`），
-而 `ShrinkToFit` 默认 `true`。因此 **`mode=fixed` 在默认配置下等于 `auto`**。
-
-只有显式写 `shrinkToFit: false` 才能得到请求尺寸。
-
-**问题在于语义矛盾：**
-
-| 声明 | 调用方预期 | 实际 |
-| --- | --- | --- |
-| `mode: "fixed"` | 页面就是 20×14 | 可能被缩到任意小 |
-| `shrinkToFit: true`（默认） | 不要留白 | 覆盖了 fixed |
-
-**修法（M2）：** 二选一，且必须报告：
-
-1. `mode=fixed` 时忽略 `shrinkToFit`（fixed 优先），或
-2. `shrinkToFit` 生效但**进 `unmetConstraints`** 说明"请求尺寸被收缩为 X×Y"
-
-推荐方案 1，因为 `fixed` 的字面语义更强。若采纳方案 2，必须报告。
-
-### 2.8 【P1】`Theme.Background` 设置了模型字段，但从不落盘
+### 缺陷 3 【P1】`Theme.Background` 设置了模型字段，但从不落盘
 
 **实测：**
 
@@ -1109,87 +367,863 @@ Stage 3 独立审查前，我自己复核了一遍，发现初稿有三处判断
 
 ---
 
-## 9. 【P0，审计遗漏】`Direction` 在全部四种布局策略下完全无效
+### 缺陷 4 【P1】Typography 只覆盖 Node
 
-这是本审计最终发现的最严重缺陷，**初稿完全漏掉了**——因为我看到
-`LayoutOptions.Direction` 存在、`DesignSpecApplier` 传了值，就判为"✅ 已实现"。
+**实测**（`fontFamily=Courier New, baseSize=14`）：
 
-### 实测
+| 对象 | font | size |
+| --- | --- | --- |
+| Node `a` | `Courier New` | 14 |
+| Group `grp` | **None** | **12**（硬编码） |
+| TextBlock `title` | **None** | 20（来自 role，非 spec） |
+| Edge `e1` 标签 | **null** | **null** |
 
-同一 IR（3 节点链），四种策略 × 两个方向：
+**关键点：写入器本身是支持的。**
 
-```
-layered/leftToRight: xspread=0.00 yspread=4.85
-layered/topToBottom: xspread=0.00 yspread=4.85     ← 完全相同
-flow/leftToRight:    xspread=5.10 yspread=0.00
-flow/topToBottom:    xspread=5.10 yspread=0.00     ← 完全相同
-tree/leftToRight:    xspread=0.00 yspread=3.50
-tree/topToBottom:    xspread=0.00 yspread=3.50     ← 完全相同
-grid/leftToRight:    xspread=5.10 yspread=0.00
-grid/topToBottom:    xspread=5.10 yspread=0.00     ← 完全相同
+```csharp
+// OfficeImoDocumentWriter.cs:378
+if (edge.LabelFontSize is double fs) connector.SetFontSize(fs);
 ```
 
-**`Direction` 对输出零影响。**
-
-### 根因
+缺的是 `DesignSpecApplier` 从不设置 `edge.LabelFontSize`：
 
 ```console
-$ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngine.cs \
-      src/Vsdx.Engine/FlowAndTreeLayoutEngine.cs src/Vsdx.Engine/SwimlaneLayoutEngine.cs
-（无结果）
+$ grep -c "LabelFont" src/Vsdx.Protocol/DesignSpec.cs
+0
 ```
 
-`LayoutDirection` 枚举存在、`LayoutOptions.Direction` 字段存在、
-`DesignSpecApplier` 把 `spec.Direction` 传给它——**但没有任何一个布局引擎读取它**。
+容器同理：`container.TextStyle.Size` 在写入器里被硬编码为 12。
 
-### 为什么这是 P0
+**因此这不是"不能做"，是"没接线"。** 工作量小，但必须有统一解析，否则会成为第五处 if。
 
-1. 它是**协议字段**：Schema 允许 `"direction":"topToBottom"`，调用方有理由相信它会生效
-2. 它是**绘制方向**：对一张图来说纵横比完全不同，不是细微样式差异
-3. 它**完全静默**：既不生效，也不进 `unmetConstraints`
+### 缺陷 5 【P1】容器颜色硬编码，绕过 Theme
 
-这比 palette 更隐蔽——palette 至少是"没实现"，而 `Direction` 是"管线全部接好，
-最后一公里断了"。链条上每一环看起来都对。
+```csharp
+// DesignSpec.cs:202-215
+var bandFills = new[] { "#EAF3FB", "#EDF7ED", "#FDF2E9", "#F2E9F7", "#EAF6F6" };
+var bandStrokes = new[] { "#9DC3E6", "#A9D08E", "#F4B183", "#C5A3D9", "#93CCCC" };
+var bandText = new[] { "#1F4E79", "#375623", "#833C0B", "#4B1F6F", "#1F5C5C" };
+...
+group.Style.Fill ??= bandFills[slot];
+```
 
-### 修法
+容器色**完全不经过 Theme**。换 palette 后容器仍固定为这五组颜色。
+这正是任务 §2.2-C 指出的问题。
 
-`LayeredLayoutEngine` / `FlowLayoutEngine` / `GridLayoutEngine` / `TreeLayoutEngine`
-的 `Layout()` 需读 `options.Direction`，在 `TopToBottom` 时交换 X/Y 轴
-（或在最后对整个页面做转置）。`ManualLayoutEngine` 不改（用户坐标即意图）。
+### 缺陷 6 【P1】`Canvas.Unit` 只写标签不换算
 
-**验收：** 同一 IR 两个方向必须产生 `xspread`/`yspread` 互换的结果。
+**实测：**
+
+```
+unit=inches -> page 10.00 x 8.00 in
+unit=cm     -> page 10.00 x 8.00 in     ← 应为 3.94 x 3.15
+unit=mm     -> page 10.00 x 8.00 in     ← 应为 0.39 x 0.31
+```
+
+代码只做了 `page.Size.Unit = spec.Canvas.Unit;`（第 256 行），
+**没有任何换算**。`grep "UnitFactor\|2.54\|25.4" DesignSpec.cs` 无结果。
+
+**但"标签写错"的说法不准确**（审查 A.1#4 / B7 纠正——**不是** A9/B8；
+A9/B8 指的是 `mode=fixed`，我一度引错了条目号）。
+
+Writer 在 `OfficeImoDocumentWriter.cs:50` **硬传 `VisioMeasurementUnit.Inches`**。
+实测解包**两个** part：
+
+```
+visio/pages/page1.xml : U="IN"=False  U="CM"=False
+visio/pages/pages.xml : U="IN"=True   U="CM"=False     ← 在这里
+```
+
+**`U="IN"` 确实写进了文件，只是在 `pages.xml` 而非 `page1.xml`。**
+
+我上一版写成"既无 `U="CM"` 也无 `U="IN"`"，是**只解包一个 part 就下了全包结论**——
+把一次范围过窄的观察当成了全文结论。这与我批评过的"读代码判断能力"是同一类毛病，
+只是换成了"读一个文件判断整个包"。
+
+**准确表述：** Writer 硬传 Inches，故 `pages.xml` 中是 `U="IN"`；
+`spec.Canvas.Unit` 从不影响该值，`10cm` 与 `10in` 产出相同。
+
+因此危险不在"标签与数值不一致"，而在：
+1. `spec.Canvas.Unit` 被**完全忽略**，`10cm` 与 `10in` 产出相同
+2. `page.Size.Unit` 在模型里是 `"cm"`，进 Writer 后仍按英寸处理——
+   **模型状态与执行结果不一致**
+
+**且存在双重换算风险：** `OfficeImoIncrementalEditor.cs:62` 已在按 `UnitFactor` 换算，
+若在 `DesignSpecApplier` 再乘一次，`update` 路径会换算两遍（M9）。
+
+### 缺陷 7 【P1】`ContainerLayouts` 在 manual 下静默跳过
+
+**实测：**
+
+```console
+$ --spec '{"layout":"manual","containerLayouts":{"grp":"grid"}}'
+  applied: ['layout=manual', 'container.bands', 'canvas.auto']
+  unmet  : []
+```
+
+`containerLayouts` 既没出现在 `applied`，也没进 `unmet` —— **第三种情况之外的第五种：被忽略且不留痕迹**。
+
+根因：`DesignSpecApplier` 把 `containerLayouts` 放在 `if (layout != manual)` 分支内（第 139-160 行）。
+manual 模式整体跳过该分支。
+
+**注意：** manual 模式下"不重新布局"是合理的语义，但**必须报告**该覆盖未生效。
+
+### 缺陷 8 【P1】`ExecutionResult.ObjectMapping` 覆盖不全
+
+**实测**（IR 含 2 节点 + 1 容器 + 1 连线 + 1 文本块）：
+
+```console
+mapping entries: ['a', 'b', 'grp']
+```
+
+**缺 `e1`（Edge）与 `title`（TextBlock）。**
+
+```csharp
+// ExecutionResult.cs — BuildMapping
+foreach (var node in ir.Nodes) ...
+foreach (var container in ir.Containers) ...
+// 没有 edges，没有 textBlocks，没有 paths
+```
+
+**量化（`examples/phase8/arch.ir.json`，单页）：**
+
+```
+mapping size: 13
+  nodes   10 : covered 10    ✅
+  groups   3 : covered  3    ✅
+  edges    9 : covered  0    ❌ 全部缺失
+  texts    4 : covered  0    ❌ 全部缺失
+```
+
+**9 条边与 4 个文本块，映射覆盖率为 0%。**
+
+且实现只看 `diagram.Pages.FirstOrDefault()`——**多页时第二页及以后完全不映射**，
+实测多页 IR 的 `objectMapping` 是**空对象** `{}`（不是"缺第二页"）。
+
+任务 §2.2-F 明确要求："是否仅映射第一页、Node 和 Container，而未完整覆盖多页、Edge、
+TextBlock、Path" —— **答案：是**。
+
+**ID 冲突问题：** 当前 `Dictionary<string,string>` 用裸 id 作键。
+若两页各有 `node-1`，后写者覆盖前者，且无任何提示。
+任务要求"必须确定对象映射契约"。
+
+### 缺陷 9 【P2】`MinReadableSize` 夹紧时不报告
+
+**实测**（`baseSize=4, minReadableSize=9`）：`unmet=[]`，无任何记录。
+
+代码确实夹紧了（`Math.Max(size, MinReadableSize)`），但**静默修改调用方的输入**。
+任务 §3.3 要求"不能偷偷缩小字号以制造通过结果" —— 反向同理：
+把 4pt 悄悄提到 9pt 而不说，调用方以为 4pt 被接受了。
+
+同一位置**确实有**报告代码，但它是**死代码**：
+
+```csharp
+var clamped = Math.Max(size, spec.Typography.MinReadableSize);
+if (clamped < size)          // ← 永远为假
+{
+    unmet.Add(new UnmetConstraint { Code = "typography.min_size", ... });
+}
+```
+
+`Math.Max(size, min) >= size` 恒成立，故 `clamped < size` 恒为假，
+该分支**从不执行**。判断方向写反了（应为 `clamped > size`）。
+
+**这是一个比"未报告"更隐蔽的缺陷**：代码看起来处理了这种情况，
+静态阅读会以为功能存在，只有实际构造"低于下限"的输入才会发现它从不触发。
 
 ---
 
-## 10. 审计最终的缺陷清单
+### 缺陷 10 【P1】`Typography.BaseSize` 抹平了字体层级
 
-| # | 缺陷 | 严重度 | 初稿是否发现 |
+任务 §3.3 明确要求"不能只提供一个全局 FontSize，需要支持不同角色的字体层级"。
+
+当前 `BaseSize` 的实现恰恰是"一个全局 FontSize"：
+
+```csharp
+foreach (var node in page.Nodes)
+{
+    node.Style.FontSize = Math.Max(size, MinReadableSize);   // 每个节点同一个值
+}
+```
+
+**实测（两家对照）：**
+
+```
+无 spec       : node sizes = [('a', None), ('b', None), ('c', None)]
+baseSize=14   : node sizes = [('a', 14),   ('b', 14),   ('c', 14)  ]
+```
+
+**注意第一行**：无 spec 时 `fontSize` 是 `None`——`TypeScale` 并不给节点写字号字段，
+它只用来**反算节点尺寸**（字号影响文字→影响框体大小）。因此"层级"体现在几何，不在样式字段。
+
+**而 `baseSize` 一旦给值，就把三个角色全部设成同一个 14**，
+此时字号字段有了值，但**层级消失了**——所有节点同样大小。
+
+所以准确说法是：`baseSize` 不是"覆盖了现有层级"，而是**引入了本不存在的平坦字号**，
+且跳过 TypeScale 的推导链路。两者机制不同，无法共存。
+
+更矛盾的是：`DiagramSizer` 里**已经**有按画布与密度推导的完整 TypeScale
+（`TypeScale.ForCanvas(width, height, nodeCount)`，6 个档位），
+而 `DesignSpecApplier` 完全绕过它，另起一套。
+
+**因此存在两套字号机制并存，且互相不通信：**
+
+| 路径 | 来源 | 结果 |
+| --- | --- | --- |
+| 无 spec | `TypeScale.ForCanvas` | 有层级（title 20 / region 12 / node 11 …） |
+| 有 `baseSize` | 直接赋值 | **无层级**（全部同值） |
+
+即"声明了 typography 反而比不声明更难读"，与设计意图相反。
+
+**修法：** `BaseSize` 应解读为**基准**（缩放因子），而非绝对值。
+建议：`scale = baseSize / TypeScale.NodeTitle`，作用于整个 TypeScale，
+保留档位关系。这是 Phase 8.2 §3.1 统一解析的核心任务之一。
+
+### 缺陷 11 【P1】字号在布局之后应用，框体不会重算 → 文字溢出
+
+**实测：**
+
+```
+baseSize=9  -> box 2.00 x 0.90, fontSize 9
+baseSize=24 -> box 2.00 x 0.90, fontSize 24     ← 框完全没变
+```
+
+检测器确实抓到了：
+
+```
+$ check-layout b24.vsdx
+text.overflow-horizontal: 'a' 最长行约 5.09" 宽，实际 2.00"
+```
+
+**但那是事后检测，生成时并未阻止。** 产出物仍然落盘，溢出 2.5 倍。
+
+**根因是阶段缺失，不是顺序**（本项已按审查 E-2 更正，原写"步骤顺序"是错的）
+
+初稿认为根因是"字号改得太晚，应提前到 `DiagramSizer.Apply` 之前"。
+**但 spec 路径上 `DiagramSizer.Apply` 根本不存在**——提前到一个不存在的步骤不会生效。
+
+```csharp
+// ProtocolRunner.cs:66-88
+if (spec is not null)
+{
+    DesignSpecApplier.Apply(diagram, spec);   // ← 只调 Recenter/FitPage（页面级）
+}                                              //   没有 DiagramSizer.Apply（框体级）
+else
+{
+    DiagramSizer.Apply(diagram);               // ← 只在这里
+}
+```
+
+`DiagramSizer.Apply` 的全部调用点（`grep -rn` 实测）：
+
+| 位置 | 条件 |
+| --- | --- |
+| `ProtocolRunner.cs:77` | **仅 `spec == null` 分支** |
+| `VsdxEngine.cs:58` | `FitToText`，默认 false |
+| `CandidateComparison.cs:103` | `recipe.FitToText` |
+| `Program.cs:550` | repair 命令 |
+
+**spec 路径上一次都不调用。**
+
+同一 IR、同一字号（`baseSize=11`），唯一变量是 spec 是否存在：
+
+```
+带 spec     : 节点宽 [2.00, 2.00]     ← DiagramIr 写死的 Bounds(0,0,2.0,0.9)
+不带 spec   : 节点宽 [1.33, 2.33]     ← 按文字推导
+```
+
+**带 spec 比不带 spec 更差**，因为恰好跳过了尺寸推导。
+
+**修法见 plan §12**：补上该阶段，并把 `DesignSpecApplier` 拆成
+"仅样式（尺寸前）"与"布局/画布（尺寸后）"两段。
+
+---
+
+### 缺陷 12 【P2】`roleColors` 无 `default` 回退，拼错角色静默不上色
+
+**实测：** 声明 `roleColors: {"databse": "#FF0000"}`（`database` 拼错），
+节点 `role: "database"`。
+
+```console
+$ execute --json
+  status: succeeded
+  unmet : []
+```
+
+**该节点保持默认白色，无任何提示。**
+
+根因：`DesignSpec.cs` 的 roleColors 查表用 `TryGetValue`，
+未命中时**跳过**而非报告，且**没有 `default` 键回退机制**。
+
+| 情形 | 现状 |
+| --- | --- |
+| 角色在 `roleColors` 中 | 上色 ✅ |
+| 角色不在其中，但有 `default` 键 | **不支持**（`default` 被当作普通角色名） |
+| 角色拼错 / 未声明 | 静默不上色 ❌ |
+
+**修法（T2b）：** 支持 `default` 键作为兜底；未覆盖的角色按角色值去重后进
+`unmetConstraints`（`style.role-uncolored`）。
+
+---
+
+### 缺陷 13 【P0】`mode=fixed` 在默认配置下不成立
+
+**实测：**
+
+```
+请求 canvas: { mode:"fixed", width:20, height:14 }   （默认 shrinkToFit=true）
+实得: 4.00 x 3.45
+unmet: []
+```
+
+**缩小了 78%，且报告成功。**
+
+根因：`fixed` 分支里仍执行 `FitPage(page, shrink: true)`（`DesignSpec.cs:258-262`），
+而 `ShrinkToFit` 默认 `true`。因此 **`mode=fixed` 在默认配置下等于 `auto`**。
+
+只有显式写 `shrinkToFit: false` 才能得到请求尺寸。
+
+**问题在于语义矛盾：**
+
+| 声明 | 调用方预期 | 实际 |
+| --- | --- | --- |
+| `mode: "fixed"` | 页面就是 20×14 | 可能被缩到任意小 |
+| `shrinkToFit: true`（默认） | 不要留白 | 覆盖了 fixed |
+
+**修法（M2）：** 二选一，且必须报告：
+
+1. `mode=fixed` 时忽略 `shrinkToFit`（fixed 优先），或
+2. `shrinkToFit` 生效但**进 `unmetConstraints`** 说明"请求尺寸被收缩为 X×Y"
+
+推荐方案 1，因为 `fixed` 的字面语义更强。若采纳方案 2，必须报告。
+
+### 缺陷 14 【P1】`swimlane` 经协议入口不可达，却报告"已应用"
+
+**实测**（IR 声明两个 `kind="lane"` 的容器，分别跑两种布局）：
+
+```
+swimlane: applied=['layout=Swimlane']   geometry [(1.85,3.65), (1.85,1.23)]
+layered : applied=['layout=Layered']    geometry [(1.85,3.65), (1.85,1.23)]
+                                          ↑ 逐点相同
+```
+
+**`applied` 声称用了 Swimlane，产出却与 Layered 完全一致。**
+
+根因：
+
+```csharp
+// DiagramIr.cs:282
+Kind = container.Kind is "lane" ? "container" : (container.Kind ?? "container"),
+```
+
+IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
+`g.Kind == "lane"` 识别泳道，找不到就回退到 `LayeredLayoutEngine`。
+
+**为什么既有 `SwimlaneTests` 是绿的：** 它直接构造 `Group { Kind = "lane" }`，
+**绕过 IR 转换**，因此从未发现协议入口是断的。
+
+**这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
+
+### 缺陷 15 【P1】装饰元素逐个独立夹紧，相对间距被压没
+
+**实测**（新建的 `examples/phase8/arch.ir.json`）：
+
+IR 中 title 在 y=11.4、subtitle 在 y=10.8（间距 0.6"）。
+页面因内容收缩到 9.4" 高，两者都在页外。经 `ClampDecorationsToPage` 后：
+
+```
+title    y=8.55  h=0.60
+subtitle y=8.65  h=0.40     ← 间距从 0.6" 塌到 0.1"，视觉上重叠
+```
+
+**根因**（`LayoutStrategies.cs` 的 `ClampDecorationsToPage`）：
+对每个装饰元素**独立**执行 `Clamp(value, half, limit)`。
+当多个元素同时越界到同一侧时，各自被压到同一个边界值上，
+**相对间距归零**。
+
+渲染结果：标题与副标题叠在一起，不可读。
+
+**这是 Phase 8.1 引入的 clamp 逻辑的缺陷**——当时只测了"单个文本块不越界"，
+没测"多个装饰元素同时越界时相对位置是否保持"。
+
+**修法：** 先对整组装饰元素施加**统一偏移**（保持相对间距），
+仅在整组仍超出页面时才逐个夹紧。
+
+**验收：** IR 中 title/subtitle 间距 0.6"，页面收缩后间距仍须 ≥ 0.5"。
+
+---
+
+### 缺陷 16 【P0】IR 声明了容器顺序，但布局完全忽略 → 流程倒置
+
+**实测**（`examples/phase8/flow.ir.json`）：
+
+IR 用 `order` 声明容器次序：`intake(2) → review(1) → fulfil(0)`，
+语义上订单从受理→审核→履约，**受理应在最上**。
+
+实际产出：
+
+```
+fulfil   y=5.55   ← 最上
+review   y=3.43
+intake   y=1.30   ← 最下
+```
+
+**顺序完全颠倒**，流程从底部开始读。
+
+**根因链（已按审查更正引用的代码路径）：**
+
+1. `IrContainer.Order` 在 `DiagramIrConverter` 中**从未被消费**
+2. **`flow.ir.json` 中 `role=decision` 的节点使其走 `FlowLayoutEngine`**，
+   容器排序是 `OrderBy(g => g.Bounds?.Y ?? 0)`（`FlowAndTreeLayoutEngine.cs:92`）
+   ——**不是** `LayeredLayoutEngine` 的 `MeanY` 逻辑
+3. IR 节点无 `anchor` → 全部 `Bounds(0,0,2.0,0.9)`（`DiagramIr.cs:297`）
+4. 容器 `Bounds` 由成员反算，成员全在同一点 → 各容器 `Bounds.Y` 相同
+5. `OrderBy` 对相等键**保持输入顺序**（稳定排序），输入顺序即字典/插入序，
+   与 `order` 无关
+
+**更正说明：** 初稿引用了 `LayeredLayoutEngine:117-121` 作为根因位置。
+审查指出该 IR 实际选择 Flow 引擎，两处排序逻辑不同。
+**结论不变**（`order` 被忽略 → 顺序错），但**引用路径已改对**。
+
+**修复要点（对两个引擎都成立）：**
+两个引擎都必须**优先消费显式 `order`**，缺失时再退回几何推断。
+
+**这是缺陷 6（`IrContainer.Order` 接受不执行）的一个具体后果**，
+但后果比"字段无效"严重得多：**产出语义颠倒的图**，且 `status=succeeded`、`hard=True`、`score=100`。
+
+**为什么 `score=100`：** 质量检测只看几何合法性（不重叠、不越界、连线不穿节点），
+**不检查容器顺序是否符合语义**——后者需要语义知识，不属于检测器职责。
+
+**修法：**
+
+1. `DiagramIrConverter` 消费 `IrContainer.Order`（写入 `Group.Bounds.Y` 或新字段）
+2. `LayeredLayoutEngine` 容器排序优先用显式 `order`，缺失时再退回 `MeanY`
+3. 两者都缺失时，按 IR 声明顺序（`OrderBy(ID)` 至少稳定，而非字典序）
+
+**验收：** `flow.ir.json` 产出中 `intake` 的 Y 必须最大（最上）。
+
+---
+
+### 缺陷 17 【P0】样式静默丢失，且 `lossless` 主动掩盖
+
+任务书 §3.5 明文要求：
+
+> **无法表达或渲染的样式必须报告。**
+
+**实测：比"没有机制"更糟——有机制，但它报告了错误的结论。**
+
+`StyleStyle` 有四个字段**从未被任何代码消费**：
+
+```console
+$ grep -rn "Opacity|Shadow|Radius|LineJoin" src/Vsdx.Model/DiagramModel.cs
+300:    public double? Opacity { get; set; }
+301:    public bool? Shadow { get; set; }
+302:    public double? Radius { get; set; }
+303:    public string? LineJoin { get; set; }
+
+$ grep -rn "Opacity|Shadow|Radius|LineJoin" src/Vsdx.Protocol/*.cs src/Vsdx.Adapters/*.cs
+（无结果）
+```
+
+**写入后全部丢失，而兼容性报告说没丢：**
+
+```
+$ create --input a.json （style 含 opacity:0.5, shadow:true, radius:0.3, lineJoin:round）
+  compatibility: lossless          ← 主动声称无损
+
+$ export-model
+  opacity  : None
+  shadow   : None
+  radius   : None
+  lineJoin : None
+```
+
+**`lossless` 是主动的虚假声明**，不只是沉默。这比"没有报告机制"严重一个量级：
+调用方看到 `lossless: True` 会认为这四个样式已经生效。
+
+给一个 TextBlock 设置 `italic: true, color: "#FF0000", fontSize: 14`：
+
+```console
+$ execute --json
+  status: succeeded
+  unmet : []
+```
+
+**没有任何"该样式是否真的写进 VSDX / 是否能被渲染"的检查。**
+
+具体缺口：
+
+| 环节 | 现状 | 应有行为 |
+| --- | --- | --- |
+| 样式 → VSDX | 写了就假设成功 | 应回读确认关键单元格存在 |
+| VSDX → Renderer | 渲染器能力未知 | 支持的样式集应显式声明，不支持的进 `unmet` |
+| 未知样式值 | 静默接受 | 应报告 |
+
+**这与缺陷 4（Typography 仅 Node）不同**：那项是"没接线"，本项是
+**缺少"确认接线成功"的验证环节**——即使所有样式都接上，仍无法回答
+"这个样式真的进文件了吗、渲染器认得吗"。
+
+**修法（T2c）：**
+
+1. 定义"Renderer 支持的样式属性白名单"（fill / stroke / fontSize / bold / italic / color / align）
+2. 写入后抽样回读，断言关键单元格存在且值正确
+3. 白名单外的样式进 `unmetConstraints`（`style.renderer-unsupported`）
+
+**验收：** 设置一个白名单外的样式（如 `shadow: true`）→ `unmet` 必须含对应条目。
+
+---
+
+### 缺陷 18 【P0】Renderer 完全不消费 `FontFamily`
+
+**逐像素实测**（同一 IR，仅换字体）：
+
+```
+e3d355cdcaa3c960405ff927204f4eec  georgia.png    ← Georgia
+e3d355cdcaa3c960405ff927204f4eec  courier.png    ← Courier New
+e3d355cdcaa3c960405ff927204f4eec  bogus.png      ← NoSuchFont-XYZ（不存在的字体）
+```
+
+**三张 PNG 的 MD5 完全相同**，连不存在的字体也一样。
+
+根因：`FontResolver.cs` 只按"是否 CJK"二选一挑一个字体文件，
+**从不读取 VSDX 中的 FontFamily**。
+
+对照组：字号、粗体、斜体**是**生效的——所以不是"渲染器整体失灵"，
+而是**字体族这一个维度被完全忽略**。
+
+**后果：**
+
+1. 任务书 §3.4 要求"不同角色应能产生有意义的视觉区分"，字体族是其中一项
+2. D-4 修好回读后，**用户仍然看不出效果**——文件里字体对了，渲染出来一模一样
+3. T2c 的白名单若把 `font-family` 写成"支持"，那条验收**永远为假**
+
+**这是本阶段最需要负责人知情的一项**：它意味着"视觉样式系统"在字体维度上
+对预览无效，仅对 Visio 原生打开有效（而 L4 未验证）。
+
+---
+
+### 缺陷 19 【P0】TextBlock 的 `Color` / `Font` 写错 XML 层级
+
+**实测**（TextBlock 设 `color:"#FF0000"`, `font:"Verdana"`）：
+
+```xml
+<!-- TextBlock：Color 与 Font 在 shape 级裸 cell -->
+<Shape NameU="TextBlock">
+  <Cell N="Color" V="#FF0000" />        ← 位置错
+  <Cell N="Font"  V="Verdana" />        ← 位置错
+  <Section N="Character">
+    <Row IX="0"><Cell N="Size" .../><Cell N="Style" V="0"/></Row>   ← 只有 Size/Style
+  </Section>
+</Shape>
+
+<!-- Node：正确写法，Font 在 Character/Row 内 -->
+<Section N="Character">
+  <Row IX="0"><Cell N="Font" V="Georgia" /></Row>
+</Section>
+```
+
+Reader 只读 `shape.TextStyle`（`OfficeImoDocumentReader.cs:602-625`），
+而 `TextStyle` 来自 `Character` 段。shape 级裸 `Color`/`Font` **不在其覆盖范围**。
+
+**后果：**
+
+| 样式 | 写入 | 回读 | 渲染 |
 | --- | --- | --- | --- |
-| 1 | `Direction` 四种策略全无效 | **P0** | ❌ **遗漏** |
-| 2 | `Theme.Palette` 未执行 + 未知值不报告 | **P0** | ✅ |
-| 3 | `Theme.Background` 设置后丢失 | P1 | ❌ 初稿误判为已实现 |
-| 4 | Typography 仅覆盖 Node | P1 | ✅ |
-| 5 | 容器色硬编码绕过 Theme | P1 | ✅ |
-| 6 | `Canvas.Unit` 只写标签不换算 | P1 | ✅ |
-| 7 | `containerLayouts` manual 下静默跳过 | P1 | ✅ |
-| 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | P1 | ✅ |
-| 9 | `typography.min_size` 死代码 | P2 | ❌ 初稿误判为存在 |
-| 10 | `BaseSize` 抹平字体层级 | **P1** | ❌ **遗漏** |
-| 11 | 字号在布局后应用 → 文字溢出 | **P1** | ❌ **遗漏** |
-| 12 | `roleColors` 无 default 回退 | P2 | ❌ **遗漏** |
-| 13 | `mode=fixed` 名存实亡 | **P0** | ❌ **遗漏，且初稿判为"✅ 已实现"** |
-| 14 | `swimlane` 经协议不可达 | P1 | ❌ **遗漏** |
-| 15 | 装饰元素独立夹紧致间距塌陷 | P1 | ❌ **遗漏**（Phase 8.1 遗留） |
-| 16 | IR 容器 `order` 被忽略致流程倒置 | **P0** | ❌ **遗漏** |
-| 17 | **样式静默丢失 + `lossless` 谎报** | **P0**（原判 P1，已升级） | ❌ **遗漏**（任务书 §3.5 明确要求） |
-| 18 | **Renderer 不消费 FontFamily** | **P0** | ❌ **遗漏**（三轮审查才发现） |
-| 19 | **TextBlock Color/Font 层级错** | **P0** | ❌ **遗漏**（两轮审查均未发现） |
-| 20 | **文字裁切不计入硬约束** | P1 | ❌ **遗漏**（致任务书 §5.3 不可证伪） |
-| 21 | **非法枚举静默回退并谎报已执行** | P1 | ❌ **遗漏**（审查 E-4） |
-| 22 | **`LocalRelayout` 不检查越界碰撞** | P1 | ❌ **遗漏**（本轮发现） |
-| 23 | **默认路径不写字体，混排无保障** | **P1** | ❌ **遗漏**（任务书 §5.2 明确要求） |
-| 24 | **对比度无任何校验** | P1 | ❌ **遗漏**（任务书 §5.3 明确要求） |
-| 25 | **语义角色不可往返致样式失效** | **P0** | ❌ **遗漏**（任务书 §5.4 要求样式稳定） |
+| TextBlock 字号 | ✅ | ✅ | ✅ |
+| TextBlock 粗体/斜体 | ✅ | ✅ | ✅ |
+| **TextBlock 颜色** | ✅ | ❌ null | ❌ 三色同图 |
+| **TextBlock 字体** | ✅ | ❌ null | ❌ 三字体同图 |
 
-**25 项缺陷中，初稿漏了 19 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
-也说明"读代码判断能力"不可靠，只有实测才作数。
+**这与缺陷 17 的关系：** 我在 §2.13 拿 `color:"#FF0000"` 作为"缺报告机制"的例子，
+但**没看出根因是写错层级**。缺陷 17 是"没有验证是否成功"，
+缺陷 16 是"确实没成功"——后者更根本。
+
+**修法：** `VisioTextBlockBridge` 的 `Color`/`Font` 移入 `Character/Row`，
+与 Node 保持一致。改动很小（几行），但必须验证回读。
+
+**D-4 的诊断需要两次修正，两次都不完整：**
+
+| 版本 | 判断 | 问题 |
+| --- | --- | --- |
+| 第一版 | "FaceNames 未注册" | 只说了一半 |
+| 第二版（本段原文） | "层级错了，注册与否是次要的" | **说反了**——注册同样必要 |
+
+**实测（三个变体，`validate` 均通过）：**
+
+| 变体 | font | textColor | fontSize |
+| --- | --- | --- | --- |
+| 现状 | `None` | `None` | 18 ✅ |
+| 只移入 `Character/Row` | `None` | `None` | **`None`** ❌ |
+| 移入 + 注册 `FaceNames` | `Verdana` | `#FF0000` | 18 ✅ |
+
+**只移动会让结果比现状更差**——连原本正确的 `fontSize` 也丢失。
+
+原因：`Character/Row` 的 `Font` 单元格存**字体索引**（指向 `FaceNames` 数组），
+不是名字字符串。写 `V="Verdana"` 解析失败，整个 `Character` 段失效。
+
+**结论：位置与注册都是必要条件，缺一不可，且必须在同一提交内完成。**
+
+---
+
+### 缺陷 20 【P1】文字裁切不计入硬约束，致 §5.3 验收不可证伪
+
+**且裁切不计入硬约束**（审查 E-3 指出，我已复现）：
+
+```console
+$ execute --spec '{"typography":{"baseSize":24}}' --json
+  status: succeeded
+  hard: True          ← 硬约束"通过"
+  score: 76
+  hardViolations: 0
+  issueCodes: [text.overflow-horizontal, text.overflow-vertical]
+```
+
+**12 处文字被裁切，系统判定"可交付"。**
+
+这使任务书 §5.3 的验收项"**不发生文本裁切**"**无法证伪**——
+无论裁切多少，`hardConstraintsPassed` 都是 `true`。
+
+**两个入口的判据一致**（审查 E-3 曾疑为不一致，实测排除）：
+
+```console
+$ check-layout o.vsdx
+  score=96/100
+  text.overflow-horizontal (1)
+    [warning] ...                    ← 是 warning，不是 error
+```
+
+**`execute` 与 `check-layout` 都一致地把它当 warning。** 问题不在两者分歧，
+而在于**两者共同把"文字被裁切"判为可交付**。
+
+**修法（T6b）：** 文字裁切应计入硬约束。
+任务书 §5.3 把它列在"验收要求"里，与"文字可读""对比度合理"并列，
+而这些是不可让步的交付底线，不是风格偏好。
+
+---
+
+### 缺陷 21 【P1】非法枚举值被静默替换为默认值，且报告"已执行"
+
+**实测：**
+
+```console
+$ --spec '{"containerLayouts":{"back":"kaboom"}}'
+  status: succeeded
+  applied: ['container back relaid as kaboom']    ← 声称按 kaboom 做了
+  unmet: []
+```
+
+**`kaboom` 不是任何已知策略。** `DiagramLayoutEngine.Parse()` 的 `_ =>` 分支
+回退到 `Layered`，然后 `applied` 把原始字符串原样回显。
+
+**同类问题（审查 E-4 列出，其中 3 项我已逐一实测）：**
+
+| 输入 | 实际行为 | 报告 |
+| --- | --- | --- |
+| `containerLayouts: "kaboom"` | 回退 Layered | `applied: relaid as kaboom` ❌ |
+| `layout: "kaboom"` | 回退 Layered | `applied: layout=Layered`（不报错） |
+| `anchor.mode: "relative"` | 等同 fixed | 不报告 |
+| `FromPort`/`ToPort` | **实测回读 `None`**（写入后丢失） | 不报告 |
+| `ConstraintSpec.Target` | 只回显 | 不报告作用域 |
+| `anchor.mode: "relative"` | **实测与 `fixed` 完全相同** | 不报告 |
+
+**共同模式：枚举解析用"默认回退"而非"拒绝"。**
+
+回退本身不是错——错在**回退后不说明**。调用方传了 `kaboom`，
+系统应当说"未知策略，已回退为 Layered"，而不是声称执行了 `kaboom`。
+
+**修法：** 所有枚举解析统一为 `TryParse` 语义——失败时记录原值进
+`unmetConstraints`（`input.unknown-enum`），再执行回退。
+
+---
+
+### 缺陷 22 【P1】`LocalRelayout` 只验证"没动别人"，不验证"没撞别人"
+
+**实测**（`overview.ir.json` + `containerLayouts:{"back":"grid"}`）：
+
+```console
+$ execute --json
+  status: partial
+  hard: False
+  score: 0
+  codes: [edge.crossing, node.overlap, page.margins, row.misaligned, spacing.too-tight]
+```
+
+**`node.overlap` 硬失败。** 而 `appliedDesignNotes` 仍写
+`container back relaid as grid`——报告"重排成功"。
+
+**根因（`LocalRelayout.cs`）：**
+
+```csharp
+// 它验证的是"容器外节点没被移动"
+foreach (var (id, before) in untouched) { ... IsolationBroken = true ... }
+// 但从不检查"重排后的成员是否与那些节点重叠"
+// grep -c "Overlaps|overlap" LocalRelayout.cs  →  0
+```
+
+**这是一个方向性遗漏：**
+
+| 检查项 | 现状 |
+| --- | --- |
+| 容器外节点是否被移动 | ✅ 有（`IsolationBroken`） |
+| 重排后是否与容器外节点重叠 | ❌ **无** |
+| 重排后容器尺寸是否仍容纳成员 | ⚠️ 仅扩大，不重算位置 |
+
+**后果：** 容器内重排把成员推出原范围 → 撞上邻区 → 硬失败，
+但 `result.Ok == true`，`applied` 报告成功。
+
+**这与缺陷 5（容器色）同类但更隐蔽**：它不改变外观，只让"局部重排"这个
+安全操作变成可能破坏全局的操作。
+
+**修法（T5b）：** `LocalRelayout` 重排后应对**全部页面节点**做碰撞检查
+（不只是 `untouched` 的位移检查），发现重叠则回退该次重排并报告。
+
+---
+
+### 缺陷 23 【P1】默认路径完全不写字体，中英文混排无从谈起
+
+**任务书 §5.2 明确要求覆盖"中英文混排"**，但审计与计划此前**完全未提及**。
+
+**实测（同一 IR 含纯中文 / 中英混排 / 纯英文三种节点，不传 spec）：**
+
+```console
+$ execute --ir mixed.ir.json --output o.vsdx
+  quality: hard=True score=97          ← 一切正常
+
+$ 解包检查
+  FaceNames  : []                      ← 没有注册任何字体
+  Font cells : []                      ← 也没有给任何 shape 设字体
+```
+
+**默认路径下一个字体都没写。** Visio 只能回退到文档默认字体。
+
+对照：显式传 `typography.fontFamily` 才写入：
+
+```
+with fontFamily spec -> FaceNames: ['Microsoft YaHei']
+                        Font cells: ['Microsoft YaHei', ...]
+```
+
+**这解释了为什么缺陷 18（渲染器不读字体）长期未被发现**——
+大多数图根本没有字体可读。修复缺陷 18 的前提是先修本项，
+否则渲染器读到的永远是"未设置"。
+
+**两个后果：**
+
+1. **中英文混排无保障**：中文与拉丁共用回退字体，字重与行高可能不匹配，
+   且不同机器回退结果不同（不可复现）
+2. **"字体是视觉样式的一部分"这一前提不成立**：除非调用方显式指定，
+   否则引擎不控制字体
+
+**修法（T1c）：**
+
+| 项 | 做法 |
+| --- | --- |
+| 默认字体 | `DesignSpec` 未指定时，从 `TypeScale` 的同源默认值取一个 CJK-capable 字族 |
+| 混排处理 | 中英混排节点允许 `latinFont`/`cjkFont` 分开指定；未指定时用同一字族的合理搭配 |
+| 报告 | 无法解析字体时进 `unmet`（`style.font-unresolved`） |
+| 验收 | 中文/混排/英文三类节点各产出 PNG，与"全中文"版本对比，混排不得出现方框或字重跳变 |
+
+---
+
+### 缺陷 24 【P1】对比度能力已实现，但无任何校验
+
+**任务书 §5.3 要求"颜色与文字对比合理"，但审计与计划此前均未覆盖。**
+
+**现状：能力有，校验无。**
+
+`ColorUtil.ReadableTextColor` 实现正确（按 WCAG 对比度择优）：
+
+```csharp
+public static string ReadableTextColor(string background) =>
+    Contrast(background, "#FFFFFF") >= Contrast(background, "#111111") ? "#FFFFFF" : "#111111";
+```
+
+且已在三处调用（`DesignSpec` roleColors、`ShapeStyler`、`Writer`）。
+
+**但 `LayoutAnalyzer` 中没有任何对比度检查：**
+
+```console
+$ grep -c "contrast|Contrast|luminance" src/Vsdx.Engine/LayoutAnalyzer.cs
+0
+```
+
+**实测：**
+
+```console
+$ --spec '{"roleColors":{"service":"#FFFF99"}}'
+  n1: fill=#FFFF99  textColor=#111111    ← 对比度约 16:1
+  quality: hard=True  score=95           ← 无任何提示
+```
+
+`#FFFF99` 是浅黄，配近黑文字对比度过高（刺眼），而系统"正确地"选了黑字
+——按算法没错，但**没有判断结果是否落在合理区间**。
+
+**两类失败都没有被发现：**
+
+| 情形 | 现状 |
+| --- | --- |
+| 对比度过低（浅底 + 浅字，读不清） | 不报告（`ReadableTextColor` 会避免，但调用方显式设 `textColor` 时可绕过） |
+| 对比度过高（深底 + 纯黑或浅底 + 近黑） | **完全不检测** |
+
+**修法（T1d）：**
+
+1. `LayoutAnalyzer` 新增 `text.low-contrast` / `text.harsh-contrast` 检查
+   （WCAG 阈值：正文 ≥ 4.5:1，且 < 21:1 上限避免刺眼）
+2. 显式 `textColor` 覆盖时同样校验——绕过自动选择的路径必须被检查
+3. 无法解析颜色时进 `unmet`（`style.color-unparsed`）
+
+**验收：** 显式设 `#FFFF99` 底 + `#FFFF00` 字（对比度 1.05:1）→
+`text.low-contrast` 必须出现；设 `#000000` 底 + `#111111` 字 → 同样必须报告。
+
+---
+
+### 缺陷 25 【P0】语义角色不可往返 → 角色样式第二次保存即失效
+
+**任务书 §5.4 要求"再次保存后样式仍然稳定"。实测不稳定。**
+
+**实测**（同一 `arch.ir.json`，`roleColors: {service:"#FF0000", database:"#00FF00"}`）：
+
+```
+第一次 execute → export-model:
+  auth  role=None  fill=#FF0000    ← 颜色在
+  order role=None  fill=#FF0000
+  web   role=None  fill=#FFFFFF    ← client 角色未定义，正常
+
+  ⚠️ 但 role 已经是 None —— IR 里声明的是 client/gateway/service
+```
+
+`Node.Type` **在回读时从未被恢复**：
+
+```csharp
+// ReadNode 只设这些
+Id = StableIdOf(shape) ?? shape.Id,
+Shape = MasterCatalog.ToModelKind(shape.MasterNameU),
+VisioShapeId = shape.Id,
+// 没有 Type = ...
+```
+
+**后果链：**
+
+1. 首次 `execute`：IR 的 `role` → `Node.Type` → `roleColors` 命中 → 上色 ✅
+2. 回读：`Node.Type` 丢失 → `role=None`
+3. 再次应用 spec：`roleColors` 找不到角色 → **不上色**，节点回退默认白色
+4. 结果：**同一张图，第二次处理比第一次更差**
+
+**这直接推翻"样式可继续修改"这一前提**：任务书要求交付"可以继续修改的 VSDX"，
+但修改一次之后角色样式就没了。
+
+**且它是静默的**：`status=succeeded`、`hard=True`，没有任何提示。
+
+**修法（T2g）：**
+
+1. `ReadNode` 从已有的 `User.VsdxModelId` 旁再存一个 `User.VsdxRole`，
+   或复用 Shape Data 的 `role` 行
+2. 读取时恢复 `Node.Type`
+3. 验收：`execute → export-model → update → export-model`，
+   四步后每个节点的 `type` 与 `fill` 都必须与第一步一致
+
+**这条也解释了缺陷 2（Palette 不执行）为何长期未被发现**——
+角色色只在首次生成时可见，任何回读流程都会掩盖它。
+
+---
+
