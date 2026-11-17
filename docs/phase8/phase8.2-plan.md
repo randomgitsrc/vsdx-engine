@@ -276,6 +276,8 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `src/Vsdx.Engine/TypeScaleDefaults.cs` | **新增**（放 `Vsdx.Model`）：字号档位唯一权威（M11） | 小 |
 | `src/Vsdx.Adapters/VisioBackgroundBridge.cs` | **新增**：写 `pages.xml` 的 `PageSheet`（T10） | 小 |
 | `src/Vsdx.Protocol/DiagramIrConverter.cs` | **需改动**：消费 `IrContainer.Order`（T1b） | 小 |
+| `src/Vsdx.Renderer/FontResolver.cs` | **需改动**：读 VSDX 的 `FontFamily` 而非仅推断 CJK（T2d，缺陷 18） | **中** |
+| `src/Vsdx.Protocol/JsonGate.cs` | **新增**：闸门 0/1/2/3 的统一实现（Schema 校验 + 未知成员 + 枚举白名单） | 中 |
 | `src/Vsdx.Adapters/OfficeImoDocumentReader.cs` | **读回页面背景** + **读回 Edge 标签字体 / TextBlock 字体**（M4） | **中** |
 | `schemas/phase7/design-spec.schema.json` | 枚举 4 个 palette 名 | 低 |
 | `skill/SKILL.md` | 新增 palette 与样式优先级说明 | 低 |
