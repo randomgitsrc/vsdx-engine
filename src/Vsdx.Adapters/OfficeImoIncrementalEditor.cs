@@ -31,6 +31,10 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
         var baseline = reader.Read(sourceVsdxPath);
         compat.Merge(baseline.Compatibility);
 
+        // P0: remember which shapes carry no geometry, so the sections the backend synthesises
+        // during Save can be removed again. Must happen before Load.
+        var ungeometried = VisioGeometryPreserver.SnapshotUngeometriedShapes(sourceVsdxPath);
+
         var doc = VisioDocument.Load(sourceVsdxPath);
 
         var changes = new List<ModelChange>();
@@ -278,6 +282,15 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
 
         if (options.ValidateAfterSave) doc.RequestRecalcOnOpen();
         doc.Save(outputVsdxPath);
+
+        // P0: the backend synthesises a rectangle for any shape that had no geometry. Strip those
+        // so an unmodified shape keeps whatever its master (or its absence) says it looks like.
+        VisioGeometryPreserver.RestoreAfterSave(outputVsdxPath, ungeometried, compat);
+
+        // Z-order is document order in Visio; restore the author's stacking after the writer has
+        // created shapes in its own dependency-satisfying order.
+        VisioZOrderBridge.Apply(model, outputVsdxPath, compat);
+
         VisioMetadataBridge.Write(model, outputVsdxPath);
 
         var result = new UpdateResult
