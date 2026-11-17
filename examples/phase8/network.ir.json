@@ -1,0 +1,53 @@
+{
+  "irVersion": "1.0",
+  "id": "phase82-network",
+  "title": "企业网络拓扑",
+  "kind": "network",
+  "containers": [
+    { "id": "edge", "label": "边缘区 Edge",     "kind": "layer", "order": 2 },
+    { "id": "core", "label": "核心区 Core",     "kind": "layer", "order": 1 },
+    { "id": "sec",  "label": "安全域 Security", "kind": "layer", "order": 0 }
+  ],
+  "nodes": [
+    { "id": "inet",  "label": "互联网\nInternet",   "role": "external",  "containerId": "edge" },
+    { "id": "fw",    "label": "边界防火墙\nFirewall", "role": "gateway",  "containerId": "edge" },
+    { "id": "waf",   "label": "WAF",                 "role": "gateway",   "containerId": "edge" },
+    { "id": "lb",    "label": "负载均衡\nLB",        "role": "gateway",   "containerId": "edge" },
+    { "id": "dmz",   "label": "DMZ 交换机",          "role": "service",   "containerId": "core" },
+    { "id": "core1", "label": "核心交换机",          "role": "service",   "containerId": "core" },
+    { "id": "appsw", "label": "应用区交换机",        "role": "service",   "containerId": "core" },
+    { "id": "app1",  "label": "应用服务器 A\n10.20.1.11", "role": "service", "containerId": "core" },
+    { "id": "app2",  "label": "应用服务器 B\n10.20.1.12", "role": "service", "containerId": "core" },
+    { "id": "db",    "label": "数据库集群\n10.20.2.0/24", "role": "database", "containerId": "sec" },
+    { "id": "ids",   "label": "入侵检测\nIDS",       "role": "monitor",   "containerId": "sec" },
+    { "id": "bak",   "label": "备份存储\nOffsite",   "role": "storage",   "containerId": "sec" }
+  ],
+  "edges": [
+    { "id": "n1",  "from": "inet",  "to": "fw",    "relation": "flows", "label": "WAN" },
+    { "id": "n2",  "from": "fw",    "to": "waf",   "relation": "flows", "label": "DMZ" },
+    { "id": "n3",  "from": "waf",   "to": "lb",    "relation": "flows", "label": "清洗后" },
+    { "id": "n4",  "from": "lb",    "to": "appsw", "relation": "flows", "label": "10G" },
+    { "id": "n5",  "from": "fw",    "to": "core1", "relation": "flows", "label": "trunk" },
+    { "id": "n6",  "from": "core1", "to": "dmz",   "relation": "flows", "label": "VLAN 10" },
+    { "id": "n7",  "from": "core1", "to": "appsw", "relation": "flows", "label": "VLAN 20" },
+    { "id": "n8",  "from": "appsw", "to": "db",    "relation": "flows", "label": "VLAN 30" },
+    { "id": "n9",  "from": "dmz",   "to": "app1",  "relation": "flows", "label": "VLAN 40" },
+    { "id": "n10", "from": "core1", "to": "app2",  "relation": "flows", "label": "VLAN 41" },
+    { "id": "n11", "from": "appsw", "to": "ids",   "relation": "depends", "label": "镜像" },
+    { "id": "n12", "from": "ids",   "to": "bak",   "relation": "writes", "label": "syslog" }
+  ],
+  "textBlocks": [
+    { "id": "title", "text": "企业网络拓扑", "role": "title",
+      "box": { "x": 7.0, "y": 11.0, "width": 10.0, "height": 0.6 },
+      "align": "center", "bold": true },
+    { "id": "subtitle", "text": "Enterprise Network Topology", "role": "subtitle",
+      "box": { "x": 7.0, "y": 10.4, "width": 10.0, "height": 0.4 },
+      "align": "center" },
+    { "id": "legend", "text": "深红 = 边界   蓝 = 核心   紫 = 安全", "role": "legend",
+      "box": { "x": 7.0, "y": 0.9, "width": 10.0, "height": 0.35 },
+      "align": "center" },
+    { "id": "note", "text": "注：IDS 以镜像端口旁路部署，不串联在业务链路上",
+      "role": "note", "box": { "x": 3.5, "y": 0.4, "width": 7.0, "height": 0.3 },
+      "align": "left", "italic": true }
+  ]
+}

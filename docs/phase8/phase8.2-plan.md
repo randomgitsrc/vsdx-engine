@@ -418,6 +418,28 @@ Reader 无法通过 `shape.TextStyle.FontFamily` 取回。
 已建立 `phase8.2-regression-baseline.md` 按"命令 / 退出码 / 结果"三列记录，
 并要求每个子任务完成后重跑对比。
 
+#### 逐项对应任务书 §5.6 的人工视觉检查
+
+| §5.6 要求 | IR | 状态 |
+| --- | --- | --- |
+| 分层架构图 | `arch.ir.json` | ✅ |
+| 流程图 | `flow.ir.json` | ✅ |
+| **网络拓扑图** | `network.ir.json` | ✅ **本轮新建**（此前缺失） |
+| 综合图（标题+容器+标签+注释） | `overview.ir.json` | ✅ |
+| **不能以分数代替视觉判断** | `phase8.2-visual-review.md` | ✅ 逐图记录观感 |
+
+**网络拓扑 IR 此前不存在**——四类里只有三份，"网络拓扑"从未被实际生成过。
+
+#### 逐项对应任务书 §5.7 的 L4 边界
+
+| 层级 | 要求 | 状态 |
+| --- | --- | --- |
+| L1 | VSDX 包结构 | ✅ `validate` exit 0 |
+| L2 | Engine 读回 | ✅ `export-model` exit 0 |
+| L3 | Renderer 渲染 | ✅ `render` exit 0 |
+| L4 | Visio 原生打开/编辑/保存 | ⬜ **未验证**，不以 WPS 替代，不声称通过 |
+| — | 不以 L4 作为开发阻塞条件 | ✅ 本阶段不阻塞 |
+
 | 测试 | 断言 |
 | --- | --- |
 | `TypographyReachesAllObjectKinds` | Node/Group/Edge/TextBlock 四种都有 font+size |
