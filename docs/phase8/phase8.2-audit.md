@@ -446,15 +446,16 @@ $ --spec '{"containerLayouts":{"back":"kaboom"}}'
 **`kaboom` 不是任何已知策略。** `DiagramLayoutEngine.Parse()` 的 `_ =>` 分支
 回退到 `Layered`，然后 `applied` 把原始字符串原样回显。
 
-**同类问题（审查 E-4 列出，我已验证 `containerLayouts` 一项）：**
+**同类问题（审查 E-4 列出，其中 3 项我已逐一实测）：**
 
 | 输入 | 实际行为 | 报告 |
 | --- | --- | --- |
 | `containerLayouts: "kaboom"` | 回退 Layered | `applied: relaid as kaboom` ❌ |
 | `layout: "kaboom"` | 回退 Layered | `applied: layout=Layered`（不报错） |
 | `anchor.mode: "relative"` | 等同 fixed | 不报告 |
-| `FromPort`/`ToPort` | 部分使用，回读 null | 不报告 |
+| `FromPort`/`ToPort` | **实测回读 `None`**（写入后丢失） | 不报告 |
 | `ConstraintSpec.Target` | 只回显 | 不报告作用域 |
+| `anchor.mode: "relative"` | **实测与 `fixed` 完全相同** | 不报告 |
 
 **共同模式：枚举解析用"默认回退"而非"拒绝"。**
 

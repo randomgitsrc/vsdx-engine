@@ -458,7 +458,46 @@ text: '企业分析平台'            ✅
 | T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
 | T2c | 样式可渲染性报告（任务书 §3.5） | **四个死字段**（`opacity`/`shadow`/`radius`/`lineJoin`）要么执行、要么进 `unmet`；**有丢失时 `compatibility` 不得为 `lossless`** |
 | T2d | Renderer 消费 FontFamily | 换字体 → PNG **必须不同**（当前 MD5 相同）；找不到字体时降级并进 `unmet` |
+
+**T2d 的实现路径已查明：**
+
+```csharp
+// OfficeImoVsdxRenderer.cs:37 —— 关键行
+var fontFile = resolver.Resolve(requiresCjk, request.FontFile);
+//                                        ^^^^^^^^^^^^^^^^ 只来自请求，从不来自 VSDX
+```
+
+`FontResolver.Resolve(bool requiresCjk, string? preferredFontFile)` **已经支持**
+指定字体文件；缺的是**上游把 VSDX 里的 FontFamily 传进来**。
+
+因此 T2d 分三步：
+
+| 步 | 改动 |
+| --- | --- |
+| 1 | 打开 VSDX 后收集实际用到的 `FaceName`（`document.xml` 已有） |
+| 2 | 把 `FaceName` 映射到系统字体文件（新 `FontResolver.ResolveByFamilyName`） |
+| 3 | 传进 `Resolve` 的 `preferredFontFile`；找不到时**降级并进 `unmet`** |
+
+**这条链是通的**，不存在"渲染器架构不支持"的障碍——纯属参数没接上。
+这与缺陷 18 的性质一致（同缺陷 15/19：管线都在，最后一跳断了）。
 | T2e | TextBlock 字色/字体层级 | `color:#FF0000` 与 `font:Verdana` 回读非 null；三色三字体产出 PNG 互不相同 |
+
+**T2e 的修法只有两行移动**（已核实代码位置）：
+
+```csharp
+// VisioTextBlockBridge.BuildShape 现状
+if (style?.TextColor is not null) AddCell(shape, "Color", style.TextColor);  // ❌ shape 级
+if (style?.Font      is not null) AddCell(shape, "Font",  style.Font);       // ❌ shape 级
+
+var character = new XElement(VisioNs + "Section", new XAttribute("N", "Character"));
+character.Add(new XElement(VisioNs + "Row", new XAttribute("IX", "0"), ...));  // ← 段已建好
+```
+
+**把前两行改为加入 `character` 的 `Row` 内部即可**，与 Node 的写法一致
+（Node 的 `<Row><Cell N="Font" .../></Row>` 已验证可回读）。
+
+**不是架构问题，是位置问题**——这也解释了为什么三轮审查才找到：
+代码"看起来"在设置字体，字段名也对，只有对照 Node 的 XML 才看出层级不同。
 | T6b | 文字裁切计入硬约束 | `baseSize=24` 时 `hardConstraintsPassed=false`、score=0 |
 | T2f | 枚举 `TryParse` + 未识别值报告 | `containerLayouts:"kaboom"` → `unmet` 含 `input.unknown-enum`；`applied` 不得声称执行了 `kaboom` |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
