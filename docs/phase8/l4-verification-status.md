@@ -9,6 +9,26 @@
 
 负责人要求 L4 提前安排。我先确认环境是否具备条件，而不是直接假设不具备。
 
+### 1.0 C: 盘是只读挂载（第二层障碍）
+
+```console
+$ mount | grep ' /mnt/c '
+C:\ on /mnt/c type 9p (ro,nosuid,nodev,noatime,aname=drvfs;path=C:\;...)
+```
+
+**`ro` = 只读。** 即使装上 Visio，也无法从 WSL 往 Windows 侧写待测文件。
+
+实测：
+
+```console
+$ mkdir -p /mnt/c/temp/l4
+$ touch /mnt/c/temp/l4/probe.txt
+touch: 只读文件系统
+```
+
+Windows 侧**能读到**本仓库（`\\wsl.localhost\Ubuntu-24.04\...` 有效），
+所以不是完全阻断——但需要先解决"从 WSL 交付文件给 Windows Visio"这一步。
+
 ### 1.1 WSL 互操作可用
 
 ```console
@@ -52,8 +72,9 @@ WPS Office 2023 增强版
 
 | 项 | 状态 |
 | --- | --- |
-| 环境探测 | ✅ 已完成（WSL interop 可用，Visio 缺失） |
-| 验证执行 | ⬜ **阻塞：需要安装 Microsoft Visio** |
+| 环境探测 | ✅ 已完成（WSL interop 可用；C: 只读；Visio 缺失） |
+| 验证脚本 | ✅ 已写好（`tools/l4/verify-visio.ps1`，10 项检查） |
+| 验证执行 | ⬜ **阻塞：需安装 Visio + 一个可写的 Windows 侧位置** |
 | 替代方案 | ❌ 不接受（WPS 属 L3） |
 
 ---
@@ -93,9 +114,32 @@ $app.Quit()
 
 ---
 
+## 4.3 已备好执行工具
+
+`tools/l4/verify-visio.ps1` —— 一次性完成 10 项检查的 PowerShell + COM 脚本：
+
+| # | 检查 |
+| --- | --- |
+| 1–3 | 能打开、页面数、形状数 |
+| 4–6 | 文本块存在、**字号层级 ≥ 2 种**、文本非空 |
+| 7 | 自定义几何（统计 > 5 行的形状） |
+| 8 | Z-order 可按文档顺序枚举 |
+| 9 | 容器存在 |
+| 10 | 保存后重开形状数不变 |
+
+输出 JSON（含 `humanReviewRequired` 四项）与退出码。
+
+**该脚本尚未执行**——被上述两个环境限制阻断，不是能力问题。
+
+---
+
 ## 5. 需要负责人决策
 
-**是否可在本机安装 Microsoft Visio？**
+**两个都需要解决：**
+
+1. 是否可安装 Microsoft Visio？
+2. `/mnt/c` 当前只读——是否可改为可写挂载（`mount -o remount,rw` 或 wsl.conf 配置），
+   或提供一个从 WSL 到 Windows 的文件交付方式？
 
 | 选项 | 影响 |
 | --- | --- |
