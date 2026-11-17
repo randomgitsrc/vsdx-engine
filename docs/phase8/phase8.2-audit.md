@@ -143,8 +143,21 @@ foreach (var node in page.Nodes)
 }
 ```
 
-**实测：** `baseSize=14` 时，三个不同角色的节点（service / database / gateway）
-全部得到 `fontSize=14`。原本由 `TypeScale.ForCanvas` 按角色推导的层级**被覆盖成平的**。
+**实测（两家对照）：**
+
+```
+无 spec       : node sizes = [('a', None), ('b', None), ('c', None)]
+baseSize=14   : node sizes = [('a', 14),   ('b', 14),   ('c', 14)  ]
+```
+
+**注意第一行**：无 spec 时 `fontSize` 是 `None`——`TypeScale` 并不给节点写字号字段，
+它只用来**反算节点尺寸**（字号影响文字→影响框体大小）。因此"层级"体现在几何，不在样式字段。
+
+**而 `baseSize` 一旦给值，就把三个角色全部设成同一个 14**，
+此时字号字段有了值，但**层级消失了**——所有节点同样大小。
+
+所以准确说法是：`baseSize` 不是"覆盖了现有层级"，而是**引入了本不存在的平坦字号**，
+且跳过 TypeScale 的推导链路。两者机制不同，无法共存。
 
 更矛盾的是：`DiagramSizer` 里**已经**有按画布与密度推导的完整 TypeScale
 （`TypeScale.ForCanvas(width, height, nodeCount)`，6 个档位），

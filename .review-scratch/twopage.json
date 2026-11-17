@@ -1,0 +1,232 @@
+{
+  "id": "twopage",
+  "name": "TwoPage",
+  "pageSize": {
+    "width": 5.25,
+    "height": 4.85,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Page One",
+      "nameU": "Page One",
+      "visioId": 0,
+      "size": {
+        "width": 5.25,
+        "height": 4.85,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "n1",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "n1",
+          "bounds": {
+            "x": 1.55,
+            "y": 3.425,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Courier New",
+            "fontSize": 14,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "n2",
+          "name": "B",
+          "text": "B",
+          "shape": "Rectangle",
+          "visioShapeId": "n2",
+          "bounds": {
+            "x": 1.55,
+            "y": 1,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Courier New",
+            "fontSize": 14,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "n1",
+          "to": "n2",
+          "kind": "straight",
+          "label": "go",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e1"
+        }
+      ],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "n1",
+        "n2",
+        "4",
+        "e1"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "t1",
+          "name": "Title One",
+          "text": "Title One",
+          "role": "caption",
+          "visioShapeId": "4",
+          "bounds": {
+            "x": 2.7,
+            "y": 4.05,
+            "w": 4,
+            "h": 0.5
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 20.000016,
+            "bold": false,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    },
+    {
+      "id": "page-1",
+      "name": "Page Two",
+      "nameU": "Page Two",
+      "visioId": 1,
+      "size": {
+        "width": 4,
+        "height": 4.425,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "n3",
+          "name": "C",
+          "text": "C",
+          "shape": "Rectangle",
+          "visioShapeId": "n3",
+          "bounds": {
+            "x": 1.55,
+            "y": 3.425,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Courier New",
+            "fontSize": 14,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "n4",
+          "name": "D",
+          "text": "D",
+          "shape": "Rectangle",
+          "visioShapeId": "n4",
+          "bounds": {
+            "x": 1.55,
+            "y": 1,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Courier New",
+            "fontSize": 14,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e2",
+          "from": "n3",
+          "to": "n4",
+          "kind": "straight",
+          "label": "go2",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e2"
+        }
+      ],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "n3",
+        "n4",
+        "e2"
+      ],
+      "paths": [],
+      "textBlocks": []
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-17T12:55:13.5428597+00:00",
+    "modified": "2026-11-17T12:55:13.5975784+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-scratch/twopage.vsdx",
+    "sourceHash": "8b981bd6d762052eae597ddc5414e639b26f005a0af985742182d8d4a302d363",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-17T12:55:13.5992732+00:00",
+        "action": "create",
+        "target": "twopage.vsdx",
+        "detail": "pages=2, nodes=4, edges=2",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}
