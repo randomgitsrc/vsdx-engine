@@ -1,0 +1,15 @@
+{
+  "irVersion": "1.0",
+  "id": "dirdemo",
+  "title": "DirDemo",
+  "kind": "microservices",
+  "nodes": [
+    {"id": "n1", "label": "One", "role": "service"},
+    {"id": "n2", "label": "Two", "role": "service"},
+    {"id": "n3", "label": "Three", "role": "service"}
+  ],
+  "edges": [
+    {"id": "x1", "from": "n1", "to": "n2", "relation": "calls"},
+    {"id": "x2", "from": "n2", "to": "n3", "relation": "calls"}
+  ]
+}

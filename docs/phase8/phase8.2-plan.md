@@ -291,3 +291,35 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 多区域协调、通道预留、完整 check-fidelity、六族终验、Word OLE、GUI。
 
 **L4 不作为阻塞条件**（任务 §5.7）；L1/L2/L3 必须持续通过。
+
+---
+
+## 11. T0 的实现细节：复用已有 Transpose，但先补两个遗漏
+
+`CandidateComparison.cs:141` 已有 `Transpose(Diagram)` 私有实现，逻辑正确
+（交换 X/Y、交换 W/H、清空 waypoints、交换页面尺寸）。**应提取复用，不要重写。**
+
+**但它有两个遗漏，直接复用会出错：**
+
+```csharp
+private static void Transpose(Diagram diagram)
+{
+    foreach (var page in diagram.Pages)
+    {
+        foreach (var node in page.Nodes) { ... }                // ✅
+        foreach (var group in page.Groups...) { ... }           // ✅
+        foreach (var edge in page.Edges) edge.Waypoints = null; // ✅
+        if (page.Size is not null) (W,H)=(H,W);                 // ✅
+        // ❌ 没有 page.TextBlocks —— 标题留在原坐标
+        // ❌ 没有 page.Paths      —— 分隔线宽高不换
+    }
+}
+```
+
+`TextBlock` 与 `FreePath` 是 Phase 8.1 新增的，而 `Transpose` 写于它们之前。
+
+**这是一个"复用旧代码"的典型陷阱**：函数看着通用，对新增对象类型却不完整。
+修 T0 须先补这两处，并加断言：转置后标题与路径也要跟着转。
+
+**提取位置：** 移到 `DiagramLayout` 作为 `Transpose(Page)`，
+`CandidateComparison` 改为调用，避免两份实现漂移。

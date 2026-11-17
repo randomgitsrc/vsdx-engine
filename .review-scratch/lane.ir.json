@@ -1,0 +1,16 @@
+{
+  "irVersion": "1.0",
+  "id": "lane-demo",
+  "title": "Lane Demo",
+  "kind": "workflow",
+  "containers": [
+    {"id": "L1", "label": "Lane 1", "kind": "lane"},
+    {"id": "L2", "label": "Lane 2", "kind": "lane", "order": 2}
+  ],
+  "nodes": [
+    {"id": "a", "label": "A", "role": "service", "containerId": "L1"},
+    {"id": "b", "label": "B", "role": "service", "containerId": "L1"},
+    {"id": "c", "label": "C", "role": "service", "containerId": "L2"}
+  ],
+  "edges": [{"id": "e1", "from": "a", "to": "c", "relation": "flows"}]
+}
