@@ -197,11 +197,45 @@ public static class IrValidator
             });
         }
 
-        if (ir.Nodes.Count == 0)
+        // Validate each page independently; the shorthand form is one implicit page.
+        var pages = ir.Pages.Count > 0
+            ? ir.Pages.Select(p => (p.Id, p.Nodes, p.Edges, p.Containers)).ToList()
+            : new List<(string, List<IrNode>, List<IrEdge>, List<IrContainer>)>
+            {
+                (ir.Id, ir.Nodes, ir.Edges, ir.Containers)
+            };
+
+        var pageIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var (pageId, _, _, _) in pages)
+        {
+            if (string.IsNullOrWhiteSpace(pageId)) continue;
+            if (!pageIds.Add(pageId))
+            {
+                errors.Add(new ExecutionError
+                {
+                    Code = "ir.page-id-duplicate",
+                    Message = $"页面 id 重复：'{pageId}'",
+                    Target = pageId
+                });
+            }
+        }
+
+        if (pages.Sum(p => p.Item2.Count) == 0)
             errors.Add(new ExecutionError { Code = "ir.empty", Message = "IR 不含任何节点" });
 
+        foreach (var (pageId, pageNodes, pageEdges, pageContainers) in pages)
+            ValidatePage(pageId, pageNodes, pageEdges, pageContainers, errors);
+
+        return errors;
+    }
+
+    /// <summary>Validates one page's references and hierarchy.</summary>
+    private static void ValidatePage(
+        string pageId, List<IrNode> irNodes, List<IrEdge> irEdges,
+        List<IrContainer> irContainers, List<ExecutionError> errors)
+    {
         var nodeIds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var node in ir.Nodes)
+        foreach (var node in irNodes)
         {
             if (string.IsNullOrWhiteSpace(node.Id))
             {
@@ -220,7 +254,7 @@ public static class IrValidator
         }
 
         var containerIds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var container in ir.Containers)
+        foreach (var container in irContainers)
         {
             if (string.IsNullOrWhiteSpace(container.Id))
             {
@@ -238,7 +272,7 @@ public static class IrValidator
             }
         }
 
-        foreach (var node in ir.Nodes.Where(n => n.ContainerId is not null))
+        foreach (var node in irNodes.Where(n => n.ContainerId is not null))
         {
             if (!containerIds.Contains(node.ContainerId!))
             {
@@ -251,7 +285,7 @@ public static class IrValidator
             }
         }
 
-        foreach (var container in ir.Containers.Where(c => c.ParentId is not null))
+        foreach (var container in irContainers.Where(c => c.ParentId is not null))
         {
             if (!containerIds.Contains(container.ParentId!))
             {
@@ -273,7 +307,7 @@ public static class IrValidator
             }
         }
 
-        foreach (var edge in ir.Edges)
+        foreach (var edge in irEdges)
         {
             if (string.IsNullOrWhiteSpace(edge.Id))
                 errors.Add(new ExecutionError { Code = "ir.edge-id", Message = "存在缺少 id 的连接" });
@@ -299,7 +333,7 @@ public static class IrValidator
         }
 
         // Cycles in the container hierarchy would make nesting unresolvable.
-        foreach (var container in ir.Containers)
+        foreach (var container in irContainers)
         {
             var seen = new HashSet<string>(StringComparer.Ordinal) { container.Id };
             var cursor = container.ParentId;
@@ -315,10 +349,8 @@ public static class IrValidator
                     });
                     break;
                 }
-                cursor = ir.Containers.FirstOrDefault(c => c.Id == cursor)?.ParentId;
+                cursor = irContainers.FirstOrDefault(c => c.Id == cursor)?.ParentId;
             }
         }
-
-        return errors;
     }
 }
