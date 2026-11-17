@@ -1,0 +1,175 @@
+{
+  "id": "u_inches",
+  "name": "Demo",
+  "pageSize": {
+    "width": 10,
+    "height": 8,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Demo",
+      "nameU": "Demo",
+      "visioId": 0,
+      "size": {
+        "width": 10,
+        "height": 8,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "grp",
+          "name": "Band A",
+          "nameU": "Container",
+          "members": [
+            "a"
+          ],
+          "visioShapeId": "grp",
+          "bounds": {
+            "x": 1.85,
+            "y": 2.68,
+            "w": 2.6,
+            "h": 1.96
+          },
+          "style": {
+            "fill": "#EAF3FB",
+            "fillPattern": "1",
+            "stroke": "#9DC3E6",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "Service A",
+          "text": "Service A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 1.85,
+            "y": 2.45,
+            "w": 2,
+            "h": 0.9
+          },
+          "groupId": "grp",
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "b",
+          "name": "Database B",
+          "text": "Database B",
+          "shape": "Process",
+          "visioShapeId": "b",
+          "bounds": {
+            "x": 1.85,
+            "y": 4.875,
+            "w": 2,
+            "h": 0.9
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "a",
+          "to": "b",
+          "kind": "straight",
+          "label": "reads",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e1"
+        }
+      ],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "b",
+        "5",
+        "grp",
+        "e1"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "title",
+          "name": "System Overview",
+          "text": "System Overview",
+          "role": "title",
+          "visioShapeId": "5",
+          "bounds": {
+            "x": 4,
+            "y": 7.4,
+            "w": 4,
+            "h": 0.6
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 20.000016,
+            "bold": false,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-17T12:54:11.5419258+00:00",
+    "modified": "2026-11-17T12:54:11.5859022+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-scratch/u_inches.vsdx",
+    "sourceHash": "567425e9088b80fc73ff5df09c0a5af139bd0ac2fa18f4995f9e93be7fe35151",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-17T12:54:11.615707+00:00",
+        "action": "create",
+        "target": "u_inches.vsdx",
+        "detail": "pages=1, nodes=2, edges=1",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

@@ -130,6 +130,39 @@ $ grep -c "LabelFont" src/Vsdx.Protocol/DesignSpec.cs
 
 **因此这不是"不能做"，是"没接线"。** 工作量小，但必须有统一解析，否则会成为第五处 if。
 
+### 2.2b 【P1】`Typography.BaseSize` 抹平了字体层级
+
+任务 §3.3 明确要求"不能只提供一个全局 FontSize，需要支持不同角色的字体层级"。
+
+当前 `BaseSize` 的实现恰恰是"一个全局 FontSize"：
+
+```csharp
+foreach (var node in page.Nodes)
+{
+    node.Style.FontSize = Math.Max(size, MinReadableSize);   // 每个节点同一个值
+}
+```
+
+**实测：** `baseSize=14` 时，三个不同角色的节点（service / database / gateway）
+全部得到 `fontSize=14`。原本由 `TypeScale.ForCanvas` 按角色推导的层级**被覆盖成平的**。
+
+更矛盾的是：`DiagramSizer` 里**已经**有按画布与密度推导的完整 TypeScale
+（`TypeScale.ForCanvas(width, height, nodeCount)`，6 个档位），
+而 `DesignSpecApplier` 完全绕过它，另起一套。
+
+**因此存在两套字号机制并存，且互相不通信：**
+
+| 路径 | 来源 | 结果 |
+| --- | --- | --- |
+| 无 spec | `TypeScale.ForCanvas` | 有层级（title 20 / region 12 / node 11 …） |
+| 有 `baseSize` | 直接赋值 | **无层级**（全部同值） |
+
+即"声明了 typography 反而比不声明更难读"，与设计意图相反。
+
+**修法：** `BaseSize` 应解读为**基准**（缩放因子），而非绝对值。
+建议：`scale = baseSize / TypeScale.NodeTitle`，作用于整个 TypeScale，
+保留档位关系。这是 Phase 8.2 §3.1 统一解析的核心任务之一。
+
 ### 2.3 【P1】容器颜色硬编码，绕过 Theme
 
 ```csharp
@@ -442,6 +475,7 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 7 | `containerLayouts` manual 下静默跳过 | P1 | ✅ |
 | 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | P1 | ✅ |
 | 9 | `typography.min_size` 死代码 | P2 | ❌ 初稿误判为存在 |
+| 10 | `BaseSize` 抹平字体层级 | **P1** | ❌ **遗漏** |
 
-**9 项缺陷中，初稿漏了 3 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
+**10 项缺陷中，初稿漏了 4 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
