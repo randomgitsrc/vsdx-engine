@@ -1,7 +1,16 @@
 # Phase 8.0 能力矩阵
 
 **依据：** `current-state-audit.md` 的实测证据
-**图例：** ✅ IV=Implemented&Verified / ⚠️ II=Implemented Incomplete / 📄 PO=Protocol Only / 🧪 EX=Experimental / ❌ MI=Missing / 🚫 UD=Unsupported by Dependency / ⛔ NS=Not in Engine Scope
+**图例：** ✅ IV=Implemented&Verified / ⚠️ II=Implemented Incomplete / 📄 PO=Protocol Only / 🧪 EX=Experimental / ❌ MI=Missing / 🚫 UD=Unsupported by Dependency / ⛔ NS=Not in Engine Scope / 🔬 LAB=Format Feasible by Hand, No Engine Support
+
+> **分类口径（2026-11-17 修订）：**
+> `🔬 LAB` 与 `⚠️ II` 的区别是本矩阵的关键：
+> - `🔬 LAB` = 我用手写 XML **证明了包格式能承载**该特性，但 **Engine 产品代码完全不支持**
+>   （无模型字段、无写入器、无读取器）。这**不是**产品能力。
+> - `⚠️ II` = Engine **有**实现，但在某个环节不完整（如读了不写、写得不全）。
+>
+> 初稿把 `🔬 LAB` 误归为 `⚠️ II`，会让读者以为"这个能力已经有了，只差收尾"，
+> 而实际是"格式允许，产品一行代码都没有"。这是实质性误判，已在各条目改正。
 
 ---
 
@@ -14,10 +23,10 @@
 | Group / Container | ✅ IV | `DiagramLayout.Apply`、`GroupTests` | 含 `msvStructureType` |
 | 嵌套容器 | ⚠️ II | `VisioNestingBridge`、`G1_*` 测试 | 靠 XML patch；join key 是容器标题（脆） |
 | Layer（图层） | ⚠️ II | `OfficeImoDocumentReader.cs:289` 读取 | **读取后可写回未验证** |
-| 自由路径 / 自定义几何 | ⚠️ II | **实验 1：可写入、可保留、渲染正确；但读回被标记为 Rectangle** | 模型层缺 `FreePath` |
+| 自由路径 / 自定义几何 | 🔬 **LAB** | 实验 1 手写 XML 可行 | **Engine 零支持**：无 `FreePath` 类型、无写入器、读者误标 Rectangle |
 | 独立文本（标题/注释/图例） | ❌ MI | `grep Title/Legend/Annotation` 仅 TypeScale | 无对象 |
-| 图片 | ⚠️ II | **实验 2：ForeignData 可行，校验通过、渲染出占位框** | 需自写 XML；渲染器不显示真实位图 |
-| SVG 嵌入 | ⚠️ II | **实验 3：可行，需补 Content-Type** | 成本高于 PNG |
+| 图片 | 🔬 **LAB** | 实验 2 手写 ForeignData 可行 | **Engine 零支持**：无媒体写入、无模型字段；渲染器仅占位 |
+| SVG 嵌入 | 🔬 **LAB** | 实验 3 手写可行，需补 Content-Type | **Engine 零支持** |
 | 复合符号 | ❌ MI | — | 建议走 Stencil（库已支持，未接入）而非自建 |
 | Z-order | ⚠️ II | `ShapeOrder` 读取但**从不写入** | 每次保存丢失 |
 | 对象 ID 稳定 | ✅ IV | `RoundTrip_IdsAreStable` | — |
@@ -28,10 +37,21 @@
 **小结：** 11 类表达能力（任务 §4.1）中，模型可表达 4 类
 （几何图形、连接关系、组合、图形数据）。
 
-**重要更正：** 实验证明自由路径 / 图片 / SVG **在 VSDX 包格式层全部可行**
-（见 `technical-experiments.md`）。原标记为 🚫 是过于悲观的判断。
-当前缺的是**模型层与写入器支持**，不是底层格式限制。
-这显著降低了 Phase 8.1 / 8.3 的风险等级。
+**重要更正（二次）：**
+
+初稿标记 `🚫 Unsupported by Dependency`，是错的——实验证明包格式能承载。
+但初稿的第一次修正是**过度乐观**的：把这三项改成 `⚠️ II`（Implemented Incomplete），
+读起来像"已经实现，只差收尾"。
+
+**事实是：格式允许，产品零支持。** 现在统一标为 `🔬 LAB`：
+
+| 项 | 格式层 | Engine 产品层 |
+| --- | --- | --- |
+| 自由路径 | ✅ 可行（实验 1） | ❌ 无类型、无写入器、读者误标为 Rectangle |
+| 图片 | ✅ 可行（实验 2） | ❌ 无媒体写入、无模型字段 |
+| SVG | ✅ 可行（实验 3） | ❌ 同上，且需补 Content-Type |
+
+**这个区分直接决定 Phase 8.1 的工作量：** 不是"接线"，是从零实现。
 
 ---
 
@@ -175,7 +195,7 @@
 | **L4 Visio 原生** | ⛔ NS | 无 Windows+Visio；**不得用其它层级替代** |
 | Microsoft.Msagl | 🧪 EX | Phase 0 评估过，未引入 |
 | Graphviz | 🧪 EX | Phase 0 评估：不引入（进程依赖） |
-| OfficeIMO.Visio | ✅ IV | MIT，256 公开类型，仅用 3 个 |
+| OfficeIMO.Visio | ✅ IV | MIT，256 公开类型，实际使用 14 个 |
 
 ---
 
@@ -183,22 +203,26 @@
 
 | 状态 | 数量 | 占比 |
 | --- | --- | --- |
-| ✅ Implemented & Verified | 54 | 52% |
-| ⚠️ Implemented but Incomplete | 21 | 20% |
+| ✅ Implemented & Verified | 57 | 54% |
+| ⚠️ Implemented but Incomplete | 18 | 17% |
+| 🔬 Format Feasible, No Engine Support | 3 | 3% |
 | 📄 Protocol Only | 1 | 1% |
 | 🧪 Experimental | 3 | 3% |
-| ❌ Missing | 17 | 17% |
+| ❌ Missing | 17 | 16% |
 | 🚫 Unsupported by Dependency | 6 | 6% |
 | ⛔ Not in Engine Scope | 1 | 1% |
-| **合计** | **103** | **100%** |
+| **合计** | **106** | **100%** |
 
-> `🚫` 从 8 降到 6，因为实验证明自由路径、图片、SVG 在包格式层可行，
-> 改归 `⚠️ Implemented but Incomplete`（模型层缺失，格式层可用）。
+> 计数口径：逐行统计 §1–§9 表格状态列的第一个标记，每条矩阵行计一次，脚本可复核。
+>
+> `🔬 LAB`（3 项：自由路径、图片、SVG）的引入是本次修订的关键：
+> 它们既不是 `🚫`（格式支持），也不是 `⚠️ II`（产品有实现），
+> 而是"**格式允许、产品零支持**"。把它们混进任何一类都会误导工作量估算。
 
-> 计数口径：逐行统计 §1–§9 表格状态列的第一个标记，每条矩阵行计一次。
-> 数字由脚本统计得出，非人工估算。
-
-**分布解读：** 核心执行路径（创建/布局/读写/检测/协议）已经很扎实（52% 已验证）。
+**分布解读：** 核心执行路径（创建/布局/读写/检测/协议）已经很扎实（54% 已验证）。
 缺口集中在**表达丰富度**（形状语义、独立对象、资产）与**保真细节**（几何/Z-order），
 而不是基础能力缺失。这决定了 Phase 8 应"接入已有能力 + 补表达层"，
 而不是重建引擎。
+
+新增的 `🔬 LAB` 类（3 项）与 `❌ Missing`（17 项）合计 20 项（19%）是 Phase 8 的真实工作量——
+不是"接线"，是从零实现。

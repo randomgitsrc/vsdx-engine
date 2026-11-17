@@ -88,7 +88,6 @@ public sealed class Page
     public List<Group> Groups { get; }       // 容器（保留）
     public List<TextBlock> TextBlocks { get; }  // 新增：独立文本
     public List<FreePath> Paths { get; }        // 新增：自由几何
-    public int? ZOrderHint { get; set; }        // 新增：显式层次
 }
 ```
 
@@ -99,8 +98,47 @@ public sealed class Page
 ### 3.3 坐标与 Z-order
 
 - **坐标系**：沿用现有"页面绝对坐标 + 容器相对原点"，不引入变换矩阵
-- **Z-order**：写入顺序即层次；新增 `ZOrderHint` 控制组间顺序。
-  **必须补齐 `ShapeOrder` 的写入**（当前读了不写）
+
+**Z-order 的设计（已按负责人意见修正）：**
+
+初稿提议在 `Page` 上加一个 `int? ZOrderHint`。**这个设计是错的**，已废弃。
+
+`ZOrderHint` 只能表达"整页有一个层次值"，而 Z-order 的本质是**对象之间的全序关系**。
+一个标量无法表达"A 在 B 之上、B 在 C 之上、但 D 与它们无关"，
+更无法表达跨类型（Node / TextBlock / FreePath）的相对顺序。
+
+**正确设计：显式的顺序列表，由 Reader 保留原始顺序、Writer 消费该顺序。**
+
+```csharp
+public sealed class Page
+{
+    /// <summary>
+    /// 页面上所有可见对象的绘制顺序，从底到顶。元素是对象 id
+    /// （Node.Id / TextBlock.Id / FreePath.Id / Group.Id 共用同一命名空间）。
+    /// Reader 必须按原始 XML 中 Shape 的出现顺序填充；Writer 必须按此列表输出。
+    /// 列表可以只覆盖部分对象；未列出的对象排在已列出的之后，保持其集合内顺序。
+    /// </summary>
+    public List<string>? ShapeOrder { get; set; }
+}
+```
+
+**为什么用 id 列表而不是容器类型：**
+
+1. 现有 `Page.ShapeOrder` 已经是 `List<string>?`（`DiagramModel.cs:56`），
+   直接复用它，不引入新概念
+2. 字符串 id 让 Node / TextBlock / FreePath / Group 混合排序成为可能
+3. 解析一个列表即可决定写入顺序，无需类型转换
+
+**Reader 的义务：** 必须记录 `visio/pages/pageN.xml` 中 `<Shape>` 的**真实出现顺序**，
+而不是按模型集合的插入顺序。当前 `OfficeImoDocumentReader.cs:281` 已经在做这件事，
+但顺序来源需要确认是 XML 顺序而非 API 返回顺序。
+
+**Writer 的义务：** 必须按 `ShapeOrder` 输出 `<Shape>` 元素。
+当前写入器完全忽略该字段（`grep ShapeOrder OfficeImoDocumentWriter.cs` 为空），
+导致**每次保存都丢失 Z-order**。
+
+**Phase 8.1 的验收：** 外部文件含 5 个重叠 shape，明确的前后遮挡关系，
+经 `export-model → update` 后，包内 `<Shape>` 顺序必须与原文件一致。
 
 ---
 
@@ -171,19 +209,78 @@ AssetResolver.Resolve(semanticId) → 原生 master / stencil shape / 降级到�
 **降级必须显式：** 找不到语义资产时，回退到矩形并**在 ExecutionResult 报告**，
 不得静默替换。
 
-### 5.3 图片与 SVG：需要先做实验
+### 5.3 图片与 SVG：实验已完成，进入实现
 
-反射确认库**没有** image/SVG API。任务 §8.3 要求"如果外部 Stencil 受限制，
-需要先做小型技术实验"。同样适用于图片。
+> **本节已修订。** 原文写"需要先做实验，实验前不承诺图片能力"。
+> 实验已在 Phase 8.0 完成并通过，该前提不再成立。
 
-**Phase 8.3 的第一件事应是实验，不是实现：**
+**实验结论**（`technical-experiments.md`）：
 
-| 实验 | 判定 |
-| --- | --- |
-| 手写 `visio/media/image1.png` + 关系 + `ForeignData`，Visio 能否打开 | 若否，图片能力标记为 🚫 |
-| SVG 同理 | 若否，SVG 标记为 🚫 |
+| 项 | 包格式 | 产品实现 |
+| --- | --- | --- |
+| 图片（PNG） | ✅ 可行 | ❌ 零支持 |
+| SVG | ✅ 可行（需补 Content-Type） | ❌ 零支持 |
 
-**在实验出结论前，不在架构里承诺图片能力。**
+**Phase 8.3 的实现任务（不再是实验）：**
+
+1. 媒体写入器：`visio/media/*` + `pageN.xml.rels` + `[Content_Types].xml`
+2. 模型字段：`ImageAsset { MediaPath, Format, Bytes }`
+3. 读取器：识别 `Type="Foreign"` + `ForeignData`，关联到模型
+4. **Renderer 显示真实图片**——负责人明确：占位框只允许是阶段性限制，
+   不接受作为 8.3 验收结果
+5. 图片替换（增量编辑已有图片）
+
+**新识别的依赖风险：** Renderer 显示真实位图可能需要图像解码库
+（SkiaSharp / ImageSharp / System.Drawing）。这需要单独评估：
+许可证、包体积、跨平台行为。**不得在未评估前引入。**
+
+---
+
+### 5.4 依赖冲突的解决：8.1 语义符号 vs 8.3 Stencil（负责人意见 5）
+
+**冲突是什么**
+
+任务 §6 要求 Phase 8.1 的纵向切片包含"一个组合图形或语义符号"。
+但语义符号的实现路径是 Stencil / 原生 master，而那属于 Phase 8.3。
+
+若 8.1 必须等 8.3，则 8.1 无法完成；若 8.1 自己造符号，则与 8.3 重复。
+
+**解决原则：8.1 验证"引用链路"，8.3 验证"资产体系"。**
+
+| | Phase 8.1 | Phase 8.3 |
+| --- | --- | --- |
+| 目标 | 证明**模型能承载并往返**一个语义符号引用 | 证明**能从外部加载**资产并完整管理 |
+| 手段 | 用**内置 master**（`MasterCatalog` 已有的 17 个之一，如 `Process`） | `VisioStencilCatalog` + `ImportMasters` + 外部 .vssx |
+| 不需要 | 外部资产包 | — |
+| 验收 | 符号形状写入、读回、ID 稳定、可增量改 | 资产元数据、许可证、缺失降级、替换 |
+
+**具体做法：**
+
+`Node` 增加一个最小字段：
+
+```csharp
+public sealed class Node
+{
+    /// <summary>
+    /// 原生 master 引用。为 null 时退回 Node.Shape 的字符串映射。
+    /// 8.1 只用内置 master 验证；8.3 接入 stencil 后可使用外部资产。
+    /// </summary>
+    public string? MasterRef { get; set; }
+}
+```
+
+8.1 的纵向切片用 `MasterRef = "Process"` 验证一条完整链路：
+模型 → 写入 `<Shape Master="...">` → 读回 `MasterRef` → 再次保存不变。
+
+8.3 则把 `MasterRef` 的取值域从"17 个内置名"扩展到"任意 stencil 资产 id"，
+并补 `AssetResolver` 与降级路径。
+
+**这样两个阶段不重叠也不互相阻塞：**
+8.1 只关心"引用能不能存活"，8.3 才关心"资产从哪来、缺了怎么办"。
+
+**若 8.1 发现内置 master 无法写入 `Master` 属性**，
+则该发现本身是有价值的结论，应在 8.1 报告中记录，并让 8.3 改用直接 patch
+（`VisioShape.Master` 反射确认可写，但未实测）。
 
 ---
 
@@ -194,21 +291,58 @@ AssetResolver.Resolve(semanticId) → 原生 master / stencil shape / 降级到�
 有容器机制、有 `LocalRelayout`、有逐容器策略覆盖。
 **但没有"区域"概念**——容器是被动算出来的（包住成员），不是主动分配的。
 
-### 6.2 提议：最小区域概念
+### 6.2 Group.AutoSize / FixedSize / ContainerLayouts 三者关系（负责人意见 6）
 
-不新建 `Region` 类型，而是让 `Group` 支持**显式尺寸**：
+**先说一个审计遗漏：`AutoSize` 已经存在，且已在承担"固定尺寸"的职责。**
+
+```csharp
+// DiagramModel.cs:74
+public bool? AutoSize { get; set; }
+
+// DiagramLayout.cs:33 — AutoSize == false 时跳过反算，保留现有 Bounds
+if (group.Bounds is not null && group.AutoSize == false) continue;
+
+// OfficeImoDocumentWriter.cs:114 — 传给 Visio 容器
+page.AddToContainer(container.Id, memberIds, resizeToFit: group.AutoSize ?? true);
+```
+
+所以初稿提议新增 `FixedSize` 是**重复造概念**。正确做法是复用 `AutoSize`。
+
+#### 三者职责（明确划分）
+
+| 字段 | 归属 | 作用 | 谁消费 |
+| --- | --- | --- | --- |
+| `Group.AutoSize: bool?` | 模型 | **是否由内容反算尺寸**。`false` = 保留作者给的 Bounds | `DiagramLayout.Apply`、写入器 `resizeToFit` |
+| `Group.LayoutStrategy: string?`（新增） | 模型 | **本容器内部的布局策略** | `LocalRelayout` / 布局引擎 |
+| `DesignSpec.ContainerLayouts` | **协议** | 由 Spec 批量指定 `容器id → 策略`，**执行时写入** `Group.LayoutStrategy` | `DesignSpecApplier` |
+
+**关系：** `ContainerLayouts` 是**输入通道**，`Group.LayoutStrategy` 是**落地字段**。
+Spec 应用后，前者映射到后者；模型独立使用时可直接设后者。
+
+#### 修正后的模型变更
 
 ```csharp
 public sealed class Group
 {
-    public Bounds? Bounds { get; set; }        // 已存在
-    public bool FixedSize { get; set; }        // 新增：不自动 resize
-    public string? LayoutStrategy { get; set; } // 新增：本区域策略
+    public Bounds? Bounds { get; set; }         // 已存在
+    public bool? AutoSize { get; set; }         // 已存在，复用，不新增 FixedSize
+    public string? LayoutStrategy { get; set; } // 新增：本容器策略
 }
 ```
 
-`FixedSize = true` 时，布局器只在该矩形内排布成员，不再反算容器大小。
-这就是"空间分配由上层决定，区内布局由 Engine 执行"。
+**语义矩阵：**
+
+| `AutoSize` | `Bounds` | 行为 |
+| --- | --- | --- |
+| `true` / `null` | 任意 | 按成员反算包围盒（现状默认） |
+| `false` | 已给 | **保留给定矩形**，成员在框内排布 ← 这就是"区域" |
+| `false` | `null` | 无意义组合，`Normalize` 应报错 |
+
+**8.4 的验收改为：** `AutoSize = false` + 显式 `Bounds` + 各自 `LayoutStrategy`
+三者组合，验证多区域页面。**不新增 `FixedSize` 字段。**
+
+**这个修正降低的复杂度：** 少一个字段、少一处语义重叠、少一次迁移；
+且 `AutoSize=false` 已经有实现与测试路径，8.4 是在其上补"框内排布"与"跨区路由"。
 
 ### 6.3 为什么不做独立的 CompositionCoordinator
 

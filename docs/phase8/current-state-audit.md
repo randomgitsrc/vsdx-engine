@@ -35,14 +35,28 @@ VisioPage members   : 299
 VisioDocument members: 104
 ```
 
-**而本项目实际使用的类型只有 3 个：**
+**而本项目实际使用的库类型是 14 个：**
 
 ```console
-$ grep -ohE "OfficeIMO\.Visio\.[A-Za-z]+" src/Vsdx.Adapters/*.cs src/Vsdx.Renderer/*.cs | sort | uniq -c
-     10 OfficeIMO.Visio.VisioPage
-      6 OfficeIMO.Visio.VisioShape
-      1 OfficeIMO.Visio.VisioConnector
+$ python3 - <<'PY'  # 统计口径：只算 src/ 中 import 了 OfficeIMO.Visio 的文件，
+                    # 且标识符必须是库的公开类型（排除同名局部变量）
+distinct OfficeIMO.Visio types actually used: 14
+   26  VisioShape        19  VisioPage        12  VisioSide
+   10  VisioDocument      9  VisioTextVerticalAlignment
+    8  VisioConnector     3  VisioTextStyle    2  VisioSvgSaveOptions
+    2  VisioConnectorWaypoint   1  VisioImageExportOptions
+    1  VisioMeasurementUnit     1  VisioPageRouteStyle
+    1  VisioContainerOptions    1  VisioConnectorLabelPlacement
 ```
+
+> **口径修正记录：** 本审计初稿写的是"只用了 3 个"，那是错的。
+> 初次统计用了 `grep -ohE "OfficeIMO\.Visio\.[A-Za-z]+"`，只能匹配**全限定名**；
+> 而代码里绝大多数是 `using OfficeIMO.Visio;` + 短名，因此漏计。
+> 另有 3 个同名前缀的局部变量/字段（`VisioNs`、`VisioShapeId`、`VisioId`）
+> 不是库类型，必须排除。
+>
+> 修正后：**14 / 256**。结论方向不变（依赖库仍有大量能力闲置），
+> 但"3 个"这种量级的说法会误导读者以为项目几乎没碰这个库，属于实质性错误。
 
 ### 1.1 未被使用但已存在的能力
 
