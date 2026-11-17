@@ -432,6 +432,56 @@ IR 的 `lane` 被**改写成 `container`**，而 `SwimlaneLayoutEngine` 靠
 
 **这是"测试通过但能力不可达"的典型**——单元测试测了引擎，没测协议路径。
 
+### 2.21 【P0】语义角色不可往返 → 角色样式第二次保存即失效
+
+**任务书 §5.4 要求"再次保存后样式仍然稳定"。实测不稳定。**
+
+**实测**（同一 `arch.ir.json`，`roleColors: {service:"#FF0000", database:"#00FF00"}`）：
+
+```
+第一次 execute → export-model:
+  auth  role=None  fill=#FF0000    ← 颜色在
+  order role=None  fill=#FF0000
+  web   role=None  fill=#FFFFFF    ← client 角色未定义，正常
+
+  ⚠️ 但 role 已经是 None —— IR 里声明的是 client/gateway/service
+```
+
+`Node.Type` **在回读时从未被恢复**：
+
+```csharp
+// ReadNode 只设这些
+Id = StableIdOf(shape) ?? shape.Id,
+Shape = MasterCatalog.ToModelKind(shape.MasterNameU),
+VisioShapeId = shape.Id,
+// 没有 Type = ...
+```
+
+**后果链：**
+
+1. 首次 `execute`：IR 的 `role` → `Node.Type` → `roleColors` 命中 → 上色 ✅
+2. 回读：`Node.Type` 丢失 → `role=None`
+3. 再次应用 spec：`roleColors` 找不到角色 → **不上色**，节点回退默认白色
+4. 结果：**同一张图，第二次处理比第一次更差**
+
+**这直接推翻"样式可继续修改"这一前提**：任务书要求交付"可以继续修改的 VSDX"，
+但修改一次之后角色样式就没了。
+
+**且它是静默的**：`status=succeeded`、`hard=True`，没有任何提示。
+
+**修法（T2g）：**
+
+1. `ReadNode` 从已有的 `User.VsdxModelId` 旁再存一个 `User.VsdxRole`，
+   或复用 Shape Data 的 `role` 行
+2. 读取时恢复 `Node.Type`
+3. 验收：`execute → export-model → update → export-model`，
+   四步后每个节点的 `type` 与 `fill` 都必须与第一步一致
+
+**这条也解释了缺陷 2（Palette 不执行）为何长期未被发现**——
+角色色只在首次生成时可见，任何回读流程都会掩盖它。
+
+---
+
 ### 2.20 【P1】对比度能力已实现，但无任何校验
 
 **任务书 §5.3 要求"颜色与文字对比合理"，但审计与计划此前均未覆盖。**
@@ -1120,6 +1170,7 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 22 | **`LocalRelayout` 不检查越界碰撞** | P1 | ❌ **遗漏**（本轮发现） |
 | 23 | **默认路径不写字体，混排无保障** | **P1** | ❌ **遗漏**（任务书 §5.2 明确要求） |
 | 24 | **对比度无任何校验** | P1 | ❌ **遗漏**（任务书 §5.3 明确要求） |
+| 25 | **语义角色不可往返致样式失效** | **P0** | ❌ **遗漏**（任务书 §5.4 要求样式稳定） |
 
-**24 项缺陷中，初稿漏了 18 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
+**25 项缺陷中，初稿漏了 19 项、误判 3 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
