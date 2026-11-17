@@ -12,5 +12,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Vsdx.Engine\Vsdx.Engine.csproj" />
+    <ProjectReference Include="..\Vsdx.Protocol\Vsdx.Protocol.csproj" />
   </ItemGroup>
 </Project>

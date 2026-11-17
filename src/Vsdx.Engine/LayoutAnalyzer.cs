@@ -264,6 +264,48 @@ public static class LayoutAnalyzer
             }
         }
 
+        // ---- 7a2. Connectors that cut diagonally through a band --------------
+        // A connector legitimately enters and leaves containers (that is how cross-region
+        // relations are drawn). What reads as sloppy is a *diagonal* cut across a band, because
+        // it clips through unrelated space and looks like a mistake rather than a route.
+        foreach (var edge in page.Edges)
+        {
+            if (edge.From is null || edge.To is null) continue;
+            if (edge.Waypoints is { Count: > 0 }) continue;   // an explicit route was chosen
+            if (!nodeById.TryGetValue(edge.From, out var ef)) continue;
+            if (!nodeById.TryGetValue(edge.To, out var et)) continue;
+            if (string.Equals(ef.GroupId, et.GroupId, StringComparison.Ordinal)) continue;
+
+            var path = RoutePoints(ef, et, edge);
+            if (path.Count != 2) continue;
+
+            double dx = Math.Abs(path[1].X - path[0].X);
+            double dy = Math.Abs(path[1].Y - path[0].Y);
+            if (dx < 0.5 || dy < 0.5) continue;   // near-axis routes are fine
+
+            // Only complain when the straight run actually clips a container it does not belong to.
+            var clipped = page.Groups
+                .Where(g => g.Bounds is not null
+                         && !string.Equals(g.Id, ef.GroupId, StringComparison.Ordinal)
+                         && !string.Equals(g.Id, et.GroupId, StringComparison.Ordinal))
+                .Any(g => SegmentIntersectsRect(path, g.Bounds!, 0));
+
+            if (!clipped) continue;
+
+            report.Add(new LayoutIssue
+            {
+                Code = "edge.diagonal-across-band",
+                Severity = "warning",
+                Page = page.Name,
+                Targets = new[] { edge.Id },
+                Message = $"连线 '{edge.Id}' 以对角方式穿过容器区域",
+                SoftWeight = 5,
+                RootCause = "两端节点不在同一容器且未指定正交路由，连线直接斜穿中间色带",
+                RecommendedFix = "把该连线改为 rightAngle 并指定端口，或调整节点所在列",
+                SuggestedLevel = FixLevel.RegionRelayout
+            });
+        }
+
         // ---- 7b. Group-to-group relations ------------------------------------
         // Containers are what the reader perceives as "bands" or "zones". Overlapping bands
         // make the whole diagram look broken, yet this was previously never checked.

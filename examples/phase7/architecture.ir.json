@@ -1,0 +1,39 @@
+{
+  "irVersion": "1.0",
+  "id": "enterprise-analytics",
+  "title": "企业智能分析平台",
+  "kind": "architecture",
+  "containers": [
+    { "id": "edge", "label": "接入层 Access", "kind": "layer", "order": 2 },
+    { "id": "svc", "label": "服务层 Service", "kind": "layer", "order": 1 },
+    { "id": "data", "label": "数据层 Data", "kind": "layer", "order": 0 }
+  ],
+  "nodes": [
+    { "id": "web", "label": "Web 门户", "role": "client", "containerId": "edge" },
+    { "id": "mobile", "label": "移动端", "role": "client", "containerId": "edge" },
+    { "id": "gw", "label": "API 网关", "role": "gateway", "containerId": "edge" },
+    { "id": "auth", "label": "认证服务", "role": "service", "containerId": "edge" },
+    { "id": "ingest", "label": "数据接入服务", "role": "service", "containerId": "svc" },
+    { "id": "query", "label": "查询服务", "role": "service", "containerId": "svc" },
+    { "id": "report", "label": "报表引擎", "role": "service", "containerId": "svc" },
+    { "id": "bus", "label": "事件总线", "role": "queue", "containerId": "svc" },
+    { "id": "pg", "label": "PostgreSQL", "role": "database", "containerId": "data" },
+    { "id": "redis", "label": "Redis 缓存", "role": "storage", "containerId": "data" },
+    { "id": "lake", "label": "数据湖", "role": "storage", "containerId": "data" },
+    { "id": "audit", "label": "审计存储", "role": "database", "containerId": "data" }
+  ],
+  "edges": [
+    { "id": "e1", "from": "web", "to": "gw", "relation": "calls", "label": "HTTPS" },
+    { "id": "e2", "from": "mobile", "to": "gw", "relation": "calls", "label": "gRPC" },
+    { "id": "e3", "from": "gw", "to": "auth", "relation": "calls", "label": "verify" },
+    { "id": "e4", "from": "gw", "to": "ingest", "relation": "calls", "label": "write" },
+    { "id": "e5", "from": "ingest", "to": "query", "relation": "writes", "label": "dataset" },
+    { "id": "e6", "from": "query", "to": "report", "relation": "reads", "label": "aggregate" },
+    { "id": "e7", "from": "report", "to": "bus", "relation": "publishes", "label": "publish" },
+    { "id": "e8", "from": "query", "to": "pg", "relation": "reads", "label": "SQL" },
+    { "id": "e9", "from": "query", "to": "redis", "relation": "reads", "label": "cache" },
+    { "id": "e10", "from": "ingest", "to": "lake", "relation": "writes", "label": "Parquet" },
+    { "id": "e11", "from": "bus", "to": "audit", "relation": "writes", "label": "audit" }
+  ],
+  "metadata": { "description": "三层企业分析平台，12 节点" }
+}

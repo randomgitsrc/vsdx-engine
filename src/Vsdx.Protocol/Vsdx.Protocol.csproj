@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Vsdx.Protocol</RootNamespace>
+    <AssemblyName>Vsdx.Protocol</AssemblyName>
+    <Description>Structured protocol layer: Diagram IR, DesignSpec, ExecutionResult.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Vsdx.Model\Vsdx.Model.csproj" />
+    <ProjectReference Include="..\Vsdx.Engine\Vsdx.Engine.csproj" />
+  </ItemGroup>
+</Project>

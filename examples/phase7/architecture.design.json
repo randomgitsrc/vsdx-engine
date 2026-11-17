@@ -1,0 +1,26 @@
+{
+  "specVersion": "1.0",
+  "layout": "auto",
+  "direction": "leftToRight",
+  "canvas": { "mode": "auto", "shrinkToFit": true },
+  "typography": { "fontFamily": "Microsoft YaHei", "minReadableSize": 9 },
+  "theme": {
+    "background": "#FFFFFF",
+    "roleColors": {
+      "client": "#2E75B6",
+      "gateway": "#F2B705",
+      "service": "#70AD47",
+      "queue": "#FFC000",
+      "database": "#C55A11",
+      "storage": "#ED7D31"
+    }
+  },
+  "hardConstraints": [
+    { "code": "min_page_utilisation", "value": 0.35 },
+    { "code": "require_title" },
+    { "code": "max_edge_detour", "value": 2.0 }
+  ],
+  "softConstraints": [
+    { "code": "no_edge_crossing" }
+  ]
+}

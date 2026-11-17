@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-vsdx/schemas/phase7/diagram-ir.schema.json",
+  "title": "Diagram IR",
+  "description": "What a diagram says: nodes, relations, containers. Deliberately free of layout decisions — geometry is optional and, when omitted, the engine decides.",
+  "type": "object",
+  "required": ["irVersion", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "irVersion": { "type": "string", "pattern": "^1\\.[0-9]+$", "default": "1.0" },
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "kind": {
+      "type": "string",
+      "description": "Semantic family. Drives strategy suggestion, is not a template selector.",
+      "enum": ["architecture", "microservices", "workflow", "network", "org", "deployment", "hybrid"]
+    },
+    "nodes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+    "containers": { "type": "array", "items": { "$ref": "#/$defs/container" } },
+    "metadata": { "$ref": "#/$defs/metadata" }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "description": "Stable identifier, unique within the IR." },
+        "label": { "type": "string" },
+        "role": {
+          "type": "string",
+          "description": "Semantic role; maps to a shape family and theme colour.",
+          "enum": ["service", "database", "gateway", "queue", "client", "actor", "decision",
+                   "storage", "monitor", "external"]
+        },
+        "containerId": { "type": "string" },
+        "attributes": { "type": "object", "additionalProperties": { "type": "string" } },
+        "anchor": { "$ref": "#/$defs/anchor" }
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "description": "Optional position. Omitting it lets the engine place the node; IR must not become a coordinate list.",
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "mode": { "type": "string", "enum": ["fixed", "relative"], "default": "fixed" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "relation": {
+          "type": "string",
+          "description": "Relationship semantics. 'contains' omits the arrowhead.",
+          "enum": ["calls", "reads", "writes", "publishes", "consumes", "depends", "contains", "flows"]
+        },
+        "label": { "type": "string" },
+        "fromPort": { "type": "string", "enum": ["left", "right", "top", "bottom", "auto"] },
+        "toPort": { "type": "string", "enum": ["left", "right", "top", "bottom", "auto"] }
+      }
+    },
+    "container": {
+      "type": "object",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
+        "kind": { "type": "string", "enum": ["zone", "layer", "lane", "cluster", "boundary"] },
+        "parentId": { "type": "string" },
+        "order": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": { "type": "string" },
+        "source": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" },
+        "tags": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    }
+  }
+}

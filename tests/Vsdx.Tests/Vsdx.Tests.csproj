@@ -14,5 +14,6 @@
     <ProjectReference Include="..\..\src\Vsdx.Engine\Vsdx.Engine.csproj" />
     <ProjectReference Include="..\..\src\Vsdx.Renderer\Vsdx.Renderer.csproj" />
     <ProjectReference Include="..\..\src\Vsdx.Validator\Vsdx.Validator.csproj" />
+    <ProjectReference Include="..\..\src\Vsdx.Protocol\Vsdx.Protocol.csproj" />
   </ItemGroup>
 </Project>

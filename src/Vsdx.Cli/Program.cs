@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Vsdx.Adapters;
 using Vsdx.Engine;
 using Vsdx.Model;
+using Vsdx.Protocol;
 
 namespace Vsdx.Cli;
 
@@ -64,6 +65,7 @@ public static class Program
             "diff" => Diff(options, json),
             "repair" => Repair(options, json),
             "compare" => Compare(options, json),
+            "execute" => Execute(options, json),
             "check-layout" => CheckLayout(options, json),
             "batch" => Batch(options, json),
             "version" or "--version" => Version(json),
@@ -698,6 +700,72 @@ public static class Program
         return best is null ? 1 : 0;
     }
 
+    /// <summary>
+    /// Runs the protocol path: Diagram IR (+ optional DesignSpec) to VSDX and previews, emitting an
+    /// ExecutionResult that states explicitly what could not be done.
+    /// </summary>
+    private static int Execute(Args options, bool json)
+    {
+        var irPath = options.Require("ir");
+        var output = options.Require("output");
+        var specPath = options.Get("spec");
+
+        if (!File.Exists(irPath)) throw new FileNotFoundException($"IR not found: {irPath}", irPath);
+
+        var irOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true
+        };
+
+        var ir = JsonSerializer.Deserialize<DiagramIr>(File.ReadAllText(irPath), irOptions)
+                 ?? throw new InvalidOperationException($"IR 解析失败：{irPath}");
+
+        DesignSpec? spec = null;
+        if (!string.IsNullOrWhiteSpace(specPath))
+        {
+            if (!File.Exists(specPath)) throw new FileNotFoundException($"DesignSpec not found: {specPath}", specPath);
+            spec = JsonSerializer.Deserialize<DesignSpec>(File.ReadAllText(specPath), irOptions);
+        }
+
+        var runner = new ProtocolRunner(new VsdxEngine());
+        var result = runner.Execute(
+            ir, spec, output,
+            render: options.Has("render"),
+            renderFormat: options.Get("format") ?? "png",
+            dpi: options.GetDouble("dpi") ?? 144);
+
+        if (json)
+        {
+            Emit(result);
+        }
+        else
+        {
+            Console.WriteLine($"execute {Path.GetFileName(irPath)} -> {Path.GetFileName(output)}");
+            Console.WriteLine($"  status : {result.Status}");
+            Console.WriteLine($"  message: {result.Message}");
+            Console.WriteLine($"  stages : {string.Join(" → ", result.StagesCompleted)}");
+            Console.WriteLine($"  quality: hard={result.Quality.HardConstraintsPassed} " +
+                              $"hardViolations={result.Quality.HardViolations} " +
+                              $"softViolations={result.Quality.SoftViolations} score={result.Quality.Score}");
+
+            foreach (var unmet in result.UnmetConstraints)
+                Console.WriteLine($"  UNMET [{(unmet.IsHard ? "hard" : "soft")}] {unmet.Code}: {unmet.Reason}");
+            foreach (var error in result.Errors)
+                Console.WriteLine($"  ERROR {error.Code}: {error.Message}");
+            foreach (var warning in result.Warnings)
+                Console.WriteLine($"  warn  {warning.Code}: {warning.Message}");
+            foreach (var file in result.OutputFiles)
+                Console.WriteLine($"  output {file}");
+        }
+
+        return result.Status == ExecutionStatus.Succeeded ? 0
+             : result.Status == ExecutionStatus.Degraded ? 0
+             : 1;
+    }
+
     private static int CheckLayout(Args options, bool json)
     {
         var input = options.Require("input");
@@ -928,6 +996,11 @@ public static class Help
 
               check-layout  Detect overlap, crossing, overflow and containment defects
                               --input <file.vsdx> [--json]
+
+              execute       Run Diagram IR (+ DesignSpec) through the protocol path
+                              --ir <model.json> --output <file.vsdx>
+                              [--spec <design.json>] [--render] [--format png|svg]
+                              [--dpi <n>] [--json]
 
               compare       Generate and rank candidate layouts
                               --input <file.vsdx> [--output <file.vsdx>] [--emit-dir <dir>] [--json]

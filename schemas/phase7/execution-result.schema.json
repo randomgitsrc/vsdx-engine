@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-vsdx/schemas/phase7/execution-result.schema.json",
+  "title": "ExecutionResult",
+  "description": "What the engine actually did, including everything it could not do. A caller can always distinguish success from partial success from failure.",
+  "type": "object",
+  "required": ["resultVersion", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "resultVersion": { "type": "string", "pattern": "^1\\.[0-9]+$" },
+    "irVersion": { "type": "string" },
+    "designSpecVersion": { "type": "string" },
+    "status": {
+      "type": "string",
+      "description": "succeeded | partial (output exists but a hard constraint failed) | failed | unsupported | degraded (a capability fell back)",
+      "enum": ["succeeded", "partial", "failed", "unsupported", "degraded"]
+    },
+    "message": { "type": "string" },
+    "stagesCompleted": { "type": "array", "items": { "type": "string" } },
+    "appliedDesignNotes": { "type": "array", "items": { "type": "string" } },
+    "unmetConstraints": {
+      "type": "array",
+      "description": "Every declared constraint the engine could not satisfy. Never omitted silently.",
+      "items": { "$ref": "#/$defs/unmet" }
+    },
+    "warnings": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
+    "errors": { "type": "array", "items": { "$ref": "#/$defs/diagnostic" } },
+    "quality": { "$ref": "#/$defs/quality" },
+    "objectMapping": {
+      "type": "object",
+      "description": "IR id -> engine model id, so the caller can map results back.",
+      "additionalProperties": { "type": "string" }
+    },
+    "renders": { "type": "array", "items": { "$ref": "#/$defs/render" } },
+    "outputFiles": { "type": "array", "items": { "type": "string" } },
+    "durationMs": { "type": "integer", "minimum": 0 },
+    "completedUtc": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "unmet": {
+      "type": "object",
+      "required": ["code", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string" },
+        "target": { "type": "string" },
+        "reason": { "type": "string" },
+        "isHard": { "type": "boolean", "default": false }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": ["code", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "target": { "type": "string" }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hardConstraintsPassed": { "type": "boolean" },
+        "hardViolations": { "type": "integer", "minimum": 0 },
+        "softViolations": { "type": "integer", "minimum": 0 },
+        "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "issueCodes": { "type": "array", "items": { "type": "string" } },
+        "pageUtilisation": { "type": "object", "additionalProperties": { "type": "number" } },
+        "requiresVisualReview": {
+          "type": "boolean",
+          "description": "True when aesthetic judgement is still needed; the engine does not claim its score is a visual verdict."
+        }
+      }
+    },
+    "render": {
+      "type": "object",
+      "required": ["format", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "format": { "type": "string" },
+        "path": { "type": "string" },
+        "pageIndex": { "type": "integer", "minimum": 0 },
+        "pageName": { "type": "string" },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 0 },
+        "height": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

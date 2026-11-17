@@ -148,6 +148,7 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 | `batch --op <create\|render\|validate\|export-model> --input-dir <dir> --out-dir <dir>` | 批量处理，单项失败不中断 |
 | `repair --input out.vsdx [--max-rounds n]` | 有界改进循环：计划 → 尝试 → 接受或回滚 → 升级 → 止损 |
 | `compare --input out.vsdx [--emit-dir d]` | 生成多个候选布局，硬约束筛选后按软指标排序 |
+| `execute --ir model.json [--spec design.json] --output out.vsdx` | 三层协议入口：IR + DesignSpec → VSDX + ExecutionResult |
 | `diff --before a.vsdx --after b.vsdx [--json]` | 两版本结构对比 |
 | `version --json` | 工具 / 后端 / 模型版本 |
 
@@ -183,6 +184,9 @@ vsdx-tool batch --op validate --input out/ --json
 - 文字驱动几何：字号层级（含可读性下限）、按标签推导节点/容器/页面尺寸
 - 有界自动修复：快照、影响分析、三级修复决策、失败回滚、策略去重与止损
 - 候选方案比较：多策略/多间距并行生成，隔离互不影响，硬约束过滤 + 软分数排序
+- 三层结构化协议（Diagram IR / DesignSpec / ExecutionResult），供外部 Agent 稳定调用；
+  未满足的约束必报告，未知约束码不静默跳过
+- 容器级布局与局部重排：只重排指定容器，容器外节点逐字节不变
 - 布局质量检查，**硬约束与软约束分离**：
   - 硬（不过即不可交付，分数强制为 0）：节点重叠、连线穿节点、容器相压、节点逃出容器
   - 软（影响专业度）：连线绕行比、行错位、同行尺寸突变、色带间距、间距过密、文字溢出、连线交叉
@@ -256,7 +260,8 @@ agent-vsdx/
 | [docs/installation.md](docs/installation.md) | 安装、字体配置、离线部署、容器镜像 |
 | [docs/architecture.md](docs/architecture.md) | 分层设计、适配器接口、增量算法、第二阶段扩展点 |
 | [docs/technical-validation.md](docs/technical-validation.md) | P0–P3 实测记录与已知限制 |
-| [docs/phase0-report.md](docs/phase0-report.md) | 专业制图能力升级：诊断、技术选型、目标架构、Phase 1 实施结果 |
+| [docs/phase0-report.md](docs/phase0-report.md) | Phase 0–6：诊断、技术选型、目标架构、分阶段实施结果 |
+| [docs/phase7/](docs/phase7/) | Phase 7：独立审计、能力基线、语义语料、差距分析、协议契约、VSDX 兼容性 |
 | [docs/api.md](docs/api.md) | C# API 与 CLI 完整参考 |
 | [docs/dependencies.md](docs/dependencies.md) | 依赖清单、版本锁定、许可证 |
 | [docs/limitations.md](docs/limitations.md) | 限制说明、Visio 验收清单、兼容性报告代码 |
