@@ -129,6 +129,7 @@ DesignSpec
 | Node 主标题 | NodeTitle | 11 |
 | Node 第二行 | NodeCaption | 10 |
 | Edge 标签 | EdgeLabel | 9 |
+| TextBlock role=caption | EdgeLabel | 9（当前桥接层写 9，`NodeCaption` 是 10 —— 需统一） |
 | TextBlock role=legend | NodeCaption | 10 |
 | TextBlock role=note | Annotation | 9 |
 
@@ -209,7 +210,14 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | 15 | **装饰元素独立夹紧致间距塌陷** | 先整组统一偏移，仅整组仍越界时才逐个夹 | **T8a** |
 | 16 | **IR `order` 被忽略致流程倒置**（P0） | 转换器消费 `Order`；布局优先用显式 order，其次 `MeanY`，最后声明序 | **T1b** |
 
-**16 项缺陷 ⇄ 16 行修法 ⇄ 16 个任务**（T0→T0b、T2→T2b、T4→T4b、T1→T1b，新增 T8a），一一对应。
+**映射关系（已按审查 M5 更正，不再声称"一一对应"）：**
+
+- **16 项缺陷 → 16 行修法**：严格一一对应，编号相同
+- **16 项缺陷 → 17 个任务**：不是一一对应。`T9`（全量回归）不对应任何单一缺陷，
+  它是**跨任务的验收门禁**；其余 16 个任务与缺陷一一对应
+
+原表述"16⇄16⇄16 一一对应"是错的——§9 里 `T0.5` 曾缺失、`T8`/`T9` 无对应缺陷，
+数字相等只是巧合。现在是 16 : 16 : 17，且差异有明确解释。
 
 ### 4.1 ObjectMapping 键格式（已裁决，不再是待决项）
 
@@ -238,15 +246,30 @@ if (!Palettes.TryGet(spec.Theme.Palette, out var palette))
 | `src/Vsdx.Protocol/DesignSpec.cs` | `Apply()` 改为调用解析器；移除硬编码容器色；修 unit 换算；修 min_size 判断；containerLayouts 报告 | **中**（核心改动） |
 | `src/Vsdx.Protocol/ExecutionResult.cs` | `BuildMapping` 覆盖全对象 + 多页 | 低 |
 | `src/Vsdx.Engine/LayeredLayoutEngine.cs` 等四个引擎 | 读 `options.Direction`，实现转置 | **中**（触碰已验证布局） |
-| `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | 写页面背景（**唯一需改 Adapter 处**） | 中（触碰保真层） |
-| `src/Vsdx.Protocol/DiagramIr.cs` | 无需改动（字段已够） | — |
-| `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | **写页面背景**（仅此一处） | 中（触碰保真层） |
+| `src/Vsdx.Adapters/OfficeImoDocumentWriter.cs` | **写页面背景**（`PageSheet`，位于 `pages.xml`） | 中（触碰保真层） |
+| `src/Vsdx.Adapters/VisioTextBlockBridge.cs` | **修字体单元格**：当前写 shape 级裸 `<Cell N="Font">`，该字体未注册 FaceNames，Reader 读不到（M4） | 中 |
+| `src/Vsdx.Protocol/DiagramIr.cs` | **需改动**：`lane` 保留（T0b）、`IrEdge` 加 `Waypoints`（若采纳 §11.2 方案 B）、消费 `IrContainer.Order`（T1b） | 中 |
 | `src/Vsdx.Adapters/OfficeImoDocumentReader.cs` | **读回页面背景** + **读回 Edge 标签字体 / TextBlock 字体**（M4） | **中** |
 | `schemas/phase7/design-spec.schema.json` | 枚举 4 个 palette 名 | 低 |
 | `skill/SKILL.md` | 新增 palette 与样式优先级说明 | 低 |
 | `docs/phase8/capability-matrix.md` | 更新样式相关行 | 低 |
 
-**不触碰：** `FidelityGuard` / `Visio*Bridge` / 协议版本号。
+**不触碰：** `FidelityGuard` / 协议版本号。
+
+**`Visio*Bridge` 的范围已修正（审查 M4）：** 原文写"不触碰 Visio*Bridge"，
+但 TextBlock 字体问题必须改 `VisioTextBlockBridge`——
+
+```csharp
+// VisioTextBlockBridge.cs:141 当前写的是 shape 级裸 Cell
+AddCell(shape, "Font", style.Font);   // ← 该字体未注册进 FaceNames
+```
+
+实测：`font=Verdana` 时 Verdana 在 `document.xml` 的 FaceNames 中 **0 命中**，
+Reader 无法通过 `shape.TextStyle.FontFamily` 取回。
+
+**因此 Bridge 中至少 `VisioTextBlockBridge` 必须改，另加背景桥。**
+`VisioNestingBridge` / `VisioFreePathBridge` / `VisioZOrderBridge` / `VisioMasterBridge`
+确实不改。
 
 **需触碰（初稿遗漏）：** Writer/Reader 各一处（背景色）、四个布局引擎（Direction）。
 
@@ -328,7 +351,7 @@ text: '企业分析平台'            ✅
 | **标题与副标题重叠** | 缺陷 15（装饰元素独立夹紧） |
 | 分隔线穿过副标题文字 | 缺陷 15（同上） |
 | **流程图三个容器上下颠倒**（履约在最上、受理在最下） | 缺陷 16（IR `order` 被忽略） |
-| 连线大量交叉 | 布局问题，不在本阶段范围 |
+| 连线大量交叉 | **不属本阶段**：连线交叉是路由/布局问题（`OrthogonalRouter` + 布局策略），样式系统不改变连线几何。缺陷 16 是 **P0** 因为它是**语义倒置**（可通过数据修复），不是视觉偏好 |
 
 **这五条是 Phase 8.2 要改善的视觉基线。** 修复后再用同样三个 IR 产出对比 PNG。
 
@@ -389,10 +412,11 @@ text: '企业分析平台'            ✅
 | # | 子任务 | 验收 |
 | --- | --- | --- |
 | T0 | 修 `Direction` | 四策略 × 两方向，`xspread`/`yspread` 必须互换；转置覆盖 §11.1 全部空间数据 |
+| T0.5 | **spec 路径补 `DiagramSizer.Apply`** | 同字号下带 spec 与不带 spec 框体一致；`baseSize` 9→24 框体随之增大；`text.overflow-*` 为 0 |
 | T0b | `DiagramIr` 保留 `lane` | 声明 lane 的 IR → `applied` 含 `layout=Swimlane` **且几何与 layered 不同** |
 | T4b | `mode=fixed` 语义 | 请求 20×14 → 实得 20×14，或 `unmet` 有明确 entry |
 | T1 | `StyleResolver` + 4 套 palette | 单元测试证明三层优先级；palette 只有颜色字段 |
-| T1b | 容器顺序：消费 IR `order` | `flow.ir.json` 中 `intake` 的 Y 最大（最上）；缺失 order 时退回 `MeanY`，再缺失用声明序 |
+| T1b | 容器顺序：消费 IR `order`（**T8 的前置**） | `flow.ir.json` 中 `intake` 的 Y 最大（最上）；缺失 order 时退回 `MeanY`，再缺失用声明序 |
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
 | T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
@@ -400,7 +424,7 @@ text: '企业分析平台'            ✅
 | T5 | 修 `containerLayouts` 报告 | manual 下进 unmet |
 | T6 | 修 `min_size` 死代码 | 低于下限时进 unmet |
 | T7 | `ObjectMapping` 全对象 + 多页 | 两页 × 四类对象全覆盖 |
-| T8 | 三套产物 + PNG + 目视 | 提交 VSDX/PNG/spec，附观察记录 |
+| T8 | 三套产物 + PNG + 目视（**依赖 T1b**） | 提交 VSDX/PNG/spec，附观察记录；容器顺序必须与 IR 声明一致 |
 | T8a | 装饰元素相对间距 | title/subtitle 间距 0.6" → 页面收缩后仍 ≥ 0.5" |
 | T9 | 全量回归 | 373 测试 + 18 基准 + 0 warning |
 | T10 | `Theme.Background` 落盘 + 回读 | 写 `#FAFAFA` → 读回同值 |
@@ -473,11 +497,22 @@ foreach (var edge in page.Edges)
 | `Layout != manual` | 布局期清空，转置无输入 → **不需要转置** | 节点已移动，旧折点已失效 |
 | `Layout == manual` | **保留并转置** | 作者坐标即意图，manual 不清空 |
 
-**`Direction + manual` 是有意义的组合**：作者手绘的结构，
-请求纵向排列时应整体转置，而折点必须跟着转。
+**`Direction + manual` 的语义存在两种合理解释，必须由负责人裁决**
+（审查 M8 指出 §11.2 与 §11.4 互相矛盾，两节给出了对立结论）：
 
-**验收改为：** 在 `layout=manual` + 显式 waypoints 下，
-`direction=topToBottom` 后 waypoints 逐点转置且非空。
+| 方案 | `manual` 下 `direction` 的行为 | 理由 |
+| --- | --- | --- |
+| **A（§11.4 的立场）** | 不生效，进 `unmetConstraints` | manual 的契约是"作者坐标即最终结果" |
+| **B（§11.2 的立场）** | 生效并整体转置，waypoints 逐点跟随 | direction 是独立维度，与是否重排无关 |
+
+**在裁决前，本节不给出验收断言。** 原断言 4 已作废。
+
+**另外 §11.6 的断言 4 与断言 7 互斥**（一个要求 manual 下转置、一个要求不生效），
+同样随本裁决确定后再写。
+
+**已知的额外障碍（审查实测）：** `IrEdge` **没有 `Waypoints` 字段**，
+协议层无法携带折点；`DesignSpec.cs:163` 的 manual 分支也不做任何转置。
+因此方案 B 需要先在 `DiagramIr` 加 `Waypoints`，工作量高于方案 A。
 
 
 现有实现选择清空，理由是"旧 waypoints 描述的是转置前的几何"。
@@ -504,8 +539,8 @@ foreach (var edge in page.Edges)
 
 任务要求"Manual 模式必须保留用户坐标"。
 
-`ManualLayoutEngine` 的职责就是"什么都不做"，因此 `Direction` 在 manual 下
-**不应生效**，且必须进 `unmetConstraints` 说明"manual 保留作者坐标，direction 未应用"。
+**`manual` 下 `Direction` 的行为待裁决**——见 §11.2 的方案 A / B。
+本节原写"不应生效"是方案 A 的立场，不再是既定结论。
 
 ### 11.5 提取位置
 
@@ -524,12 +559,12 @@ public static void Transpose(Page page);
 | 1 | 四策略 × 两方向：`xspread`/`yspread` 互换 |
 | 2 | TextBlock 位置跟随转置 |
 | 3 | Path Bounds 与**内部 Geometry 坐标**同时转置 |
-| 4 | **`layout=manual`** 下 Waypoints 逐点转置（非清空）；非 manual 下允许清空 |
+| 4 | **随 §11.2 裁决确定**：方案 A 断言 manual 下 direction 不生效且进 unmet；方案 B 断言 waypoints 逐点转置 |
 | 5 | 自由端点 `FromPoint`/`ToPoint` 转置 |
 | 6 | `Angle` 镜像 |
 | 6b | `Edge.FromPort`/`ToPort` 语义重映射（left↔bottom） |
 | 6c | `Diagram.Orientation` 与 `Diagram.PageSize` 同步转置 |
-| 7 | Manual 模式不转置，且 `unmetConstraints` 有记录 |
+| 7 | 同断言 4，随 §11.2 裁决确定（原"Manual 不转置"仅对应方案 A） |
 | 8 | 转置两次回到原状态（幂等性反向验证） |
 
 ---
@@ -787,15 +822,21 @@ if (!Allowed.Contains(value))
 
 **闸门 3：未消费字段登记**
 
-对"协议接受但本阶段不执行"的字段（`IrContainer.Order`、`IrMetadata` 等），
-**显式登记**并在 `unmetConstraints` 报告一次：
+对"协议接受但**本阶段之后**仍不执行"的字段，显式登记并在 `unmetConstraints` 报告一次。
+
+**注意（审查 M7 指出）：** `containers[].order` **不能**放进该清单——
+缺陷 16 / T1b 正是要在本阶段实现它。清单中只应保留本阶段明确不做的项，
+如 `metadata.*`、`IrContainer.Kind` 的部分取值。
 
 ```csharp
-private static readonly string[] NotYetExecuted = { "containers[].order", "metadata.*" };
-// 若 IR 中该字段有非默认值 → 报告 "accepted but not executed"
+// 只列本阶段确定不执行的字段；随 T1b 实现，containers[].order 必须从清单移除
+private static readonly string[] NotYetExecuted = { "metadata.*" };
 ```
 
-**这比"以后再说"诚实**：调用方立刻知道哪些字段当前无效果。
+**闸门 1 的实现方式更正（审查 M7 已编译验证）：**
+`UnmappedMemberHandling.Disallow` 会**直接抛异常**，无法同时返回
+`Value` 与 `UnknownMembers`。因此只能用**自定义 converter** 收集未知键，
+原括号里的"或"不是可选项，是唯一路径。
 
 ### 15.3 `ExecutionResult` 扩展
 
@@ -849,7 +890,7 @@ public sealed class UnrecognizedInput
 
 ### 16.3 方案：权威常量下沉到 `Vsdx.Model`
 
-把字号档位定义为 `Vsdx.Model` 中的纯数据常量：
+把字号档位定义为 `Vsdx.Model` 中的纯数据常量（权威来源是 `Vsdx.Engine/TextLayout.cs` 的 `TypeScale`，不是 `TextScale`）：
 
 ```csharp
 // src/Vsdx.Model/TypeScaleDefaults.cs
@@ -865,7 +906,7 @@ public static class TypeScaleDefaults
 }
 ```
 
-- `Vsdx.Engine.TextScale` 引用它作为默认值
+- `Vsdx.Engine.TypeScale` 引用它作为默认值
 - `Vsdx.Adapters.VisioTextBlockBridge.SizeForRole` 引用它
 - 两者**都不再各自定义数字**
 
@@ -876,7 +917,7 @@ public static class TypeScaleDefaults
 | # | 断言 |
 | --- | --- |
 | 1 | `caption` 在 Bridge 路径与 TypeScale 路径产出**同一字号** |
-| 2 | `grep -c "20" VisioTextBlockBridge.cs` 不再出现裸数字字号 |
+| 2 | `VisioTextBlockBridge.cs` 中不再出现裸字号字面量（字面量全部来自 `TypeScaleDefaults`） |
 | 3 | Adapters 项目引用中**无** `Vsdx.Engine` |
 
 ---
@@ -943,21 +984,31 @@ page.Size.Unit   = "inches";        // ← 关键：规范化后不再标注 cm
 与 `VisioNestingBridge` / `VisioFreePathBridge` / `VisioTextBlockBridge`
 的重写顺序产生竞争。
 
-### 18.3 重写顺序（关键）
+### 18.3 重写顺序（已按审查 M10 更正）
 
-当前保存后依次执行：
+> **本节原写"背景桥必须最后，否则会被前面覆盖"——三处事实都错了。**
 
+**更正后的事实：**
+
+| 原说法 | 实际 |
+| --- | --- |
+| create 与 update 共用同一条桥链 | **不同**：`create` 有 Nesting/FreePath/TextBlock，**无** ZOrder/Master；`update` 有 ZOrder/Master，**无** Nesting |
+| 前面的桥会覆盖背景 | **不会**：每个桥都是"读入 → 改内存 → 写回"整份 part，后续桥读到的是最新内容 |
+| `PageSheet` 在 `pageN.xml` | **不在**：`PageSheet` 在 `visio/pages/pages.xml`（实测：`page1.xml` 无 `PageSheet`） |
+
+**关键推论：没有任何现有桥触碰 `pages.xml`。**
+
+```console
+$ grep -l "pages.xml" src/Vsdx.Adapters/*.cs
+（无结果）
 ```
-1. VisioNestingBridge.Apply      （改 pageN.xml）
-2. VisioFreePathBridge.Apply     （改 pageN.xml）
-3. VisioTextBlockBridge.Apply    （改 pageN.xml）
-4. VisioZOrderBridge.Apply       （重排 Shape 顺序）
-5. VisioMasterBridge.Apply       （改 Master 属性）
-6. [新增] VisioBackgroundBridge  （改 PageSheet）
-```
 
-**背景桥必须最后**，因为前面每个桥都会 `entry.Delete()` + 重建，
-若背景先写会被覆盖掉。
+因此**顺序风险不存在**。背景写入只需与 `pages.xml` 的其他写入者协调，
+而当前没有竞争者。
+
+**实现落点：** 新增 `VisioBackgroundBridge`，操作 `visio/pages/pages.xml`
+的 `<PageSheet>`，与 `create` / `update` 两条链都无冲突。
+**不需要**像原计划那样把它排在最后。
 
 ### 18.4 验收
 

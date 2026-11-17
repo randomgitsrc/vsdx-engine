@@ -393,13 +393,23 @@ intake   y=1.30   ← 最下
 
 **顺序完全颠倒**，流程从底部开始读。
 
-**根因链：**
+**根因链（已按审查更正引用的代码路径）：**
 
 1. `IrContainer.Order` 在 `DiagramIrConverter` 中**从未被消费**
-2. `LayeredLayoutEngine` 改用成员的 `MeanY` 排序容器（`:117-121`）
+2. **`flow.ir.json` 中 `role=decision` 的节点使其走 `FlowLayoutEngine`**，
+   容器排序是 `OrderBy(g => g.Bounds?.Y ?? 0)`（`FlowAndTreeLayoutEngine.cs:92`）
+   ——**不是** `LayeredLayoutEngine` 的 `MeanY` 逻辑
 3. IR 节点无 `anchor` → 全部 `Bounds(0,0,2.0,0.9)`（`DiagramIr.cs:297`）
-4. 所有容器 `MeanY == 0` → `OrderByDescending` **退化为无操作**
-5. 容器按字典/插入顺序排列，与 `order` 无关
+4. 容器 `Bounds` 由成员反算，成员全在同一点 → 各容器 `Bounds.Y` 相同
+5. `OrderBy` 对相等键**保持输入顺序**（稳定排序），输入顺序即字典/插入序，
+   与 `order` 无关
+
+**更正说明：** 初稿引用了 `LayeredLayoutEngine:117-121` 作为根因位置。
+审查指出该 IR 实际选择 Flow 引擎，两处排序逻辑不同。
+**结论不变**（`order` 被忽略 → 顺序错），但**引用路径已改对**。
+
+**修复要点（对两个引擎都成立）：**
+两个引擎都必须**优先消费显式 `order`**，缺失时再退回几何推断。
 
 **这是缺陷 6（`IrContainer.Order` 接受不执行）的一个具体后果**，
 但后果比"字段无效"严重得多：**产出语义颠倒的图**，且 `status=succeeded`、`hard=True`、`score=100`。
@@ -635,8 +645,22 @@ Stage 3 独立审查前，我自己复核了一遍，发现初稿有三处判断
 | `SoftConstraints` | `isHard=false` 且不阻断（实测） |
 | `RoleColors` | 节点取到 `#FF0000`，多页均生效（实测） |
 
-`Canvas.ShrinkToFit` 已补实测：请求 20×14 时，`true` 收缩到 4.00×3.45，
-`false` 保持 20×14。**功能正确。**
+`Canvas.ShrinkToFit` 实测：请求 20×14 时，`true` 收缩到 4.00×3.45，
+`false` 保持 20×14。
+
+**但"功能正确"这个判语已被撤回**（审查 M2 要求删除）。理由：
+`shrinkToFit=true` 时 `mode=fixed` 的尺寸承诺完全失效，这不是"功能正确"，
+而是两个字段的语义打架（见 §2.9）。
+
+**且失效是双向的**（审查补充实测，我已复现）：
+
+| 请求 | 实际 | `applied` | `unmet` |
+| --- | --- | --- | --- |
+| `fixed 20×14`（内容少） | 4.00×3.45（**缩小 78%**） | `canvas.fixed+shrunk` | `[]` |
+| `fixed 8×6`（内容多，`arch.ir.json`） | 11.35×9.85（**放大 42%**） | `canvas.fixed` | `[]` |
+
+**`fixed` 会缩小也会放大。** 因此"收缩时进 unmet"这一种修法不足以覆盖
+放大方向——两个方向都必须报告。
 
 **至此 §1 表中所有 ✅ 项均有回读或实测证据，无一项仅凭代码阅读。**
 
