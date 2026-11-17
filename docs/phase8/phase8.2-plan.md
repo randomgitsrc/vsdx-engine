@@ -819,6 +819,23 @@ character.Row.Cell("Color").Value = style.TextColor;
 **验收可证伪：** 同一 IR + `baseSize=24`，修前 `hard=true/score=76`，
 修后必须 `hard=false/score=0`；而默认参数的 18 个基准必须保持 `hard=true`。
 | T2g | 语义角色往返（§5.4） | `execute → export → update → export` 四步后，每节点的 `type` 与 `fill` 均与第一步一致 |
+
+**T2g 的实现通道已确认（现成机制，不需新建）：**
+
+```csharp
+// 写侧（OfficeImoDocumentWriter.cs:288 已有同款）
+shape.SetUserCell("VsdxModelId", node.Id, prompt: "...");
+shape.SetUserCell("VsdxRole", node.Type ?? "", prompt: "Agent VSDX Engine role");  // ← 新增一行
+
+// 读侧（OfficeImoDocumentReader.cs:691 已有同款）
+var role = shape.GetUserCellValue("VsdxRole");                                     // ← 新增一行
+```
+
+**`User.*` 单元格是 Visio 原生扩展机制**，已在 `VsdxModelId` 上验证可用（稳定 ID 靠它往返）。
+T2g 只是复用同一通道，**无新概念、无新依赖**。
+
+**注意：** `VsdxRole` 需在 `OfficeImoIncrementalEditor` 的两个 `SetUserCell` 处同步
+（`:408` 与 `:489`），否则 `update` 路径会丢掉角色。
 | T1d | 对比度校验（§5.3） | 浅底浅字（1.05:1）→ `text.low-contrast`；深底近黑（1.1:1）→ 同样报告；显式 textColor 不得绕过 |
 | T1c | 默认字体 + 中英混排（§5.2） | 不传 spec 时 `FaceNames` 非空；中文/混排/英文三类节点渲染无方框、无字重跳变 |
 | T5b | `LocalRelayout` 越界碰撞检查 | `containerLayouts` 施加后 `node.overlap` 必须为 0，或该次重排被回退并进 `unmet` |
