@@ -1,0 +1,6 @@
+{"irVersion":"1.0","id":"long","title":"Long","kind":"microservices",
+ "nodes":[
+  {"id":"short","label":"A"},
+  {"id":"long","label":"A very much longer label that definitely needs a wider box than two inches"},
+  {"id":"cjk","label":"用户身份认证与授权服务中心"}
+ ]}

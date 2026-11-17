@@ -1,0 +1,164 @@
+{
+  "id": "tb_1.2",
+  "name": "TB",
+  "pageSize": {
+    "width": 4,
+    "height": 5.45,
+    "unit": "inches"
+  },
+  "orientation": "portrait",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "TB",
+      "nameU": "TB",
+      "visioId": 0,
+      "size": {
+        "width": 4,
+        "height": 5.45,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "G2",
+          "name": "Band2",
+          "nameU": "Container",
+          "members": [
+            "b"
+          ],
+          "visioShapeId": "G2",
+          "bounds": {
+            "x": 1.85,
+            "y": 1.455,
+            "w": 2.6,
+            "h": 1.96
+          },
+          "style": {
+            "fill": "#EDF7ED",
+            "fillPattern": "1",
+            "stroke": "#A9D08E",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#375623",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        },
+        {
+          "id": "G1",
+          "name": "Band1",
+          "nameU": "Container",
+          "members": [
+            "a"
+          ],
+          "visioShapeId": "G1",
+          "bounds": {
+            "x": 1.85,
+            "y": 4.23,
+            "w": 2.6,
+            "h": 1.96
+          },
+          "style": {
+            "fill": "#EAF3FB",
+            "fillPattern": "1",
+            "stroke": "#9DC3E6",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#1F4E79",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 1.85,
+            "y": 4,
+            "w": 2,
+            "h": 0.9
+          },
+          "groupId": "G1",
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "b",
+          "name": "B",
+          "text": "B",
+          "shape": "Rectangle",
+          "visioShapeId": "b",
+          "bounds": {
+            "x": 1.85,
+            "y": 1.225,
+            "w": 2,
+            "h": 0.9
+          },
+          "groupId": "G2",
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "b",
+        "G2",
+        "G1"
+      ],
+      "paths": [],
+      "textBlocks": []
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-17T12:57:09.4628795+00:00",
+    "modified": "2026-11-17T12:57:09.5039935+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-scratch/tb_1.2.vsdx",
+    "sourceHash": "b30780e40f34d7c8616cc43347dc3382fd71f917362accdc0ace36a8d70530e9",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-17T12:57:09.5197257+00:00",
+        "action": "create",
+        "target": "tb_1.2.vsdx",
+        "detail": "pages=1, nodes=2, edges=0",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

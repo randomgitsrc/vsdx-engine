@@ -1,0 +1,4 @@
+{"irVersion":"1.0","id":"tb","title":"TB","kind":"microservices",
+ "containers":[{"id":"G1","label":"Band1","kind":"layer"},{"id":"G2","label":"Band2","kind":"layer"}],
+ "nodes":[{"id":"a","label":"A","containerId":"G1"},{"id":"b","label":"B","containerId":"G2"}],
+ "edges":[]}

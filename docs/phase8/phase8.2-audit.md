@@ -176,6 +176,43 @@ baseSize=14   : node sizes = [('a', 14),   ('b', 14),   ('c', 14)  ]
 建议：`scale = baseSize / TypeScale.NodeTitle`，作用于整个 TypeScale，
 保留档位关系。这是 Phase 8.2 §3.1 统一解析的核心任务之一。
 
+### 2.2c 【P1】字号在布局之后应用，框体不会重算 → 文字溢出
+
+**实测：**
+
+```
+baseSize=9  -> box 2.00 x 0.90, fontSize 9
+baseSize=24 -> box 2.00 x 0.90, fontSize 24     ← 框完全没变
+```
+
+检测器确实抓到了：
+
+```
+$ check-layout b24.vsdx
+text.overflow-horizontal: 'a' 最长行约 5.09" 宽，实际 2.00"
+```
+
+**但那是事后检测，生成时并未阻止。** 产出物仍然落盘，溢出 2.5 倍。
+
+**根因是步骤顺序：**
+
+```csharp
+// DesignSpec.cs
+139:  DiagramLayoutEngine.Apply(...);   // 布局：按当前字号算位置
+166:  DiagramLayout.Apply(...);        // 容器：按成员反算包围盒
+168:  // --- Typography ---            // 字号在这里才改
+178:  node.Style.FontSize = clamped;   // 但框体已经定了
+```
+
+字号影响文字占位、文字占位影响框体尺寸。**先定尺寸再改字号，等于尺寸失效。**
+
+**这与 Phase 8.1 修过的"FitPage 在布局之前"是同一类错误**——步骤顺序错了，
+每一步单独看都对，组合起来产出错误结果。
+
+**修法：** 字号必须在 `DiagramSizer.Apply` **之前**确定，
+或字号改变后重新跑一次尺寸推导。Phase 8.2 §3.1 的统一解析若在布局前完成，
+此问题自然消失——**这也是为什么解析器必须前置，而不只是"把 palette 接上"**。
+
 ### 2.3 【P1】容器颜色硬编码，绕过 Theme
 
 ```csharp
@@ -489,6 +526,7 @@ $ grep -rn "options.Direction|\.Direction ==" src/Vsdx.Engine/LayeredLayoutEngin
 | 8 | `ObjectMapping` 仅首页 + 仅 Node/Container | P1 | ✅ |
 | 9 | `typography.min_size` 死代码 | P2 | ❌ 初稿误判为存在 |
 | 10 | `BaseSize` 抹平字体层级 | **P1** | ❌ **遗漏** |
+| 11 | 字号在布局后应用 → 文字溢出 | **P1** | ❌ **遗漏** |
 
-**10 项缺陷中，初稿漏了 4 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
+**11 项缺陷中，初稿漏了 5 项、误判 2 项。** 这印证了 Stage 3 独立审查的必要性——
 也说明"读代码判断能力"不可靠，只有实测才作数。
