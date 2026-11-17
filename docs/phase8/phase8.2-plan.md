@@ -420,7 +420,7 @@ text: '企业分析平台'            ✅
 | T2 | 接入 Node / Group / Edge / TextBlock | 四种对象都拿到 font+size+color；**且能回读**（M4） |
 | T2b | `roleColors` default 回退 | 未覆盖角色进 `unmet`，按角色去重（缺陷 12） |
 | T3 | 移除容器硬编码色 | 换 palette → 容器色变（PNG 可见） |
-| T4 | 修 `Canvas.Unit` | cm/mm 换算正确，标签与数值一致 |
+| T4 | 修 `Canvas.Unit`（**两处**：Writer + DesignSpecApplier） | `create` 与 `execute` 的 cm/mm 换算一致；标签与数值一致；`update` 不再二次换算 |
 | T5 | 修 `containerLayouts` 报告 | manual 下进 unmet |
 | T6 | 修 `min_size` 死代码 | 低于下限时进 unmet |
 | T7 | `ObjectMapping` 全对象 + 多页 | 两页 × 四类对象全覆盖 |
@@ -961,6 +961,25 @@ targetW *= factor; targetH *= factor;
 
 危险在于：`create` 写入 `PageWidth=10` 却在模型里保留 `unit:"cm"`，
 下游若信任该标签，就会把 10 英寸当成 10 厘米。
+
+**根因（已定位到具体行）：**
+
+```csharp
+// OfficeImoDocumentWriter.cs:48-49
+MasterCatalog.Inches(pageModel.Size?.Width ?? ... )   // ← 直接转单位，没乘 UnitFactor
+```
+
+`MasterCatalog.UnitFactor` 已经存在且正确（`"cm" => 1/2.54`），
+**`create` 路径只是没调用它**；而 `IncrementalEditor:62` 调用了。
+
+**修法（T4 拆为两处）：**
+
+| 位置 | 改动 |
+| --- | --- |
+| `OfficeImoDocumentWriter.cs:48-49` | 页面尺寸乘 `UnitFactor(pageModel.Size.Unit)` |
+| `DesignSpecApplier` | 把 spec 单位规范化为 `inches` 后写入（避免与上一行叠加） |
+
+**两处必须同时改**，否则仍然一条路径换算、一条不换算。
 
 `DesignSpecApplier` 的职责改为**把 spec 的单位规范化为英寸**后写入
 `page.Size`（且 `Unit` 字段也写 `"inches"`），使下游 `UnitFactor("inches") == 1`。
