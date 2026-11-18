@@ -43,22 +43,31 @@ $ execute --ir checkout-sequence.ir.json
 
 **固定测试**：`UnderusedMissTests`（含一条断言"不触发"的测试，修复后会失败，迫使记录更新）。
 
-## 3. `repair` 的接受准则允许分数大幅下降
+## 3. `repair` 的接受准则未考虑分数
 
-**实测（cbo）**：`86 → 70`，问题数 `9 → 7`，决策 `Accepted`。
+**原始记录已过时**（2026-11-19 复核）。当时记的是 cbo `86 → 70`，那是容器标题未修前的状态；
+标题修复后 cbo 是 100 分，`repair` 无改动可做。
 
-准则本身合理——`repair` 的目标是消除指定问题，不是抬高总分。
-但目标问题 `container.heading-collision` 修复后**依然存在**（换了几个节点），而分数掉了 16 分。
+**当前实测（四个场景）**：
 
-**为何未修**：收紧意味着选一个阈值并改变 `repair` 行为，属产品取舍。
+| 场景 | 前后 | 尝试 |
+| --- | --- | --- |
+| cbo | 100 → 100 | 0 |
+| deploy-topology | 82 → 82 | 3（全部 `RolledBack`）|
+| user-data-flow | 100 → 100 | 0 |
+| checkout-sequence | 88 → 88 | 3（全部 `RolledBack`）|
 
-**代价已被限制在可接受范围**（2026-11-19 复核）：`repair` 不会无限重试。实测
-`deploy-topology` 的三次尝试依次为 `Local` / `Local` / `RegionRelayout`——
-失败两次后按设计升级，全部无效才停止，耗时可控。
+**没有任何改动被接受**，因此接受准则当前不影响任何输出。
 
-`attempts[]` 已逐条记录 `problem` / `strategy` / `decision` / `actualGain`，
-调用方事后能看出每次尝试及其结果。**因此不需要 `--dry-run`**：
-它要提供的信息已经存在，加一个只读模式不会带来新决策依据。
+**准则本身**：`VersionStore.Evaluate` 接受「未引入新硬约束」的候选，不看分数。
+理由是 `repair` 的目标是消除指定问题，不是抬高总分。
+
+**为何仍未改**：改动会改变 `repair` 的行为，而当前没有证据表明这个行为有害——
+所有实测尝试都被回滚了。`Accepted` 分支有测试覆盖（`RepairTests`），说明它可达，
+但真实的六个场景里一次都没触发。
+
+**若要改**：先构造一个「消除目标问题但降低总分」的用例，证明这个取舍真实存在，
+再决定是否加分数阈值。
 
 ## 4. 图例可能与连线标签视觉冲突
 
@@ -86,11 +95,28 @@ $ execute --ir checkout-sequence.ir.json
 模型层不支持时序语义（端点由节点决定，无法表达"生命线上的第 N 条消息"），
 状态机无状态语义。
 
+**为何未修**：需要扩展模型——`IrEdge` 带消息序号、端点可寻址生命线，
+以及一套新的布局策略。这不是参数调整，是新增能力，工作量与风险都高于本项目其余修复。
+
+**实测依据**：把请求/回复交替设置 `labelPosition`（0.3 / 0.7）**无效**——
+两条反向连线是同一条线段，沿比例移动只会在同一直线上滑动。
+`SequenceFeasibilityTests` 固定了这个不可行性。
+
 详见 `capability-boundaries.md`。
 
 ## 7. 校验器不检查 Master 引用有效性
 
 悬空的 `Master="9999"` 仍返回 `valid: true`，而 Visio 会显示为损坏形状。
+
+**为何未修**：补齐需要在 `visio.shape-ids-unique` 旁增加一项，
+解析 `visio/masters/masters.xml` 的 `<Master ID>` 集合并与每页的 `Master=` 属性比对。
+
+**代价**：`ValidatorCoverageTests` 里有一条断言当前行为是 `IsValid == true` 的测试，
+实现后它会失败——这是正确信号，但需要同步修改。
+
+**影响**：`valid: true` 不能推出「文件在 Visio 中完整可用」。
+外部编辑过的文件可能带本引擎不会写出的悬空引用，而校验器不会报告。
+
 详见 `limitations.md` §11。
 
 ---
