@@ -229,7 +229,21 @@ var engine = new VsdxEngine(
 ```bash
 vsdx-tool create --input <model.json> --output <file.vsdx>
                  [--title <text>] [--author <text>] [--no-validate] [--json]
+                 [--layout layered|grid|flow|tree|manual|auto]
+                 [--fit-text] [--fit-page] [--recenter]
 ```
+
+**布局参数**（最常用，缺省时按模型自带坐标）：
+
+| 参数 | 作用 |
+| --- | --- |
+| `--layout <strategy>` | 覆盖 `type` 推断的布局策略；`auto` 按图类型选择 |
+| `--fit-text` | 把框撑到文字所需的最小尺寸 |
+| `--fit-page` | 把页面缩到内容包围盒 |
+| `--recenter` | 把内容居中到页面上 |
+
+不加这三个参数、模型又没有合理坐标时，得到的图**会被判 `page.underused`**
+（内容只占页面一小块）——这是 `skill/SKILL.md` 里那条示例曾经踩过的坑。
 
 ### 2.2 `inspect`
 
@@ -250,10 +264,13 @@ vsdx-tool export-model --input <file.vsdx> --output <model.json> [--json]
 
 ```bash
 vsdx-tool update --input <source.vsdx> --model <model.json> --output <file.vsdx>
-                 [--delete-missing] [--no-validate] [--json]
+                 [--delete-missing] [--no-validate] [--no-recalc] [--json]
 ```
 
 `--delete-missing`：删除模型中不存在的对象。默认保留并报告。
+
+`--no-recalc`：不写入「请求 Visio 打开时重算」标记。默认写入——那是为了让人在 Visio 里
+编辑时布局跟着更新；若你希望产物保持当前几何不变，加这个参数。
 
 ### 2.5 `render`
 
