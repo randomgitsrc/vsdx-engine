@@ -1,0 +1,107 @@
+{
+  "id": "tr",
+  "name": "T",
+  "pageSize": {
+    "width": 5.45,
+    "height": 3.05,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "T",
+      "nameU": "T",
+      "visioId": 0,
+      "size": {
+        "width": 5.45,
+        "height": 3.05,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 4.25,
+            "y": 0.85,
+            "w": 1.3,
+            "h": 0.575
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "fontSize": 20,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "2"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "t1",
+          "name": "Big Title Text",
+          "text": "Big Title Text",
+          "role": "caption",
+          "visioShapeId": "2",
+          "bounds": {
+            "x": 2.55,
+            "y": 2.2,
+            "w": 4,
+            "h": 0.6
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 20.000016,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-18T11:02:10.4857049+00:00",
+    "modified": "2026-11-18T11:02:10.5246749+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-final/tr.vsdx",
+    "sourceHash": "db6e9a589d12f096df33d3ff8a587ece13eb0faa24ce88b7d59ad728d9b0ddeb",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-18T11:02:10.5317796+00:00",
+        "action": "create",
+        "target": "tr.vsdx",
+        "detail": "pages=1, nodes=1, edges=0",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

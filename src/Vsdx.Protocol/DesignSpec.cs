@@ -532,12 +532,21 @@ public static class DesignSpecApplier
             if (spec.Canvas.Mode.Equals("fixed", StringComparison.OrdinalIgnoreCase) &&
                 spec.Canvas.Width is double w && spec.Canvas.Height is double h)
             {
-                page.Size ??= new PageSize();
-                page.Size.Width = w;
-                page.Size.Height = h;
-                page.Size.Unit = spec.Canvas.Unit;
+                // Normalise to inches immediately. The value used to be stored with the caller's
+                // unit still attached, so FitPage compared and rewrote it as inches while the unit
+                // label said cm — and the writer then converted again on the way out. Measured:
+                // a 10x10 cm request produced a 2.92x1.18 inch page, exactly 2.54x too small, with
+                // every node pushed off the sheet.
+                double unitFactor = Vsdx.Adapters.MasterCatalog.UnitFactor(spec.Canvas.Unit);
+                double widthIn = w * unitFactor;
+                double heightIn = h * unitFactor;
 
-                string target = $"{w:0.##}x{h:0.##}";
+                page.Size ??= new PageSize();
+                page.Size.Width = widthIn;
+                page.Size.Height = heightIn;
+                page.Size.Unit = "inches";
+
+                string target = $"{widthIn:0.##}x{heightIn:0.##}";
 
                 if (spec.Canvas.ShrinkToFit)
                 {
@@ -569,8 +578,8 @@ public static class DesignSpecApplier
 
                 // The other direction matters too: content larger than the requested sheet grows
                 // it, which is equally a size the caller did not ask for.
-                double overW = page.Size.Width - w;
-                double overH = page.Size.Height - h;
+                double overW = page.Size.Width - widthIn;
+                double overH = page.Size.Height - heightIn;
                 if (overW > 0.05 || overH > 0.05)
                 {
                     unmet.Add(new UnmetConstraint

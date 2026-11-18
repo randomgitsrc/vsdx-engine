@@ -371,6 +371,51 @@ public sealed class DiagramDiff
                 });
             }
         }
+
+        // Text blocks were never compared, which made `identical` a false promise: a no-op update
+        // that silently reset every block's alignment reported no changes at all.
+        var beforeText = before.TextBlocks.ToDictionary(t => t.Id, StringComparer.Ordinal);
+        var afterText = after.TextBlocks.ToDictionary(t => t.Id, StringComparer.Ordinal);
+
+        foreach (var (id, b) in beforeText)
+        {
+            if (!afterText.TryGetValue(id, out var a))
+            {
+                diff.Changes.Add(new DiffEntry { Kind = "text.removed", Target = id, Before = b.Text });
+                continue;
+            }
+
+            if (!string.Equals(b.Text, a.Text, StringComparison.Ordinal))
+            {
+                diff.Changes.Add(new DiffEntry
+                {
+                    Kind = "text.modified", Target = id, Property = "text", Before = b.Text, After = a.Text
+                });
+            }
+
+            string? bAlign = b.Align ?? b.Style?.HAlign;
+            string? aAlign = a.Align ?? a.Style?.HAlign;
+
+            if (!string.Equals(bAlign, aAlign, StringComparison.OrdinalIgnoreCase))
+            {
+                diff.Changes.Add(new DiffEntry
+                {
+                    Kind = "text.modified", Target = id, Property = "hAlign", Before = bAlign, After = aAlign
+                });
+            }
+
+            if (Math.Abs(b.Bounds.X - a.Bounds.X) > 1e-6 || Math.Abs(b.Bounds.Y - a.Bounds.Y) > 1e-6)
+            {
+                diff.Changes.Add(new DiffEntry
+                {
+                    Kind = "text.modified", Target = id, Property = "position",
+                    Before = $"({b.Bounds.X:F2},{b.Bounds.Y:F2})", After = $"({a.Bounds.X:F2},{a.Bounds.Y:F2})"
+                });
+            }
+        }
+
+        foreach (var id in afterText.Keys.Where(k => !beforeText.ContainsKey(k)))
+            diff.Changes.Add(new DiffEntry { Kind = "text.added", Target = id, After = afterText[id].Text });
     }
 }
 

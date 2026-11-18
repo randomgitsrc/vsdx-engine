@@ -1,0 +1,115 @@
+{
+  "id": "cbz",
+  "name": "Meta",
+  "pageSize": {
+    "width": 4.25,
+    "height": 3,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Meta",
+      "nameU": "Meta",
+      "visioId": 0,
+      "size": {
+        "width": 4.25,
+        "height": 3,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 1.2,
+            "y": 0.825,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "b",
+          "name": "B",
+          "text": "B",
+          "shape": "Rectangle",
+          "visioShapeId": "b",
+          "bounds": {
+            "x": 3.05,
+            "y": 0.825,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e",
+          "from": "a",
+          "to": "b",
+          "kind": "straight",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e"
+        }
+      ],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "b",
+        "e"
+      ],
+      "paths": [],
+      "textBlocks": []
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-18T11:02:32.2742378+00:00",
+    "modified": "2026-11-18T11:02:32.3186587+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-final/cbz.vsdx",
+    "sourceHash": "e2247be52e27ed2d728f7dbe28a9ffa77eab05ed273013b037dcba7441e00332",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-18T11:02:32.3357625+00:00",
+        "action": "create",
+        "target": "cbz.vsdx",
+        "detail": "pages=1, nodes=2, edges=1",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

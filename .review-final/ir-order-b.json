@@ -1,0 +1,4 @@
+{"irVersion":"1.0","id":"ord","title":"O","kind":"workflow",
+ "containers":[{"id":"c1","label":"First","kind":"lane","order":9},{"id":"c2","label":"Second","kind":"lane","order":0}],
+ "nodes":[{"id":"a","label":"A","containerId":"c1"},{"id":"b","label":"B","containerId":"c2"}],
+ "edges":[{"id":"e1","from":"a","to":"b"}]}

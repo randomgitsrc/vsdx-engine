@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties">
+  <property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="2" name="AgentVsdxModelMetadata">
+    <lpwstr>{"modelVersion":"1.0","created":"2026-11-18T10:52:51.0845107+00:00","modified":"2026-11-18T10:52:51.107933+00:00","generator":"Agent VSDX Engine 1.0.0","backend":"OfficeIMO.Visio","backendVersion":"3.6.1.0","history":[{"at":"2026-11-18T10:52:51.1258592+00:00","action":"create","target":"b0.vsdx","detail":"pages=1, nodes=1, edges=0","tool":"Agent VSDX Engine 1.0.0"}]}</lpwstr>
+  </property>
+</Properties>

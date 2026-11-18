@@ -1,0 +1,78 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "partial",
+  "message": "执行完成，但存在未满足的硬约束或设计约束",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=Layered, direction=topToBottom (auto)",
+    "label.spread",
+    "container.bands",
+    "canvas.auto"
+  ],
+  "unmetConstraints": [
+    {
+      "code": "no_edge_crossing",
+      "reason": "2 处交叉",
+      "isHard": true
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 2,
+    "score": 96,
+    "issueCodes": [
+      "edge.crossing"
+    ],
+    "pageUtilisation": {
+      "企业智能分析平台": 0.7653594823390486
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "web": "web",
+    "mobile": "mobile",
+    "gw": "gw",
+    "auth": "auth",
+    "ingest": "ingest",
+    "query": "query",
+    "report": "report",
+    "bus": "bus",
+    "pg": "pg",
+    "redis": "redis",
+    "lake": "lake",
+    "audit": "audit",
+    "edge": "edge",
+    "svc": "svc",
+    "data": "data",
+    "e1": "e1",
+    "e2": "e2",
+    "e3": "e3",
+    "e4": "e4",
+    "e5": "e5",
+    "e6": "e6",
+    "e7": "e7",
+    "e8": "e8",
+    "e9": "e9",
+    "e10": "e10",
+    "e11": "e11"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.review-rv/q-architecture.vsdx"
+  ],
+  "durationMs": 421,
+  "completedUtc": "2026-11-18T10:14:23.2255612+00:00"
+}

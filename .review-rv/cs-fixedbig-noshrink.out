@@ -1,0 +1,59 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "partial",
+  "message": "执行完成，但存在未满足的硬约束或设计约束",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=Layered, direction=topToBottom (auto)",
+    "container.bands",
+    "canvas.fixed"
+  ],
+  "unmetConstraints": [],
+  "warnings": [
+    {
+      "code": "layout.page.underused",
+      "message": "图形只占页面的 10%；考虑缩小页面或加大间距"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": false,
+    "hardViolations": 1,
+    "softViolations": 0,
+    "score": 0,
+    "issueCodes": [
+      "page.margins",
+      "page.underused"
+    ],
+    "pageUtilisation": {
+      "Spacing": 0.10328124999999999
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "c1": "c1",
+    "c2": "c2",
+    "e1": "e1",
+    "e2": "e2"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.review-rv/cs-fixedbig-noshrink.vsdx"
+  ],
+  "durationMs": 361,
+  "completedUtc": "2026-11-18T10:23:08.5160186+00:00"
+}

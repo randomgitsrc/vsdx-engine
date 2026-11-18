@@ -1,0 +1,6 @@
+{"modelVersion":"1.0","id":"lay","name":"Layer Test",
+ "pages":[{"id":"p1","name":"P1","size":{"width":8,"height":6,"unit":"inches"},
+   "layers":[{"name":"Edge Layer"},{"name":"App Layer"}],
+   "nodes":[{"id":"a","name":"A","text":"A","shape":"Rectangle","bounds":{"x":2,"y":4,"w":1.5,"h":0.7},"layers":["App Layer"]},
+            {"id":"b","name":"B","text":"B","shape":"Rectangle","bounds":{"x":5,"y":4,"w":1.5,"h":0.7},"layers":["App Layer"]}],
+   "edges":[{"id":"e1","from":"a","to":"b","kind":"straight","layers":["Edge Layer"]}]}]}

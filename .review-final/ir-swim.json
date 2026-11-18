@@ -1,0 +1,4 @@
+{"irVersion":"1.0","id":"sw","title":"Swim","kind":"workflow",
+ "containers":[{"id":"c1","label":"Sales","kind":"lane","order":0},{"id":"c2","label":"Ops","kind":"lane","order":1},{"id":"c3","label":"Finance","kind":"lane","order":2}],
+ "nodes":[{"id":"a","label":"A","containerId":"c1"},{"id":"b","label":"B","containerId":"c2"},{"id":"c","label":"C","containerId":"c3"}],
+ "edges":[{"id":"e1","from":"a","to":"b"},{"id":"e2","from":"b","to":"c"}]}

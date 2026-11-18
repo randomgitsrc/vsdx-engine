@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PageContents xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xml:space="preserve" xmlns="http://schemas.microsoft.com/office/visio/2012/main">
+  <Shapes>
+    <Shape ID="1" Name="A" NameU="Rectangle" Type="Shape" LineStyle="0" FillStyle="0" TextStyle="0" Master="2">
+      <Cell N="PinX" V="4.275" />
+      <Cell N="PinY" V="0.825" />
+      <Cell N="Width" V="1.3" />
+      <Cell N="Height" V="0.55" />
+      <Cell N="LocPinX" V="0.65" />
+      <Cell N="LocPinY" V="0.275" />
+      <Cell N="Angle" V="0" />
+      <Cell N="LineWeight" V="0.0138889" />
+      <Cell N="LinePattern" V="1" />
+      <Cell N="LineColor" V="#000000" />
+      <Cell N="FillPattern" V="1" />
+      <Cell N="FillForegnd" V="#FFFFFF" />
+      <Cell N="VerticalAlign" V="1" />
+      <Section N="User">
+        <Row N="VsdxModelId">
+          <Cell N="Value" V="a" />
+          <Cell N="Prompt" V="Agent VSDX Engine stable node id" />
+        </Row>
+      </Section>
+      <Section N="Character">
+        <Row IX="0">
+          <Cell N="Font" V="Microsoft YaHei" />
+        </Row>
+      </Section>
+      <Section N="Paragraph">
+        <Row IX="0">
+          <Cell N="HorzAlign" V="1" />
+        </Row>
+      </Section>
+      <Section N="Geometry" IX="0">
+        <Cell N="NoFill" V="0" />
+        <Cell N="NoLine" V="0" />
+        <Cell N="NoShow" V="0" />
+        <Cell N="NoSnap" V="0" />
+        <Cell N="NoQuickDrag" V="0" />
+        <Row T="MoveTo" IX="1">
+          <Cell N="X" V="0" />
+          <Cell N="Y" V="0" />
+        </Row>
+        <Row T="LineTo" IX="2">
+          <Cell N="X" V="1.3" />
+          <Cell N="Y" V="0" />
+        </Row>
+        <Row T="LineTo" IX="3">
+          <Cell N="X" V="1.3" />
+          <Cell N="Y" V="0.55" />
+        </Row>
+        <Row T="LineTo" IX="4">
+          <Cell N="X" V="0" />
+          <Cell N="Y" V="0.55" />
+        </Row>
+        <Row T="LineTo" IX="5">
+          <Cell N="X" V="0" />
+          <Cell N="Y" V="0" />
+        </Row>
+      </Section>
+      <Section N="Prop">
+        <Row N="OfficeIMOOriginalId">
+          <Cell N="Value" V="a" />
+        </Row>
+      </Section>
+      <Text>A</Text>
+    </Shape>
+    <Shape ID="2" NameU="TextBlock" Type="Shape" LineStyle="0" FillStyle="0" TextStyle="0" Name="t1">
+      <Cell N="PinX" V="2.55" />
+      <Cell N="PinY" V="2.175" />
+      <Cell N="Width" V="4" />
+      <Cell N="Height" V="0.6" />
+      <Cell N="LocPinX" V="2" />
+      <Cell N="LocPinY" V="0.3" />
+      <Cell N="FillPattern" V="0" />
+      <Cell N="LinePattern" V="0" />
+      <Section N="Character">
+        <Row IX="0">
+          <Cell N="Size" V="0.277778" U="PT" />
+          <Cell N="Style" V="0" />
+        </Row>
+      </Section>
+      <Section N="Paragraph">
+        <Row IX="0">
+          <Cell N="HorzAlign" V="1" />
+        </Row>
+      </Section>
+      <Cell N="VerticalAlign" V="0" />
+      <Text>Big Title Text</Text>
+      <Section N="User">
+        <Row N="VsdxModelId">
+          <Cell N="Value" V="t1" />
+          <Cell N="Prompt" V="Agent VSDX Engine stable text block id" />
+        </Row>
+      </Section>
+    </Shape>
+  </Shapes>
+</PageContents>

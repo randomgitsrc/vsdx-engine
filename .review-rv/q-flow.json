@@ -1,0 +1,87 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "partial",
+  "message": "执行完成，但存在未满足的硬约束或设计约束",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=Flow, direction=topToBottom (auto)",
+    "container.bands",
+    "canvas.auto"
+  ],
+  "unmetConstraints": [
+    {
+      "code": "no_edge_crossing",
+      "reason": "2 处交叉",
+      "isHard": true
+    }
+  ],
+  "warnings": [
+    {
+      "code": "write.text-block",
+      "message": "写入了 2 个独立文本块",
+      "target": "订单履行流程"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 8,
+    "score": 72,
+    "issueCodes": [
+      "edge.crossing",
+      "text.overlaps-container",
+      "text.overlaps-node"
+    ],
+    "pageUtilisation": {
+      "订单履行流程": 0.8415484775641024
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "start": "start",
+    "valid": "valid",
+    "risk": "risk",
+    "stock": "stock",
+    "pay": "pay",
+    "reject": "reject",
+    "manual": "manual",
+    "pick": "pick",
+    "ship": "ship",
+    "notify": "notify",
+    "done": "done",
+    "intake": "intake",
+    "review": "review",
+    "fulfil": "fulfil",
+    "f1": "f1",
+    "f2": "f2",
+    "f3": "f3",
+    "f4": "f4",
+    "f5": "f5",
+    "f6": "f6",
+    "f7": "f7",
+    "f8": "f8",
+    "f9": "f9",
+    "f10": "f10",
+    "f11": "f11",
+    "f12": "f12",
+    "title": "title",
+    "note": "note"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.review-rv/q-flow.vsdx"
+  ],
+  "durationMs": 440,
+  "completedUtc": "2026-11-18T10:14:21.5987434+00:00"
+}

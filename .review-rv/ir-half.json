@@ -1,0 +1,1 @@
+{"irVersion":"1.0","id":"x1","nodes":[{"id":"a","label":"A","anchor":{"mode":"fixed","x":7}},{"id":"b","label":"B"}],"edges":[{"id":"e1","from":"a","to":"b"}]}

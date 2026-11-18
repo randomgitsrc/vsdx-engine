@@ -1,0 +1,60 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "succeeded",
+  "message": "执行完成，硬约束全部满足",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=Layered, direction=topToBottom (auto)",
+    "container.bands",
+    "canvas.fixed+shrunk"
+  ],
+  "unmetConstraints": [
+    {
+      "code": "canvas.shrunk",
+      "target": "Spacing",
+      "reason": "请求 12x10 英寸，为容纳内容收缩为 4.85x5.63 英寸",
+      "isHard": false
+    }
+  ],
+  "warnings": [],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 0,
+    "score": 98,
+    "issueCodes": [
+      "page.margins"
+    ],
+    "pageUtilisation": {
+      "Spacing": 0.4542955326460481
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "c1": "c1",
+    "c2": "c2",
+    "e1": "e1",
+    "e2": "e2"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.review-rv/cs-fixedbig-shrink.vsdx"
+  ],
+  "durationMs": 359,
+  "completedUtc": "2026-11-18T10:23:09.3095296+00:00"
+}

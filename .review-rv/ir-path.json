@@ -1,0 +1,6 @@
+{"irVersion":"1.0","id":"fp","nodes":[{"id":"a","label":"A"}],
+ "paths":[{"id":"tri","name":"Triangle","box":{"x":2,"y":2,"width":1,"height":1},"stroke":"#CC0000","strokeWidth":0.02,
+   "rows":[{"type":"MoveTo","cells":{"X":"0","Y":"0"}},
+           {"type":"LineTo","cells":{"X":"1","Y":"0"}},
+           {"type":"LineTo","cells":{"X":"0.5","Y":"1"}},
+           {"type":"LineTo","cells":{"X":"0","Y":"0"}}]}]}

@@ -1,0 +1,82 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "succeeded",
+  "message": "执行完成，硬约束全部满足",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=Layered, direction=topToBottom (auto)",
+    "container.bands",
+    "canvas.auto"
+  ],
+  "unmetConstraints": [],
+  "warnings": [
+    {
+      "code": "write.text-block",
+      "message": "写入了 4 个独立文本块",
+      "target": "企业网络拓扑"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 4,
+    "score": 94,
+    "issueCodes": [
+      "edge.crossing"
+    ],
+    "pageUtilisation": {
+      "企业网络拓扑": 0.8330977287720293
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "inet": "inet",
+    "fw": "fw",
+    "waf": "waf",
+    "lb": "lb",
+    "dmz": "dmz",
+    "core1": "core1",
+    "appsw": "appsw",
+    "app1": "app1",
+    "app2": "app2",
+    "db": "db",
+    "ids": "ids",
+    "bak": "bak",
+    "edge": "edge",
+    "core": "core",
+    "sec": "sec",
+    "n1": "n1",
+    "n2": "n2",
+    "n3": "n3",
+    "n4": "n4",
+    "n5": "n5",
+    "n6": "n6",
+    "n7": "n7",
+    "n8": "n8",
+    "n9": "n9",
+    "n10": "n10",
+    "n11": "n11",
+    "n12": "n12",
+    "title": "title",
+    "subtitle": "subtitle",
+    "legend": "legend",
+    "note": "note"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.review-rv/nh-network.vsdx"
+  ],
+  "durationMs": 417,
+  "completedUtc": "2026-11-18T10:19:02.0919562+00:00"
+}

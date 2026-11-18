@@ -1,0 +1,3 @@
+{"irVersion":"1.0","id":"tbal","title":"Aligned Title","kind":"workflow",
+ "nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"}],"edges":[{"id":"e","from":"a","to":"b"}],
+ "textBlocks":[{"id":"t1","text":"Aligned Title","role":"title","box":{"x":1,"y":2,"width":4,"height":0.5},"align":"center"}]}

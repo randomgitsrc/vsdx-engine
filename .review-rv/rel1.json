@@ -1,0 +1,65 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "partial",
+  "message": "执行完成，但存在未满足的硬约束或设计约束",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=manual",
+    "container.bands",
+    "canvas.auto (manual: coordinates kept)"
+  ],
+  "unmetConstraints": [],
+  "warnings": [
+    {
+      "code": "layout.node.overlap",
+      "message": "节点 'a' 与 'b' 重叠",
+      "target": "a"
+    },
+    {
+      "code": "layout.node.out-of-page",
+      "message": "节点 'a' 超出页面边界 (1.2x0.825)",
+      "target": "a"
+    },
+    {
+      "code": "layout.node.out-of-page",
+      "message": "节点 'b' 超出页面边界 (1.2x0.825)",
+      "target": "b"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": false,
+    "hardViolations": 3,
+    "softViolations": 0,
+    "score": 0,
+    "issueCodes": [
+      "node.out-of-page",
+      "node.overlap"
+    ],
+    "pageUtilisation": {
+      "Page-1": 0.727777777777778
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "a": "a",
+    "b": "b",
+    "e1": "e1"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.review-rv/rel1.vsdx"
+  ],
+  "durationMs": 332,
+  "completedUtc": "2026-11-18T10:17:51.8445209+00:00"
+}

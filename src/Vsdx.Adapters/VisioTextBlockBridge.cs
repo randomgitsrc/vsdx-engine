@@ -183,7 +183,14 @@ public static class VisioTextBlockBridge
         shape.Add(character);
 
         // Alignment lives in the paragraph section.
-        string align = block.Align?.ToLowerInvariant() switch
+        //
+        // Two fields carry it: `TextBlock.Align` (set by an author in the IR) and
+        // `TextBlock.Style.HAlign` (set by the reader when parsing a package). The writer only read
+        // the first, so a round trip silently reset every block to left — measured, a centred title
+        // came back left-aligned while `changes` stayed empty and `diff` reported identical.
+        string? requested = block.Align ?? block.Style?.HAlign;
+
+        string align = requested?.ToLowerInvariant() switch
         {
             "center" => "1",
             "right" => "2",

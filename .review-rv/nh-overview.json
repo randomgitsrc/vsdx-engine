@@ -1,0 +1,85 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "succeeded",
+  "message": "执行完成，硬约束全部满足",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=Layered, direction=topToBottom (auto)",
+    "label.spread",
+    "container.bands",
+    "canvas.auto"
+  ],
+  "unmetConstraints": [],
+  "warnings": [
+    {
+      "code": "write.free-path",
+      "message": "写入了 1 个自定义几何形状（原始指令逐行保留）",
+      "target": "系统全景综合图"
+    },
+    {
+      "code": "write.text-block",
+      "message": "写入了 4 个独立文本块",
+      "target": "系统全景综合图"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 7,
+    "score": 92,
+    "issueCodes": [
+      "edge.crossing",
+      "page.margins"
+    ],
+    "pageUtilisation": {
+      "系统全景综合图": 0.7475934838948539
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "web": "web",
+    "mobile": "mobile",
+    "api": "api",
+    "order": "order",
+    "report": "report",
+    "worker": "worker",
+    "pg": "pg",
+    "redis": "redis",
+    "kafka": "kafka",
+    "mon": "mon",
+    "front": "front",
+    "back": "back",
+    "infra": "infra",
+    "g1": "g1",
+    "g2": "g2",
+    "g3": "g3",
+    "g4": "g4",
+    "g5": "g5",
+    "g6": "g6",
+    "g7": "g7",
+    "g8": "g8",
+    "g9": "g9",
+    "title": "title",
+    "subtitle": "subtitle",
+    "legend": "legend",
+    "note": "note",
+    "rule": "rule"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.review-rv/nh-overview.vsdx"
+  ],
+  "durationMs": 425,
+  "completedUtc": "2026-11-18T10:19:02.6324052+00:00"
+}

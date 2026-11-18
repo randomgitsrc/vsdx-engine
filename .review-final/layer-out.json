@@ -1,0 +1,148 @@
+{
+  "id": "layer",
+  "name": "L",
+  "pageSize": {
+    "width": 8,
+    "height": 6,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "P1",
+      "nameU": "P1",
+      "visioId": 0,
+      "size": {
+        "width": 8,
+        "height": 6,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 2,
+            "y": 4,
+            "w": 1.5,
+            "h": 0.7
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "layers": [
+            "App Layer"
+          ],
+          "imported": true
+        },
+        {
+          "id": "b",
+          "name": "B",
+          "text": "B",
+          "shape": "Rectangle",
+          "visioShapeId": "b",
+          "bounds": {
+            "x": 5,
+            "y": 4,
+            "w": 1.5,
+            "h": 0.7
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "layers": [
+            "App Layer"
+          ],
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "a",
+          "to": "b",
+          "kind": "straight",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e1",
+          "layers": [
+            "Edge Layer"
+          ]
+        }
+      ],
+      "layers": [
+        {
+          "id": "Edge Layer",
+          "name": "Edge Layer",
+          "nameU": "Edge Layer",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": [
+            "e1"
+          ]
+        },
+        {
+          "id": "App Layer",
+          "name": "App Layer",
+          "nameU": "App Layer",
+          "visible": true,
+          "locked": false,
+          "print": true,
+          "members": [
+            "a",
+            "b"
+          ]
+        }
+      ],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "b",
+        "e1"
+      ],
+      "paths": [],
+      "textBlocks": []
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-18T10:44:55.4722255+00:00",
+    "modified": "2026-11-18T10:44:55.4913244+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-final/layer.vsdx",
+    "sourceHash": "eadf91fca9257c4c9905672c144f6e035bb96895cf869dab7dd340d94bfaf278",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-18T10:44:55.5039882+00:00",
+        "action": "create",
+        "target": "layer.vsdx",
+        "detail": "pages=1, nodes=2, edges=1",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}
