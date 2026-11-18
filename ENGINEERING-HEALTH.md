@@ -1,5 +1,18 @@
 # ENGINEERING HEALTH — vsdx-engine
 
+**性质：快照，不是当前状态。** 记录时间用 `git log -1 --format=%cd -- ENGINEERING-HEALTH.md`。
+当前规模用以下命令实测：
+
+```bash
+git ls-files | wc -l                              # 跟踪文件
+find src -name '*.cs' | xargs cat | wc -l         # 源码行数
+find src -name '*.cs' | xargs wc -l | sort -rn | head -12   # 最大文件
+dotnet test VsdxEngine.sln -c Release             # 测试数
+```
+
+**仍然成立的判断**：`LayoutAnalyzer.cs` 与 `Program.cs` 是最大的两个文件，
+承担职责过宽；`DesignSpec.cs` 是"单点 if 集合"。这三条是结构性观察，不随行数变化。
+
 **调查日期：** 2026-11-18
 **基线提交：** `3cad2f3`
 **方法：** 命令实测 + 源码统计；无一项依据印象。

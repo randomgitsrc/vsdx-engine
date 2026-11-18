@@ -313,6 +313,30 @@ public static class LayoutAnalyzer
                         SuggestedLevel = FixLevel.RegionRelayout
                     });
                 }
+
+                // A member that reaches into the heading band is *inside* the container, so
+                // `group.member-escapes` says nothing and no bounding box overlaps the heading — the
+                // measured case had both edges at exactly y=2.55. The heading is painted over and only
+                // a human notices; the diagram scored 98/100 with "数据层 Data" covered by a node.
+                double memberTop = node.Bounds.Y + node.Bounds.H / 2;
+                double headingBottom = group.Bounds.Y + group.Bounds.H / 2 - DiagramLayout.ContainerHeading;
+
+                // `>=`, not `>`: the measured case sits exactly on the boundary, and that is the
+                // worst outcome — the heading is drawn in the same place as the member's top edge.
+                if (memberTop >= headingBottom - options.OverlapTolerance)
+                {
+                    report.Add(new LayoutIssue
+                    {
+                        Code = "container.heading-collision",
+                        Severity = "warning",
+                        Page = page.Name,
+                        Targets = new[] { group.Id, memberId },
+                        Message = $"节点 '{memberId}' 进入容器 '{group.Id}' 的标题区，标题文字会被遮挡",
+                        RootCause = "成员顶端未留出标题高度",
+                        RecommendedFix = "容器顶部为标题预留 ContainerHeading，或下移成员",
+                        SuggestedLevel = FixLevel.RegionRelayout
+                    });
+                }
             }
         }
 

@@ -42,7 +42,9 @@ public sealed class DetectorDocumentationTests
         var doc = File.ReadAllText(
             Path.Combine(RepoRoot(), "docs", "capability-boundaries.md"));
 
-        return Regex.Matches(doc, "`((?:node|group|edge|label|text|row|spacing|page)\\.[a-z.\\-]+)`")
+        // Every code namespace the analyser emits. `container` was absent, so a newly added
+        // `container.heading-collision` read as undocumented although the table listed it.
+        return Regex.Matches(doc, "`((?:node|group|container|edge|label|text|row|spacing|page)\\.[a-z.\\-]+)`")
             .Select(m => m.Groups[1].Value)
             .ToHashSet(StringComparer.Ordinal);
     }

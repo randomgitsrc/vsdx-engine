@@ -70,7 +70,7 @@ label.overlaps-label (4)
 - 标签不重叠（只能减少，无法完全消除）
 
 
-## 三附、检测器实际覆盖的 23 类问题
+## 三附、检测器实际覆盖的 24 类问题
 
 `check-layout` 与 `execute` 的 `quality` 字段会报告以下代码。**这是引擎能自动发现的问题全集。**
 
@@ -83,6 +83,7 @@ label.overlaps-label (4)
 | `group.overlap` | 两个容器相交 | error |
 | `group.member-escapes` | 成员落在容器外 | error |
 | `group.gutter` | 容器之间间距过小 | warning |
+| `container.heading-collision` | 成员进入容器标题区，标题被遮挡 | warning |
 
 ### 文字
 
@@ -124,7 +125,7 @@ label.overlaps-label (4)
 **warning / info 级（只影响 `score`）：** 其余全部。
 
 实测确认：**error 级 7 项，warning 14 项，info 1 项**（`page.margins`），
-另加 `page.underused` 的严重度按利用率动态计算（warning，严重时 error），合计 23 个代码。
+另加 `page.underused` 的严重度按利用率动态计算（warning，严重时 error），合计 24 个代码。
 
 ## 四、能画好的
 

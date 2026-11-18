@@ -40,7 +40,7 @@
 
 **质量检测**
 
-- 23 类问题，其中 7 类为 error 级（令 `hardConstraintsPassed=false`）
+- 24 类问题，其中 7 类为 error 级（令 `hardConstraintsPassed=false`）
 - 覆盖 node↔node、group↔group、group↔child、label↔node、label↔label、
   text↔group、text↔node、text↔text
 
