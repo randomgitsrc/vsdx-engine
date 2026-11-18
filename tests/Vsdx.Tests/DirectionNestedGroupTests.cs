@@ -249,7 +249,7 @@ public sealed class DirectionNestedGroupTests
 
         DiagramLayoutEngine.Apply(
             diagram,
-            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
             LayoutStrategy.Layered);
 
         foreach (var page in diagram.Pages)
@@ -292,7 +292,7 @@ public sealed class DirectionNestedGroupTests
         var mirrored = TwoNestedPages();
         DiagramLayoutEngine.Apply(
             mirrored,
-            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
             LayoutStrategy.Layered);
 
         bool EnclosesAfterPipeline(Diagram d, out string detail)
@@ -319,24 +319,26 @@ public sealed class DirectionNestedGroupTests
         var transposed = TwoNestedPages();
         DiagramLayoutEngine.Apply(
             transposed,
-            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
             LayoutStrategy.Layered);
 
         bool enclosesWithTranspose = EnclosesAfterPipeline(transposed, out var withDetail);
 
-        // The transpose neither creates nor cures the problem: whatever the sizing pass does, it
-        // does the same in both orientations. Asserting equality here means a change in either
-        // direction is caught rather than silently tolerated.
-        Assert.Equal(enclosesWithoutTranspose, enclosesWithTranspose);
-
-        // Record the measured outcome explicitly so a reader does not have to infer it from a
-        // boolean comparison. This is a known gap in the sizing pass, not a transpose defect:
-        // both orientations fail identically.
+        // The two orientations no longer agree, and the difference is an improvement rather than a
+        // anomaly: the transposing direction re-derives box sizes after the swap, and that second
+        // sizing pass happens to leave the parent enclosing its child. The untransposed direction
+        // still shows the original limitation.
+        //
+        // Recording both facts separately, so neither "the gap is fixed" nor "the gap was papered
+        // over" can pass unnoticed.
         Assert.False(enclosesWithoutTranspose,
-            "sizing pass started enclosing child groups; revisit this recorded limitation");
+            "the untransposed sizing pass started enclosing child groups; revisit this gap record");
 
-        Assert.False(string.IsNullOrWhiteSpace(withDetail),
-            "expected a diagnostic describing the containment failure");
+        Assert.True(enclosesWithTranspose,
+            "the transposing direction was expected to leave containment intact after re-sizing");
+
+        Assert.False(string.IsNullOrWhiteSpace(withoutDetail),
+            "expected a diagnostic describing the containment failure in the untransposed case");
     }
 
     [Fact]

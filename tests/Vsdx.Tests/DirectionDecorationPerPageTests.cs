@@ -198,7 +198,7 @@ public sealed class DirectionDecorationPerPageTests
 
         DiagramLayoutEngine.Apply(
             diagram,
-            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
             LayoutStrategy.Layered);
 
         foreach (var page in diagram.Pages)

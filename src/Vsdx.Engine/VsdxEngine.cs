@@ -67,7 +67,12 @@ public sealed class VsdxEngine
                 ? DiagramLayoutEngine.SuggestStrategy(diagram)
                 : DiagramLayoutEngine.Parse(requested);
 
-            DiagramLayoutEngine.Apply(diagram, new LayoutOptions(), strategy);
+            // The create path lays out in the engine's own direction. Stating it explicitly matters
+            // now that the default is LeftToRight: a default that transposes would silently rotate
+            // every model sent through create, which is not what a caller passing a
+            // hand-positioned Diagram is asking for.
+            DiagramLayoutEngine.Apply(
+                diagram, new LayoutOptions { Direction = LayoutDirection.TopToBottom }, strategy);
         }
 
         if (options?.AutoLayout ?? true)

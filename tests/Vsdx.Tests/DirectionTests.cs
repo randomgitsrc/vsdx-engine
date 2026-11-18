@@ -55,14 +55,14 @@ public sealed class DirectionTests
         DiagramLayoutEngine.Apply(wide, new LayoutOptions
         {
             Strategy = strategy,
-            Direction = LayoutDirection.LeftToRight
+            Direction = LayoutDirection.TopToBottom
         }, strategy);
 
         var tall = Chain();
         DiagramLayoutEngine.Apply(tall, new LayoutOptions
         {
             Strategy = strategy,
-            Direction = LayoutDirection.TopToBottom
+            Direction = LayoutDirection.LeftToRight
         }, strategy);
 
         var (wideX, wideY) = Spread(wide);
@@ -75,22 +75,29 @@ public sealed class DirectionTests
     }
 
     [Fact]
-    public void TopToBottom_IsNotAnIdentity()
+    public void LeftToRightIsNotAnIdentity()
     {
-        var wide = Chain();
-        DiagramLayoutEngine.Apply(wide, new LayoutOptions { Strategy = LayoutStrategy.Layered });
-
-        var tall = Chain();
-        DiagramLayoutEngine.Apply(tall, new LayoutOptions
+        // LeftToRight is the direction that transposes, so it must differ from the engine's own
+        // vertical default. Both are stated explicitly: relying on the default for the "before"
+        // case made this compare a direction against itself once the semantics were corrected.
+        var vertical = Chain();
+        DiagramLayoutEngine.Apply(vertical, new LayoutOptions
         {
             Strategy = LayoutStrategy.Layered,
             Direction = LayoutDirection.TopToBottom
         });
 
-        var widePositions = wide.Pages[0].Nodes.Select(n => (n.Bounds.X, n.Bounds.Y)).ToList();
-        var tallPositions = tall.Pages[0].Nodes.Select(n => (n.Bounds.X, n.Bounds.Y)).ToList();
+        var horizontal = Chain();
+        DiagramLayoutEngine.Apply(horizontal, new LayoutOptions
+        {
+            Strategy = LayoutStrategy.Layered,
+            Direction = LayoutDirection.LeftToRight
+        });
 
-        Assert.NotEqual(widePositions, tallPositions);
+        var a = vertical.Pages[0].Nodes.Select(n => (Math.Round(n.Bounds.X, 2), Math.Round(n.Bounds.Y, 2))).ToList();
+        var b = horizontal.Pages[0].Nodes.Select(n => (Math.Round(n.Bounds.X, 2), Math.Round(n.Bounds.Y, 2))).ToList();
+
+        Assert.NotEqual(a, b);
     }
 
     [Fact]
@@ -111,7 +118,7 @@ public sealed class DirectionTests
         DiagramLayoutEngine.Apply(diagram, new LayoutOptions
         {
             Strategy = LayoutStrategy.Manual,
-            Direction = LayoutDirection.TopToBottom
+            Direction = LayoutDirection.LeftToRight
         }, LayoutStrategy.Manual);
 
         Assert.Equal(2, page.Nodes[0].Bounds.X, 3);
@@ -121,18 +128,16 @@ public sealed class DirectionTests
     }
 
     [Fact]
-    public void Manual_WithTopToBottom_IsReportedAsIgnored()
+    public void ManualIgnoresDirectionWhicheverIsAsked()
     {
-        var options = new LayoutOptions
+        // Manual keeps the author's coordinates, so neither direction can be honoured.
+        foreach (var direction in new[] { LayoutDirection.LeftToRight, LayoutDirection.TopToBottom })
         {
-            Strategy = LayoutStrategy.Manual,
-            Direction = LayoutDirection.TopToBottom
-        };
+            var options = new LayoutOptions { Strategy = LayoutStrategy.Manual, Direction = direction };
 
-        Assert.True(DiagramLayoutEngine.IsDirectionIgnoredUnderManual(options, LayoutStrategy.Manual));
-        Assert.False(DiagramLayoutEngine.IsDirectionIgnoredUnderManual(options, LayoutStrategy.Layered));
-        Assert.False(DiagramLayoutEngine.IsDirectionIgnoredUnderManual(
-            options with { Direction = LayoutDirection.LeftToRight }, LayoutStrategy.Manual));
+            Assert.True(DiagramLayoutEngine.IsDirectionIgnoredUnderManual(options, LayoutStrategy.Manual));
+            Assert.False(DiagramLayoutEngine.IsDirectionIgnoredUnderManual(options, LayoutStrategy.Layered));
+        }
     }
 
     [Fact]

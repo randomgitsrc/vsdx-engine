@@ -66,7 +66,12 @@ public sealed class DeclarationOrderTests
         var ir = JsonSerializer.Deserialize<DiagramIr>(BandIr, Json)!;
         var diagram = DiagramIrConverter.ToDiagram(ir);
 
-        DiagramLayoutEngine.Apply(diagram, new LayoutOptions(), LayoutStrategy.Layered);
+        // The engine's own direction, stated rather than defaulted: the default transposes, and
+        // in-band order then runs along Y instead of X.
+        DiagramLayoutEngine.Apply(
+            diagram,
+            new LayoutOptions { Direction = LayoutDirection.TopToBottom },
+            LayoutStrategy.Layered);
 
         var byId = diagram.Pages[0].Nodes.ToDictionary(n => n.Id, n => n.Bounds.X, StringComparer.Ordinal);
 

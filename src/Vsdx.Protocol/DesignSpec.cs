@@ -284,13 +284,13 @@ public static class DesignSpecApplier
         // Manual promises that the author's coordinates survive untouched, so a top-to-bottom
         // request cannot be honoured there. Saying so is the only honest option: silently
         // ignoring it would leave the caller believing the page was transposed.
-        if (manualRequested && wantsTopToBottom)
+        if (manualRequested)
         {
             unmet.Add(new UnmetConstraint
             {
                 Code = "direction.manual-ignored",
                 Target = "layout",
-                Reason = "manual 保留作者坐标，direction=topToBottom 未应用"
+                Reason = $"manual 保留作者坐标，direction={spec.Direction} 未应用"
             });
         }
 

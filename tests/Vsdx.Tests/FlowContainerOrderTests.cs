@@ -66,7 +66,7 @@ public sealed class FlowContainerOrderTests
             var diagram = new VsdxEngine().Read(output).Diagram;
             return diagram.Pages[0].Groups
                 .Where(g => g.Bounds is not null)
-                .ToDictionary(g => g.Id, g => g.Bounds!.Y, StringComparer.Ordinal);
+                .ToDictionary(g => g.Id, g => ReadingAxis(g.Bounds!), StringComparer.Ordinal);
         }
         finally
         {
@@ -141,7 +141,7 @@ public sealed class FlowContainerOrderTests
             foreach (var page in diagram.Pages)
             {
                 var groups = page.Groups.Where(g => g.Bounds is not null)
-                    .ToDictionary(g => g.Id, g => g.Bounds!.Y, StringComparer.Ordinal);
+                    .ToDictionary(g => g.Id, g => ReadingAxis(g.Bounds!), StringComparer.Ordinal);
 
                 var first = groups.Keys.Single(k => k.StartsWith("a"));
                 var second = groups.Keys.Single(k => k.StartsWith("b"));
@@ -155,4 +155,13 @@ public sealed class FlowContainerOrderTests
             File.Delete(output);
         }
     }
+
+    /// <summary>
+    /// The coordinate bands are ordered along.
+    ///
+    /// Bands stack vertically in the engine's own arrangement, so Y. Highlighting `leftToRight`
+    /// transposes the page, after which the same ordering runs along X. Comparing Y in both cases
+    /// made the tests read a constant.
+    /// </summary>
+    private static double ReadingAxis(Bounds bounds) => bounds.H > bounds.W ? bounds.Y : bounds.X;
 }

@@ -102,7 +102,7 @@ public sealed class DirectionMultiPageTests
     [Fact]
     public void TopToBottom_TransposesEveryPage()
     {
-        var diagram = LaidOut(LayoutDirection.TopToBottom);
+        var diagram = LaidOut(LayoutDirection.LeftToRight);
 
         foreach (var page in diagram.Pages)
         {
@@ -116,7 +116,7 @@ public sealed class DirectionMultiPageTests
     [Fact]
     public void BothPagesAgreeOnOrientation()
     {
-        var diagram = LaidOut(LayoutDirection.TopToBottom);
+        var diagram = LaidOut(LayoutDirection.LeftToRight);
 
         var shapes = diagram.Pages.Select(p =>
         {
@@ -131,8 +131,8 @@ public sealed class DirectionMultiPageTests
     [Fact]
     public void TwoPagesAreNotRestoredToOriginalOrientation()
     {
-        var original = LaidOut(LayoutDirection.LeftToRight);
-        var transposed = LaidOut(LayoutDirection.TopToBottom);
+        var original = LaidOut(LayoutDirection.TopToBottom);
+        var transposed = LaidOut(LayoutDirection.LeftToRight);
 
         for (int i = 0; i < original.Pages.Count; i++)
         {
@@ -149,7 +149,7 @@ public sealed class DirectionMultiPageTests
     [Fact]
     public void PageSizeIsSwappedExactlyOncePerPage()
     {
-        var diagram = LaidOut(LayoutDirection.TopToBottom);
+        var diagram = LaidOut(LayoutDirection.LeftToRight);
 
         foreach (var page in diagram.Pages)
         {
@@ -162,7 +162,7 @@ public sealed class DirectionMultiPageTests
     [Fact]
     public void DocumentLevelPageSizeAndOrientationAreHandledOnce()
     {
-        var diagram = LaidOut(LayoutDirection.TopToBottom);
+        var diagram = LaidOut(LayoutDirection.LeftToRight);
 
         Assert.True(diagram.PageSize!.Width < diagram.PageSize.Height,
             $"top-level PageSize {diagram.PageSize.Width:F1}x{diagram.PageSize.Height:F1} not swapped once");
@@ -172,7 +172,7 @@ public sealed class DirectionMultiPageTests
     [Fact]
     public void TextBlocksPathsAndEdgeWaypointsFollowThePage()
     {
-        var diagram = LaidOut(LayoutDirection.TopToBottom);
+        var diagram = LaidOut(LayoutDirection.LeftToRight);
 
         // A wide page becomes tall, so an element authored at (3, 7) must land at (7, 3):
         // the coordinates change places, and so do width and height.
@@ -208,7 +208,7 @@ public sealed class DirectionMultiPageTests
     [Fact]
     public void GroupPaddingAndHeadingTradeAxes()
     {
-        var diagram = LaidOut(LayoutDirection.TopToBottom);
+        var diagram = LaidOut(LayoutDirection.LeftToRight);
 
         foreach (var group in diagram.Pages.SelectMany(p => p.Groups))
         {
@@ -224,7 +224,7 @@ public sealed class DirectionMultiPageTests
         var diagram = TwoPageDiagram();
         DiagramLayoutEngine.Apply(
             diagram,
-            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
             LayoutStrategy.Layered);
 
         var before = diagram.Pages.Select(p => p.Nodes
@@ -266,7 +266,7 @@ public sealed class DirectionMultiPageTests
 
         DiagramLayoutEngine.Apply(
             diagram,
-            new LayoutOptions { Strategy = LayoutStrategy.Manual, Direction = LayoutDirection.TopToBottom },
+            new LayoutOptions { Strategy = LayoutStrategy.Manual, Direction = LayoutDirection.LeftToRight },
             LayoutStrategy.Manual);
 
         for (int i = 0; i < diagram.Pages.Count; i++)
@@ -297,7 +297,7 @@ public sealed class DirectionMultiPageTests
 
         DiagramLayoutEngine.Apply(
             diagram,
-            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
             LayoutStrategy.Layered);
 
         // With an odd page count the old bug flipped each page three times: still wrong, but
@@ -342,7 +342,7 @@ public sealed class DirectionMultiPageTests
 
         DiagramLayoutEngine.Apply(
             diagram,
-            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
             LayoutStrategy.Layered);
 
         // Container padding is axis-specific, so it has to trade sides with the geometry.

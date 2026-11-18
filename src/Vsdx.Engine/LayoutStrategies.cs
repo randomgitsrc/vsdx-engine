@@ -131,7 +131,7 @@ public static class DiagramLayoutEngine
     /// rather than silently ignored.
     /// </summary>
     public static bool IsDirectionIgnoredUnderManual(LayoutOptions options, LayoutStrategy strategy) =>
-        options.Direction == LayoutDirection.TopToBottom && strategy == LayoutStrategy.Manual;
+        strategy == LayoutStrategy.Manual;
 
     /// <summary>Runs the requested strategy. Manual is a no-op.</summary>
     public static LayoutResult Apply(
@@ -175,9 +175,18 @@ public static class DiagramLayoutEngine
         // Manual is deliberately excluded: its contract is that the author's coordinates are
         // final, so reflecting them would break the one guarantee manual makes. The caller
         // reports that as unmet rather than applying it silently.
-        if (options.Direction == LayoutDirection.TopToBottom && strategy != LayoutStrategy.Manual)
+        // Layered stacks bands bottom-up — a vertical result. So LeftToRight is the one that needs
+        // the transpose; the two names were swapped, and `leftToRight` produced an 11" x 23.3"
+        // strip while `topToBottom` produced 23.3" x 11".
+        if (options.Direction == LayoutDirection.LeftToRight && strategy != LayoutStrategy.Manual)
         {
             DiagramLayout.Transpose(diagram);
+
+            // Transposing swaps every box's width and height, but the text inside was measured
+            // against the pre-transpose shape: a wide label fitted a wide box, and after the swap
+            // the same box is narrow and the label overflows. Re-derive the boxes so sizing follows
+            // the orientation the caller asked for.
+            DiagramSizer.Apply(diagram);
         }
 
         return results.FirstOrDefault() ?? new LayoutResult { Strategy = strategy };
