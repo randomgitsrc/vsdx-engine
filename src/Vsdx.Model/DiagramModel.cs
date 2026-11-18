@@ -336,6 +336,13 @@ public sealed class Metadata
     public DateTimeOffset Modified { get; set; } = DateTimeOffset.UtcNow;
     public string ModelVersion { get; set; } = Vsdx.Model.ModelVersion.Current;
     public string? SourceFile { get; set; }
+
+    /// <summary>Free-text description carried from the IR. Persisted in the package.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Free-form tags carried from the IR. Persisted in the package.</summary>
+    public Dictionary<string, string>? Tags { get; set; }
+
     /// <summary>SHA-256 of the source VSDX, for incremental-change detection.</summary>
     public string? SourceHash { get; set; }
     public string? Backend { get; set; }

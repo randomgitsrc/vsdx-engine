@@ -167,8 +167,11 @@ public sealed class RoleColorReportingTests
 
         try
         {
-            Assert.DoesNotContain(result.UnmetConstraints,
-                u => u.Code.Contains("role", StringComparison.OrdinalIgnoreCase));
+            // A node without a role is not an *uncovered* role — that distinction stands. What the
+            // charter adds is that a supplied map which coloured nothing at all cannot pass in
+            // silence, so `roleColors-unused` is expected here while `role-uncovered` is not.
+            Assert.DoesNotContain(result.UnmetConstraints, u => u.Code == "theme.role-uncovered");
+            Assert.Contains(result.UnmetConstraints, u => u.Code == "theme.roleColors-unused");
         }
         finally
         {

@@ -251,6 +251,12 @@ public static class DiagramIrConverter
             Id = ir.Id,
             Name = ir.Title ?? ir.Id,
             Type = ir.Kind,
+            Metadata =
+            {
+                // Carried rather than dropped: these were parsed and then silently discarded.
+                Description = ir.Metadata?.Description,
+                Tags = ir.Metadata?.Tags
+            },
             ModelVersion = ModelVersion.Current
         };
 

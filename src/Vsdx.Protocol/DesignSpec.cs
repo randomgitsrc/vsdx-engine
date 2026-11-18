@@ -402,6 +402,19 @@ public static class DesignSpecApplier
                     });
                 }
             }
+
+            // Spacing has the same problem: it is only consumed by the layout engines, so under
+            // manual it cannot take effect. `direction` and `containerLayouts` already report from
+            // this branch; spacing was the one silently dropped.
+            if (spec.Spacing.NodeGapX is not null || spec.Spacing.BandGapY is not null)
+            {
+                unmet.Add(new UnmetConstraint
+                {
+                    Code = "spacing.manual-ignored",
+                    Target = "layout",
+                    Reason = "manual 保留作者坐标，spacing 未应用"
+                });
+            }
         }
 
         DiagramLayout.Apply(diagram);
@@ -453,7 +466,9 @@ public static class DesignSpecApplier
                 index++;
             }
         }
-        applied.Add("container.bands");
+        // Only claim the step when it did something: a diagram with no containers had no bands to
+        // style, and recording the note anyway made `applied` describe work that never happened.
+        if (diagram.Pages.Any(p => p.Groups.Count > 0)) applied.Add("container.bands");
 
         // --- Theme ---------------------------------------------------------
         if (spec.Theme?.RoleColors is { Count: > 0 })
@@ -493,7 +508,22 @@ public static class DesignSpecApplier
                 }
             }
 
-            if (coloured > 0) applied.Add("theme.roleColors");
+            if (coloured > 0)
+            {
+                applied.Add("theme.roleColors");
+            }
+            else if (uncovered.Count == 0)
+            {
+                // A map was supplied but no node carries a role, so nothing could be coloured. That
+                // is neither applied nor an uncovered role, which left it invisible: the caller saw
+                // no mention of their request at all.
+                unmet.Add(new UnmetConstraint
+                {
+                    Code = "theme.roleColors-unused",
+                    Target = "theme",
+                    Reason = "提供了 roleColors，但图中没有带 role 的节点，未着色任何对象"
+                });
+            }
 
             foreach (var role in uncovered)
             {
