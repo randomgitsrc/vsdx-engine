@@ -1,4 +1,12 @@
-# 自动化测试报告
+# 自动化测试报告（历史快照）
+
+> **本文档记录的是某一时刻的结果，不是当前状态。**
+>
+> 记录时间：`git log -1 --format=%cd -- docs/test-report.md`。
+> 当前测试数量：`dotnet test` 实测。
+>
+> **不作为能力依据。** 判断当前测试覆盖请看 `docs/phase8/capability-matrix.md`
+> 与测试源码本身。保留本文档的目的，是记录当时验证了哪些行为、如何验证的。
 
 ```bash
 dotnet test tests/Vsdx.Tests/Vsdx.Tests.csproj -c Release

@@ -22,6 +22,12 @@
 ┌───────────────────────────────────────────────┐
 │  Vsdx.Cli   (vsdx-tool)                       │  参数解析 / JSON 输出 / 退出码
 ├───────────────────────────────────────────────┤
+│  Vsdx.Protocol                                │  IR / DesignSpec / ExecutionResult
+│   ├── DiagramIr           IR → Diagram         │  三层协议的契约
+│   ├── DesignSpec          外观应用 + 报告        │
+│   ├── ProtocolRunner      阶段编排与状态判定     │
+│   └── DesignSpecApplier   应用并记录 unmet      │
+├───────────────────────────────────────────────┤
 │  Vsdx.Engine                                  │  编排：Create / Read / Update /
 │   ├── VsdxEngine          门面                 │        Render / Validate / Diff
 │   ├── DiagramLayout       容器几何推导         │
