@@ -120,35 +120,17 @@ $ execute --ir checkout-sequence.ir.json
 
 详见 `capability-boundaries.md`。
 
-## 7. 校验器不检查 Master 引用有效性
+---
 
-悬空的 `Master="9999"` 仍返回 `valid: true`，而 Visio 会显示为损坏形状。
+## 7. 极简模型下 palette 不生效
 
-**为何未修**：补齐需要在 `visio.shape-ids-unique` 旁增加一项，
-解析 `visio/masters/masters.xml` 的 `<Master ID>` 集合并与每页的 `Master=` 属性比对。
+**实测**：单节点、无容器的模型，`enterprise` 与 `midnight` 都产出 `fill=#FFFFFF stroke=#000000`，
+两套 palette 渲染结果相同。同样的两套用在 `cbo`（3 层容器、多种角色）上则不同。
 
-**代价**：`ValidatorCoverageTests` 里有一条断言当前行为是 `IsValid == true` 的测试，
-实现后它会失败——这是正确信号，但需要同步修改。
+**原因**：palette 通过 `roleColors` 与容器色带生效；无容器的单节点两者都没有。
 
-**影响**：`valid: true` 不能推出「文件在 Visio 中完整可用」。
-外部编辑过的文件可能带本引擎不会写出的悬空引用，而校验器不会报告。
-
-详见 `limitations.md` §11。
-
-## 8. 极简模型下 palette 不生效
-
-**实测**：一个单节点、无容器的模型，`enterprise` 与 `midnight` 都产出色值
-`fill=#FFFFFF stroke=#000000`——**两套 palette 产出的 PNG 相同**。
-
-同样的两套 palette 用在 `cbo`（3 层容器、多种角色）上，PNG **不同**。
-
-**原因**：palette 通过 `roleColors` 作用于角色色与容器色带；一个无容器的单节点既没有
-容器色带，也没有角色差异可比。
-
-**为何未修**：这与「角色到颜色」的设计一致——单一形状没有可比较的对象。
-但**容易被误判**：用它做 palette 验证会得出"palette 无效"的错误结论（本轮就是这样发现的）。
-
-**规避**：验证 palette 时用带容器或多角色的图。`RoleShapeClaimsTests` 固定了这一点。
+**为何未修**：与「角色到颜色」的设计一致，但**容易误判**——用它验证 palette 会得出"无效"的
+错误结论。`RoleShapeClaimsTests` 固定了正确用法。
 
 ---
 

@@ -66,9 +66,10 @@ public sealed class ValidatorCoverageTests
     }
 
     [Fact]
-    public void ItCatchesADanglingConnectorButNotADanglingMaster()
+    public void ItCatchesBothDanglingConnectorsAndDanglingMasters()
     {
-        // The connector case is covered; this asserts the contrast so neither claim drifts.
+        // Both reference kinds are checked. This used to assert the contrast — connectors caught, masters
+        // not — and the comment said to update it if that ever changed.
         var path = Build(parts =>
         {
             var key = parts.Keys.First(k => k.StartsWith("visio/pages/page", StringComparison.Ordinal) && k != "visio/pages/pages.xml");
@@ -88,11 +89,10 @@ public sealed class ValidatorCoverageTests
         {
             var result = new VsdxEngine().Validate(path);
 
-            // Documented gap: a master reference to a non-existent master is accepted.
-            Assert.True(result.IsValid,
-                "the validator now rejects dangling master references — update this test and the docs");
-
-            Assert.DoesNotContain(result.Errors, e => e.Code.Contains("master", StringComparison.OrdinalIgnoreCase));
+            // Formerly a documented gap: the reference to master 9999 was accepted. Visio draws that as a
+            // broken shape, so the package is not deliverable and validation now says so.
+            Assert.False(result.IsValid);
+            Assert.Contains(result.Errors, e => e.Code == "visio.master-reference-missing");
         }
         finally { File.Delete(path); }
     }

@@ -88,6 +88,7 @@ public sealed class VsdxPackageValidatorService : IDocumentValidator
             ValidateShapeIdUniqueness(archive, result, pageShapeIds);
             ValidateConnectorReferences(archive, result);
             ValidateGroupMembership(archive, result);
+            ValidateMasterReferences(archive, result);
         }
 
         // 5. Reload through the backend
@@ -370,6 +371,79 @@ public sealed class VsdxPackageValidatorService : IDocumentValidator
         bool allUnique = pageShapeIds.Values.All(ids => ids.Count > 0);
         result.Check("visio.shape-ids-unique", allUnique,
             string.Join(", ", pageShapeIds.Select(kv => $"{Path.GetFileName(kv.Key)}={kv.Value.Count}")));
+    }
+
+    /// <summary>
+    /// Every `Master="n"` on a shape must name a master the package actually declares.
+    ///
+    /// Visio shows a dangling reference as a broken shape; the validator used to return VALID for it. The
+    /// engine never writes one — but an externally edited file can carry one, and that is exactly the case
+    /// validation exists for.
+    /// </summary>
+    private static void ValidateMasterReferences(ZipArchive archive, ValidationResult result)
+    {
+        var mastersEntry = archive.Entries.FirstOrDefault(e =>
+            string.Equals(e.FullName, "visio/masters/masters.xml", StringComparison.OrdinalIgnoreCase));
+
+        // No masters part at all: nothing to resolve against, and nothing to complain about.
+        if (mastersEntry is null) return;
+
+        var declared = new HashSet<string>(StringComparer.Ordinal);
+
+        // `LoadXml` returns null for a part that does not parse. That has already been reported as
+        // `xml.unparseable` by the structural pass, so there is nothing to resolve here.
+        var mastersDoc = LoadXml(mastersEntry);
+        if (mastersDoc is null) return;
+
+        foreach (var master in mastersDoc.Descendants()
+                     .Where(e => e.Name.LocalName == "Master"))
+        {
+            var id = master.Attribute("ID")?.Value;
+
+            if (!string.IsNullOrEmpty(id)) declared.Add(id);
+        }
+
+        var dangling = new List<string>();
+
+        foreach (var entry in archive.Entries.Where(e =>
+                     e.FullName.StartsWith("visio/pages/", StringComparison.OrdinalIgnoreCase)
+                     && e.FullName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)
+                     && !e.FullName.Contains("_rels", StringComparison.Ordinal)
+                     && !e.FullName.EndsWith("pages.xml", StringComparison.OrdinalIgnoreCase)))
+        {
+            var pageDoc = LoadXml(entry);
+            if (pageDoc is null) continue;
+
+            foreach (var shape in pageDoc.Descendants().Where(e => e.Name.LocalName == "Shape"))
+            {
+                var referenced = shape.Attribute("Master")?.Value;
+
+                if (string.IsNullOrEmpty(referenced)) continue;
+
+                // Inherited from a container's master, not a direct reference.
+                if (string.Equals(referenced, "0", StringComparison.Ordinal)) continue;
+
+                if (!declared.Contains(referenced))
+                    dangling.Add($"{Path.GetFileName(entry.FullName)}#shape {shape.Attribute("ID")?.Value} -> master {referenced}");
+            }
+        }
+
+        result.Check("visio.master-references",
+            dangling.Count == 0,
+            dangling.Count == 0
+                ? $"{declared.Count} master(s) declared"
+                : "dangling: " + string.Join("; ", dangling.Take(5)));
+
+        // Also an error, not only a failed check: Visio draws a dangling reference as a broken shape, so a
+        // package carrying one is not deliverable. `Check` alone would leave `IsValid` true — the file looked
+        // valid precisely because nothing here raised an error.
+        if (dangling.Count > 0)
+        {
+            result.Error(
+                "visio.master-reference-missing",
+                $"形状引用了不存在的 Master：{string.Join("; ", dangling.Take(5))}",
+                "visio/masters/masters.xml");
+        }
     }
 
     private static void ValidateConnectorReferences(ZipArchive archive, ValidationResult result)

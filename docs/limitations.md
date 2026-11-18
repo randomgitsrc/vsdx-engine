@@ -216,13 +216,13 @@ A4 容不下它们——内容本就需要 A3 的面积，这不是可以靠调�
 `ValidatorDetectionTests` 证明它能发现五类真实损坏（缺 `[Content_Types].xml`、XML 截断、
 悬空连线引用、缺 `_rels/.rels`、重复 override）。
 
-**但它不检查 Master 引用的有效性。**
+**Master 引用的有效性已检查**（`visio.master-references`）。
 
 把 `page1.xml` 里的 `Master="17"` 改成 `Master="9999"`，`validate` 仍返回 `valid: true`，
 而 Visio 打开这样的文件会显示为损坏形状（`shapes-not-valid`）。
 
 **影响**：`valid: true` 不能推出“文件在 Visio 中完整可用”。外部编辑过的文件可能带有
-本引擎不会写出的悬空 Master 引用，而校验器不会报告。
+悬空的 Master 引用会令 `valid: false`。
 
 **若要补齐**：在 `visio.shape-ids-unique` 旁增加一项，解析 `visio/masters/masters.xml`
 的 `<Master ID>` 集合并比对页面中的 `Master=` 属性。`ValidatorCoverageTests` 里那条
