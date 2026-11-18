@@ -34,10 +34,13 @@ public sealed class DirectionNestedGroupTests
             TextBlocks = { new TextBlock { Id = name + "-t", Text = "T", Bounds = new Bounds(2, 7, 3, 0.4) } }
         };
 
-        // Deliberately non-square parents so a failure to swap width and height is visible.
+        // ParentId names the *parent*, so this child points at the enclosing group. Hierarchy and
+        // geometry must agree: an earlier version of this fixture had the containment the wrong
+        // way round and still passed, because the assertion was transposed to match the mistake
+        // instead of the relationship being verified.
         page.Groups.Add(new Group
         {
-            Id = name + "-inner",
+            Id = name + "-outer",
             Members = { name + "-a", name + "-b" },
             Bounds = new Bounds(4, 4, 5, 2),
             Style = new ShapeStyle { PaddingX = 0.30, HeadingHeight = 0.46, PaddingBottom = 0.22 }
@@ -45,12 +48,19 @@ public sealed class DirectionNestedGroupTests
 
         page.Groups.Add(new Group
         {
-            Id = name + "-outer",
+            Id = name + "-inner",
             Members = { name + "-c" },
-            ParentId = name + "-inner",
-            Bounds = new Bounds(5, 3, 8, 4),
+            ParentId = name + "-outer",
+            Bounds = new Bounds(4.5, 4, 2, 1.2),
             Style = new ShapeStyle { PaddingX = 0.50, HeadingHeight = 0.60, PaddingBottom = 0.22 }
         });
+
+        // Fail loudly here rather than in an assertion later: the fixture is only meaningful if
+        // the child really sits inside its parent.
+        var outerBounds = page.Groups[0].Bounds!;
+        var innerBounds = page.Groups[1].Bounds!;
+        if (!Encloses(outerBounds, innerBounds))
+            throw new InvalidOperationException("fixture: inner group is not inside outer group");
 
         return page;
     }
@@ -69,26 +79,50 @@ public sealed class DirectionNestedGroupTests
         inner.Y - inner.H / 2 >= outer.Y - outer.H / 2 - tolerance &&
         inner.Y + inner.H / 2 <= outer.Y + outer.H / 2 + tolerance;
 
+    /// <summary>
+    /// Resolves the parent/child pair from <c>ParentId</c> rather than from the fixture's naming.
+    /// ParentId names the parent, so the group carrying it is the child.
+    /// </summary>
+    private static (Group Parent, Group Child) Hierarchy(Page page)
+    {
+        var child = page.Groups.Single(g => g.ParentId is not null);
+        var parent = page.Groups.Single(g => g.Id == child.ParentId);
+        return (parent, child);
+    }
+
     [Fact]
-    public void ParentGroupEnclosesChildGroupOnEveryPage()
+    public void FixtureHierarchyMatchesGeometryBeforeAnyTransform()
+    {
+        // Guards the fixture itself: if this ever fails, the other assertions in this class are
+        // meaningless because they would be verifying an arrangement that never existed.
+        foreach (var page in TwoNestedPages().Pages)
+        {
+            var (parent, child) = Hierarchy(page);
+
+            Assert.Equal(page.Name + "-outer", parent.Id);
+            Assert.Equal(page.Name + "-inner", child.Id);
+            Assert.NotNull(parent.Bounds);
+            Assert.NotNull(child.Bounds);
+            Assert.True(Encloses(parent.Bounds!, child.Bounds!),
+                $"{page.Name}: ParentId says {parent.Id} is the parent, but its bounds do not enclose {child.Id}");
+        }
+    }
+
+    [Fact]
+    public void ParentIdParentEnclosesChildBeforeTranspose()
     {
         var diagram = TwoNestedPages();
 
         foreach (var page in diagram.Pages)
         {
-            var outer = page.Groups.Single(g => g.Id == page.Name + "-outer").Bounds!;
-            var inner = page.Groups.Single(g => g.Id == page.Name + "-inner").Bounds!;
-
-            // Each page's fixtures nest inner inside outer before the transform.
-            var swappedOuter = new Bounds(outer.Y, outer.X, outer.H, outer.W);
-            var swappedInner = new Bounds(inner.Y, inner.X, inner.H, inner.W);
-            Assert.True(Encloses(swappedOuter, swappedInner),
-                $"{page.Name}: after transposition the parent no longer encloses the child");
+            var (parent, child) = Hierarchy(page);
+            Assert.True(Encloses(parent.Bounds!, child.Bounds!),
+                $"{page.Name}: {parent.Id} does not enclose {child.Id} before transposition");
         }
     }
 
     [Fact]
-    public void TransposeKeepsParentEnclosingChildOnEveryPage()
+    public void ParentIdParentEnclosesChildAfterTranspose()
     {
         var diagram = TwoNestedPages();
 
@@ -96,11 +130,54 @@ public sealed class DirectionNestedGroupTests
 
         foreach (var page in diagram.Pages)
         {
-            var outer = page.Groups.Single(g => g.Id == page.Name + "-outer").Bounds!;
-            var inner = page.Groups.Single(g => g.Id == page.Name + "-inner").Bounds!;
+            var (parent, child) = Hierarchy(page);
+            Assert.True(Encloses(parent.Bounds!, child.Bounds!),
+                $"{page.Name}: {parent.Id} no longer encloses {child.Id} after transposition " +
+                $"(parent {parent.Bounds!.W:F2}x{parent.Bounds.H:F2}, child {child.Bounds!.W:F2}x{child.Bounds.H:F2})");
+        }
+    }
 
-            Assert.True(Encloses(outer, inner),
-                $"{page.Name}: outer {outer.W:F2}x{outer.H:F2} does not enclose inner {inner.W:F2}x{inner.H:F2}");
+    [Fact]
+    public void ParentIdParentEnclosesChildAfterTransposingTwice()
+    {
+        var diagram = TwoNestedPages();
+
+        DiagramLayout.Transpose(diagram);
+        DiagramLayout.Transpose(diagram);
+
+        foreach (var page in diagram.Pages)
+        {
+            var (parent, child) = Hierarchy(page);
+            Assert.True(Encloses(parent.Bounds!, child.Bounds!),
+                $"{page.Name}: {parent.Id} does not enclose {child.Id} after two transpositions");
+        }
+    }
+
+    [Fact]
+    public void ParentIdChainIsAcyclicAndResolvableOnEveryPage()
+    {
+        // A ParentId that points at a missing group, or a cycle, would make containment
+        // meaningless regardless of what the bounds say.
+        foreach (var page in TwoNestedPages().Pages)
+        {
+            var byId = page.Groups.ToDictionary(g => g.Id, StringComparer.Ordinal);
+
+            foreach (var group in page.Groups)
+            {
+                var seen = new HashSet<string>(StringComparer.Ordinal) { group.Id };
+                var cursor = group.ParentId;
+
+                while (cursor is not null)
+                {
+                    Assert.True(seen.Add(cursor),
+                        $"{page.Name}: ParentId cycle through '{group.Id}'");
+
+                    Assert.True(byId.ContainsKey(cursor),
+                        $"{page.Name}: '{group.Id}' references missing parent '{cursor}'");
+
+                    cursor = byId[cursor].ParentId;
+                }
+            }
         }
     }
 
@@ -113,23 +190,25 @@ public sealed class DirectionNestedGroupTests
 
         foreach (var page in diagram.Pages)
         {
-            var inner = page.Groups.Single(g => g.Id == page.Name + "-inner");
-            // (4,4,5,2) -> (4,4,2,5)
-            Assert.Equal(4, inner.Bounds!.X, 3);
-            Assert.Equal(4, inner.Bounds.Y, 3);
-            Assert.Equal(2, inner.Bounds.W, 3);
-            Assert.Equal(5, inner.Bounds.H, 3);
-            Assert.Equal(0.46, inner.Style!.PaddingX!.Value, 3);
-            Assert.Equal(0.30, inner.Style.HeadingHeight!.Value, 3);
+            var (parent, child) = Hierarchy(page);
 
-            var outer = page.Groups.Single(g => g.Id == page.Name + "-outer");
-            // (5,3,8,4) -> (3,5,4,8)
-            Assert.Equal(3, outer.Bounds!.X, 3);
-            Assert.Equal(5, outer.Bounds.Y, 3);
-            Assert.Equal(4, outer.Bounds.W, 3);
-            Assert.Equal(8, outer.Bounds.H, 3);
-            Assert.Equal(0.60, outer.Style!.PaddingX!.Value, 3);
-            Assert.Equal(0.50, outer.Style.HeadingHeight!.Value, 3);
+            // Parent authored as (4,4,5,2); transposed it becomes (4,4,2,5).
+            var pb = parent.Bounds!;
+            Assert.Equal(4, pb.X, 3);
+            Assert.Equal(4, pb.Y, 3);
+            Assert.Equal(2, pb.W, 3);
+            Assert.Equal(5, pb.H, 3);
+            Assert.Equal(0.46, parent.Style!.PaddingX!.Value, 3);
+            Assert.Equal(0.30, parent.Style.HeadingHeight!.Value, 3);
+
+            // Child authored as (4.5,4,2,1.2); transposed it becomes (4,4.5,1.2,2).
+            var cb = child.Bounds!;
+            Assert.Equal(4, cb.X, 3);
+            Assert.Equal(4.5, cb.Y, 3);
+            Assert.Equal(1.2, cb.W, 3);
+            Assert.Equal(2, cb.H, 3);
+            Assert.Equal(0.60, child.Style!.PaddingX!.Value, 3);
+            Assert.Equal(0.50, child.Style.HeadingHeight!.Value, 3);
         }
     }
 
@@ -162,9 +241,10 @@ public sealed class DirectionNestedGroupTests
     [Fact]
     public void LayoutPipelineTransposesRecomputedGroupBoundsOnBothPages()
     {
-        // The layout pipeline recomputes container bounds from member geometry (groups are
-        // auto-sized by default), so hand-authored bounds do not survive it. What must survive
-        // is that every group is still a valid box, on every page, after the transpose.
+        // The pipeline recomputes container bounds from member geometry (auto-sized by default),
+        // so hand-authored bounds do not survive it. What this asserts is limited to what the
+        // pipeline does guarantee: valid boxes, containment of members, padding swapped, and the
+        // page reflected. See the next test for what it does not guarantee.
         var diagram = TwoNestedPages();
 
         DiagramLayoutEngine.Apply(
@@ -183,14 +263,80 @@ public sealed class DirectionNestedGroupTests
                     $"{page.Name}/{group.Id}: degenerate bounds {group.Bounds.W:F2}x{group.Bounds.H:F2}");
             }
 
-            // Padding still reflects the swap even though the box was recomputed.
-            var inner = page.Groups.Single(g => g.Id == page.Name + "-inner");
-            Assert.Equal(0.46, inner.Style!.PaddingX!.Value, 3);
-            Assert.Equal(0.30, inner.Style.HeadingHeight!.Value, 3);
+            var (parent, child) = Hierarchy(page);
+
+            // Padding is swapped by the reflection even though the box itself is recomputed.
+            Assert.Equal(0.46, parent.Style!.PaddingX!.Value, 3);
+            Assert.Equal(0.30, parent.Style.HeadingHeight!.Value, 3);
+            Assert.Equal(0.60, child.Style!.PaddingX!.Value, 3);
+            Assert.Equal(0.50, child.Style.HeadingHeight!.Value, 3);
 
             Assert.True(page.Size!.Height > page.Size.Width,
                 $"{page.Name}: page was not transposed");
         }
+    }
+
+    [Fact]
+    public void LayoutPipelineDoesNotGuaranteeParentGroupEnclosesChildGroup()
+    {
+        // Measured, and recording a real limitation rather than asserting it away.
+        //
+        // DiagramLayout.Apply orders groups parents-first and derives each container from its
+        // members plus the child groups' bounds *as they are at that moment*. A child group that
+        // is itself auto-sized is recomputed afterwards, so the parent was fitted to a box the
+        // child no longer has. The result is a parent that can fail to enclose its child.
+        //
+        // This is pre-existing behaviour of the sizing pass, unrelated to transposition: the
+        // same fixture without any transpose shows it too (verified by the second half of this
+        // test). Fixing it is out of scope for T0 and is recorded as a known gap.
+        var mirrored = TwoNestedPages();
+        DiagramLayoutEngine.Apply(
+            mirrored,
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.LeftToRight },
+            LayoutStrategy.Layered);
+
+        bool EnclosesAfterPipeline(Diagram d, out string detail)
+        {
+            foreach (var page in d.Pages)
+            {
+                var (parent, child) = Hierarchy(page);
+                if (!Encloses(parent.Bounds!, child.Bounds!))
+                {
+                    detail = $"{page.Name}: parent {parent.Bounds!.W:F2}x{parent.Bounds.H:F2} at " +
+                             $"({parent.Bounds.X:F2},{parent.Bounds.Y:F2}) does not enclose child " +
+                             $"{child.Bounds!.W:F2}x{child.Bounds.H:F2} at ({child.Bounds.X:F2},{child.Bounds.Y:F2})";
+                    return false;
+                }
+            }
+
+            detail = string.Empty;
+            return true;
+        }
+
+        // Without transposition: documents the absence of the guarantee on its own.
+        bool enclosesWithoutTranspose = EnclosesAfterPipeline(mirrored, out var withoutDetail);
+
+        var transposed = TwoNestedPages();
+        DiagramLayoutEngine.Apply(
+            transposed,
+            new LayoutOptions { Strategy = LayoutStrategy.Layered, Direction = LayoutDirection.TopToBottom },
+            LayoutStrategy.Layered);
+
+        bool enclosesWithTranspose = EnclosesAfterPipeline(transposed, out var withDetail);
+
+        // The transpose neither creates nor cures the problem: whatever the sizing pass does, it
+        // does the same in both orientations. Asserting equality here means a change in either
+        // direction is caught rather than silently tolerated.
+        Assert.Equal(enclosesWithoutTranspose, enclosesWithTranspose);
+
+        // Record the measured outcome explicitly so a reader does not have to infer it from a
+        // boolean comparison. This is a known gap in the sizing pass, not a transpose defect:
+        // both orientations fail identically.
+        Assert.False(enclosesWithoutTranspose,
+            "sizing pass started enclosing child groups; revisit this recorded limitation");
+
+        Assert.False(string.IsNullOrWhiteSpace(withDetail),
+            "expected a diagnostic describing the containment failure");
     }
 
     [Fact]
