@@ -398,6 +398,7 @@ public static class LayoutAnalyzer
         // make the whole diagram look broken, yet this was previously never checked.
         CheckGroupRelations(page, options, report);
         CheckTextAgainstContainers(page, options, report);
+        CheckTextAgainstNodes(page, options, report);
 
         // ---- 7c. Row alignment and size uniformity ---------------------------
         CheckRowsAndSizes(nodes, options, page, report);
@@ -497,6 +498,47 @@ public static class LayoutAnalyzer
     /// Straddling is distinguished from containment on purpose: a fully contained label is a design
     /// choice, a label cut by the border is a defect.
     /// </summary>
+    /// <summary>
+    /// Flags a text block lying across a node.
+    ///
+    /// Both are opaque, so whichever is drawn last hides the other; the state-machine diagram had a
+    /// title sitting on top of two nodes with nothing reported, because the analyser only compared
+    /// text with containers.
+    ///
+    /// A block wholly inside a node is left alone: an oversized node with a caption in it is a
+    /// deliberate overlay, not a collision.
+    /// </summary>
+    private static void CheckTextAgainstNodes(Page page, LayoutAnalyzerOptions options, LayoutReport report)
+    {
+        if (page.TextBlocks.Count == 0 || page.Nodes.Count == 0) return;
+
+        foreach (var text in page.TextBlocks)
+        {
+            if (string.IsNullOrWhiteSpace(text.Text)) continue;
+
+            foreach (var node in page.Nodes)
+            {
+                double ix = OverlapExtentX(text.Bounds, node.Bounds);
+                double iy = OverlapExtentY(text.Bounds, node.Bounds);
+                if (ix <= 0 || iy <= 0) continue;
+
+                // Fully inside the node: a caption placed on purpose.
+                if (Encloses(node.Bounds, text.Bounds, 0)) continue;
+
+                report.Add(new LayoutIssue
+                {
+                    Code = "text.overlaps-node",
+                    Severity = "warning",
+                    Page = page.Name,
+                    Targets = new[] { text.Id, node.Id },
+                    Message = $"文本块 '{text.Id}' 压在节点 '{node.Id}' 上（重叠 {ix:F2}\" × {iy:F2}\"）",
+                    RootCause = "装饰元素沿用作者坐标，节点由布局移动后两者未协调",
+                    RecommendedFix = "把文本块移出节点范围，或调整节点位置"
+                });
+            }
+        }
+    }
+
     private static void CheckTextAgainstContainers(Page page, LayoutAnalyzerOptions options, LayoutReport report)
     {
         var groups = page.Groups.Where(g => g.Bounds is not null).ToList();
