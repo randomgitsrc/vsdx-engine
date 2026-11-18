@@ -65,7 +65,8 @@ public sealed class SwimlaneLayoutEngine : ILayoutEngine
             maxWidth = Math.Max(maxWidth, width);
 
             // Reserve the lane header plus breathing room.
-            double envelope = DiagramLayout.ContainerHeading + DiagramLayout.ContainerPaddingBottom;
+            double envelope = DiagramLayout.ContainerHeading + DiagramLayout.HeadingClearance
+                              + DiagramLayout.ContainerPaddingBottom;
             y += height + envelope + options.BandGapY;
             bandCount++;
         }

@@ -53,7 +53,8 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
             // heading height and below by the bottom padding (see DiagramLayout). Advancing by
             // the row height alone makes adjacent containers overlap by exactly that padding,
             // so reserve the full band envelope plus the requested gutter.
-            double containerEnvelope = DiagramLayout.ContainerHeading + DiagramLayout.ContainerPaddingBottom;
+            double containerEnvelope = DiagramLayout.ContainerHeading + DiagramLayout.HeadingClearance
+                                       + DiagramLayout.ContainerPaddingBottom;
             y += rowHeight + containerEnvelope + options.BandGapY;
         }
 

@@ -133,8 +133,8 @@ public sealed class FlowLayoutEngine : ILayoutEngine
         // review and fulfil all at y=9.27, i.e. three containers drawn on top of each other. The
         // same reversal as C19, in the banded path.
         double totalHeight = rows.Sum(r =>
-            r.Max(n => n.Bounds.H) + DiagramLayout.ContainerHeading +
-            DiagramLayout.ContainerPaddingBottom + options.BandGapY);
+            r.Max(n => n.Bounds.H) + DiagramLayout.ContainerHeading
+            + DiagramLayout.HeadingClearance + DiagramLayout.ContainerPaddingBottom + options.BandGapY);
 
         double y = Math.Max(options.PageMargin, totalHeight + options.PageMargin - options.BandGapY);
         double maxWidth = 0;

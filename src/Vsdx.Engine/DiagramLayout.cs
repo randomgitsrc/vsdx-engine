@@ -88,7 +88,11 @@ public static class DiagramLayout
                 // deploy topology: container top 3.01, heading bottom 2.55, member top 2.55, eleven
                 // collisions. The clearance keeps them apart; it is safe to add only now that
                 // `LayoutBanded` no longer adds the envelope on top of the container's own height.
-                top += heading;
+                // Reserve the heading plus a gap. Without the gap the members' top edge lands exactly
+                // on the heading's bottom edge, because the derived height and the placed position are
+                // built from the same three terms. No bounding box overlaps, nothing is reported, and
+                // the heading is painted over its first row.
+                top += heading + HeadingClearance;
 
                 group.Bounds = new Bounds((left + right) / 2, (bottom + top) / 2, right - left, top - bottom);
             }
