@@ -43,18 +43,7 @@ $ execute --ir checkout-sequence.ir.json
 
 **固定测试**：`UnderusedMissTests`（含一条断言"不触发"的测试，修复后会失败，迫使记录更新）。
 
-## 3. 评分权重缺依据
-
-`SoftWeight` 决定所有分数，但没有任何一项说明为何取该值。
-
-最可疑的是：`edge.detour` 扣 **6**，`edge.crossing` 扣 **2**——绕远路比两线交叉罚得重 3 倍；
-`label.overlaps-label`（文字读不了）只有 4。
-
-**为何未修**：同 §2，改动影响所有分数。
-
-**固定测试**：`SoftWeightBaselineTests`（含一条断言"交叉轻于绕行"的测试）。
-
-## 4. `repair` 的接受准则允许分数大幅下降
+## 3. `repair` 的接受准则允许分数大幅下降
 
 **实测（cbo）**：`86 → 70`，问题数 `9 → 7`，决策 `Accepted`。
 
@@ -71,14 +60,14 @@ $ execute --ir checkout-sequence.ir.json
 调用方事后能看出每次尝试及其结果。**因此不需要 `--dry-run`**：
 它要提供的信息已经存在，加一个只读模式不会带来新决策依据。
 
-## 5. 图例可能与连线标签视觉冲突
+## 4. 图例可能与连线标签视觉冲突
 
 `ClampToPage` 只保证文本块在页面内，**不避让连线标签**——而标签是渲染时绘制的，
 不在任何包围盒里，24 项检测全都看不到。
 
 **当前状态**：已知，未修。需要一个能估算标签绘制位置的机制，成本较高。
 
-## 6. 跨层连线是斜线
+## 5. 跨层连线是斜线
 
 `OrthogonalRouter` 的策略是「直边只在穿形状时才绕行」。
 
@@ -92,19 +81,36 @@ $ execute --ir checkout-sequence.ir.json
 
 **若要改**：让布局引擎按图类型选默认边类型（树形/泳道 → `rightAngle`），属能力扩展。
 
-## 7. 时序图与状态机
+## 6. 时序图与状态机
 
 模型层不支持时序语义（端点由节点决定，无法表达"生命线上的第 N 条消息"），
 状态机无状态语义。
 
 详见 `capability-boundaries.md`。
 
-## 8. 校验器不检查 Master 引用有效性
+## 7. 校验器不检查 Master 引用有效性
 
 悬空的 `Master="9999"` 仍返回 `valid: true`，而 Visio 会显示为损坏形状。
 详见 `limitations.md` §11。
 
 ---
+
+## 已量化、不构成待决问题的
+
+**评分权重缺依据**（原 §3）：权重决定分数，但没有任何一项说明为何取该值——
+`edge.detour` 扣 6、`edge.crossing` 扣 2，绕远路比交叉罚得重 3 倍。
+
+复核后确认它**不影响功能正确性**：
+
+| 事实 | 依据 |
+| --- | --- |
+| 分数是参考性的 | `Score` 注释明写 "the soft score is advisory"；可交付性只看 `HardConstraintsPassed` |
+| 只有 `compare` 用它排序 | `CandidateComparison.Deliverable`，排在可交付过滤之后 |
+| 无测试依赖中间分值 | 7 处断言全是 `== 0` 或 `== 100` |
+| 实测排序正确 | `deploy-topology` 候选按 90 / 72 / 64 降序 |
+
+**唯一影响**是 `compare` 在多个可交付候选间的偏好。当前候选分差 18–26 分，
+远大于权重差 4 分，不会造成颠倒。`SoftWeightBaselineTests` 会拦住无声改动。
 
 ## 已完成的不在此列
 
