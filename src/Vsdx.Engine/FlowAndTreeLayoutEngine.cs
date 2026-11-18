@@ -126,7 +126,17 @@ public sealed class FlowLayoutEngine : ILayoutEngine
         }
         if (loose.Count > 0) rows.Add(OrderRow(page, loose));
 
-        double y = options.PageMargin;
+        // Stack downward from the top of the stack, not upward from the page margin.
+        //
+        // Y grows upward while the cursor started at the margin and increased, so every band ended
+        // up below the one before it and all three landed at the same height — measured, intake,
+        // review and fulfil all at y=9.27, i.e. three containers drawn on top of each other. The
+        // same reversal as C19, in the banded path.
+        double totalHeight = rows.Sum(r =>
+            r.Max(n => n.Bounds.H) + DiagramLayout.ContainerHeading +
+            DiagramLayout.ContainerPaddingBottom + options.BandGapY);
+
+        double y = Math.Max(options.PageMargin, totalHeight + options.PageMargin - options.BandGapY);
         double maxWidth = 0;
 
         foreach (var row in rows)
@@ -144,7 +154,7 @@ public sealed class FlowLayoutEngine : ILayoutEngine
 
             maxWidth = Math.Max(maxWidth, rowWidth);
             double envelope = DiagramLayout.ContainerHeading + DiagramLayout.ContainerPaddingBottom;
-            y += rowHeight + envelope + options.BandGapY;
+            y -= rowHeight + envelope + options.BandGapY;
         }
 
         DiagramLayout.Apply(new Diagram { Pages = { page } });

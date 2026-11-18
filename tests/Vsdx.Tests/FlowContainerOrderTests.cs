@@ -132,12 +132,10 @@ public sealed class FlowContainerOrderTests
         var flowOrder = BandCentres(asFlow.Pages[0]);
         var layeredOrder = BandCentres(asLayered.Pages[0]);
 
-        // Measured: they disagree, and the reason is recorded as C20 — the flow engine's banded
-        // path leaves all three bands at the same y, so its order is the declared one while
-        // Layered's is the drawn one. Asserting the current values rather than the intended
-        // equality keeps the gap visible instead of hiding it behind a loosened assertion.
-        Assert.Equal(new[] { "fulfil", "review", "intake" }, layeredOrder);
-        Assert.Equal(new[] { "intake", "review", "fulfil" }, flowOrder);
+        // The two engines must agree. They did not while the flow engine's banded path left every
+        // band at the same y — its order was the declared one while Layered's was the drawn one.
+        // With that fixed (C20) both produce fulfil, review, intake top-first for this IR.
+        Assert.Equal(layeredOrder, flowOrder);
     }
 
     /// <summary>Band ids ordered top-first along whichever axis the page stacks them on.</summary>

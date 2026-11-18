@@ -1217,5 +1217,32 @@ band 同 y 意味着容器重叠。`auto` 策略下 workflow 有容器时走 Lay
 
 **未修复**。优先级 P2：默认策略不会走到，需显式指定。
 
-**已记录到测试**：`BothEnginesAgreeOnBandOrder` 现在断言两个引擎**一致**，
-若这条修好会自动通过。
+### 部分修复
+
+`LayoutBanded` 的 y 推进改为**从栈顶向下**（与 C19 同一修法）：
+
+```csharp
+double totalHeight = rows.Sum(...);
+double y = totalHeight + margin - bandGap;   // 从顶部起
+... y -= rowHeight + envelope + bandGap;      // 向下
+```
+
+正常 band 顺序因此恢复，`BothEnginesAgreeOnBandOrder` 通过（两引擎一致）。
+
+### 仍然存在：转置后容器重叠
+
+```console
+$ execute --spec '{"layout":"flow"}'   # 有容器的图
+  score=0/100
+  group.overlap: 容器 'app' 与 'dmz' 重叠 0.14" x 5.67"
+```
+
+**根因已定位但未修**：Flow 引擎按 band 纵向堆叠（正确），
+但 `LeftToRight`/`TopToBottom` 的转置会把**容器自身高度**与 band 间距的对应关系打乱。
+实测三个容器的顶部都落在 y=12.80，而高度分别 6.44/8.89/11.44。
+
+**未修**。默认策略不会走到这条路径（有容器即 Layered），需显式 `layout: flow`。
+若要修，需要让转置同时调整 band 间距分配，或让 Flow 的 banded 路径直接按目标方向排布、
+不再依赖转置。
+
+**影响范围**：仅显式 `layout: flow` + 有容器。
