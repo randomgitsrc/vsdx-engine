@@ -359,11 +359,57 @@ var export = runner.ExportMany(pairs);
 `BatchResult`: `Operation`、`Total`、`Succeeded`、`Failed`、`Ok`、`Items`
 `BatchItem`: `Input`、`Output`、`Ok`、`Detail`、`Error`、`Issues`
 
-### 2.10 `version`
+### 2.10 `execute`
+
+三层协议的入口：Diagram IR + 可选 DesignSpec → VSDX + ExecutionResult。
+
+```bash
+vsdx-tool execute --ir <model.json> [--spec <design.json>] --output <file.vsdx> [--json]
+                  [--render] [--format png|svg]
+```
+
+`--json` 输出为 ExecutionResult：
+
+| 字段 | 含义 |
+| --- | --- |
+| `status` | `succeeded` / `partial` / `failed` / `degraded` |
+| `appliedDesignNotes` | 实际执行了什么，含推断结果（如 `direction=topToBottom (auto)`、`canvas.paper=A3`） |
+| `unmetConstraints` | **每一条未能满足的请求及原因**；引擎不静默丢弃 |
+| `quality.hardConstraintsPassed` | 交付前必查的门禁 |
+| `stagesCompleted` | 已完成的阶段（`ir.validate` → `quality.check`） |
+
+`status: partial` 表示文件已写出但部分请求未满足——此时必须读 `unmetConstraints`。
+
+**DesignSpec 是内容与外观的分离**：同一份 IR 配不同 spec 得到不同外观，可用 `diff` 证明
+是哪个 spec 产出了哪个文件。
+
+### 2.11 `compare`
+
+生成多个候选布局，按硬约束筛选后以软指标排序。
+
+```bash
+vsdx-tool compare --input <file.vsdx> [--output <file.vsdx>] [--emit-dir <dir>] [--json]
+```
+
+`--emit-dir` 会保留每个候选，便于逐个查看后再选。
+
+### 2.12 `repair`
+
+有界改进循环：规划 → 尝试 → 接受或回滚 → 升级 → 止损。
+
+```bash
+vsdx-tool repair --input <file.vsdx> [--output <file.vsdx>] [--max-rounds <n>] [--max-attempts-per-issue <n>] [--json]
+```
+
+**有界**是关键：它不会无限重试。每轮记录尝试与结果，无法改进时停止而不是继续消耗时间。
+
+### 2.13 `version`
 
 ```bash
 vsdx-tool version [--json]
 ```
+
+报告工具版本、后端版本与模型版本。版本号由程序集元数据驱动，不硬编码。
 
 ---
 
