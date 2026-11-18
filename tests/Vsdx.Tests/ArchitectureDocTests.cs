@@ -92,4 +92,82 @@ public sealed class ArchitectureDocTests
 
         Assert.DoesNotMatch(@"写于测试规模为 \d+", header);
     }
+
+    /// <summary>
+    /// The dependency graph must stay acyclic, and the doc must not claim more than that.
+    ///
+    /// `AGENTS.md` said "依赖单向", which reads as a strict chain. It is not one: `Vsdx.Cli` references both
+    /// `Vsdx.Engine` and `Vsdx.Protocol`, and `Vsdx.Protocol` references `Vsdx.Engine`. What holds — and what
+    /// matters — is that nothing points back at something that points at it. The wording now says so.
+    /// </summary>
+    [Fact]
+    public void TheProjectGraphHasNoCycles()
+    {
+        var root = new DirectoryInfo(AppContext.BaseDirectory);
+        while (root is not null && !File.Exists(Path.Combine(root.FullName, "VsdxEngine.sln")))
+            root = root.Parent;
+
+        Assert.NotNull(root);
+
+        var edges = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+        foreach (var project in Directory.GetDirectories(Path.Combine(root!.FullName, "src")))
+        {
+            var csproj = Directory.GetFiles(project, "*.csproj").FirstOrDefault();
+            if (csproj is null) continue;
+
+            var name = Path.GetFileName(project);
+            var refs = System.Text.RegularExpressions.Regex
+                .Matches(File.ReadAllText(csproj), @"ProjectReference\s+Include=""([^""]+)""")
+                .Select(m => Path.GetFileNameWithoutExtension(m.Groups[1].Value))
+                .ToList();
+
+            edges[name] = refs;
+        }
+
+        Assert.NotEmpty(edges);
+
+        // Depth-first cycle detection.
+        var visiting = new HashSet<string>(StringComparer.Ordinal);
+        var done = new HashSet<string>(StringComparer.Ordinal);
+        var cycle = new List<string>();
+
+        bool Walk(string node)
+        {
+            if (done.Contains(node)) return false;
+            if (!visiting.Add(node))
+            {
+                cycle.Add(node);
+                return true;
+            }
+
+            foreach (var next in edges.GetValueOrDefault(node) ?? new List<string>())
+                if (Walk(next)) { cycle.Add(node); return true; }
+
+            visiting.Remove(node);
+            done.Add(node);
+            return false;
+        }
+
+        foreach (var node in edges.Keys)
+            Assert.False(Walk(node), "dependency cycle through: " + string.Join(" -> ", cycle));
+    }
+
+    [Fact]
+    public void NoProjectReferencesItself()
+    {
+        var root = new DirectoryInfo(AppContext.BaseDirectory);
+        while (root is not null && !File.Exists(Path.Combine(root.FullName, "VsdxEngine.sln")))
+            root = root.Parent;
+
+        foreach (var project in Directory.GetDirectories(Path.Combine(root!.FullName, "src")))
+        {
+            var csproj = Directory.GetFiles(project, "*.csproj").FirstOrDefault();
+            if (csproj is null) continue;
+
+            var name = Path.GetFileName(project);
+
+            Assert.DoesNotContain(name + ".csproj", File.ReadAllText(csproj));
+        }
+    }
 }
