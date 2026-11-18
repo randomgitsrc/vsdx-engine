@@ -63,6 +63,14 @@ $ execute --ir checkout-sequence.ir.json
 
 **为何未修**：收紧意味着选一个阈值并改变 `repair` 行为，属产品取舍。
 
+**代价已被限制在可接受范围**（2026-11-19 复核）：`repair` 不会无限重试。实测
+`deploy-topology` 的三次尝试依次为 `Local` / `Local` / `RegionRelayout`——
+失败两次后按设计升级，全部无效才停止，耗时可控。
+
+`attempts[]` 已逐条记录 `problem` / `strategy` / `decision` / `actualGain`，
+调用方事后能看出每次尝试及其结果。**因此不需要 `--dry-run`**：
+它要提供的信息已经存在，加一个只读模式不会带来新决策依据。
+
 ## 5. 图例可能与连线标签视觉冲突
 
 `ClampToPage` 只保证文本块在页面内，**不避让连线标签**——而标签是渲染时绘制的，
