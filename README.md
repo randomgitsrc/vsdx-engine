@@ -271,6 +271,16 @@ agent-vsdx/
 | [skill/SKILL.md](skill/SKILL.md) | Agent Skill |
 | [schemas/diagram.schema.json](schemas/diagram.schema.json) | JSON Schema |
 
+### 项目管理文档（2026-11-18 复盘产出）
+
+| 文档 | 内容 |
+| --- | --- |
+| [PROJECT-CHARTER.md](PROJECT-CHARTER.md) | 项目目标、职责边界、架构约束、验收层级定义 |
+| [PROJECT-STATUS.md](PROJECT-STATUS.md) | 当前真实能力（实测）、未验证项、25 项缺陷状态、与目标的差距 |
+| [ENGINEERING-HEALTH.md](ENGINEERING-HEALTH.md) | 构建/测试/依赖/分层健康度、测试分布不均、架构债、风险登记 |
+| [ROADMAP.md](ROADMAP.md) | 按产品目标排序的路线、四阶段与可证伪验收标准 |
+| [TASK-REGISTER.md](TASK-REGISTER.md) | 统一任务台账（25 项缺陷 + 2 项新发现 + 路线任务） |
+
 ---
 
 ## 开发
