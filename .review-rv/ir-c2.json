@@ -1,4 +1,0 @@
-{"irVersion":"1.0","id":"c2","title":"Two containers","kind":"architecture",
- "containers":[{"id":"c1","label":"One"},{"id":"c2","label":"Two"}],
- "nodes":[{"id":"a","label":"A","containerId":"c1"},{"id":"b","label":"B","containerId":"c2"}],
- "edges":[{"id":"e1","from":"a","to":"b"}]}

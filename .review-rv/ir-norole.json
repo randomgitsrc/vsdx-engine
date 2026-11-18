@@ -1,1 +1,0 @@
-{"irVersion":"1.0","id":"nr","nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"}],"edges":[{"id":"e","from":"a","to":"b"}]}

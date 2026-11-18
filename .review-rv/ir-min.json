@@ -1,3 +1,0 @@
-{"irVersion":"1.0","id":"t","title":"T","kind":"workflow",
- "nodes":[{"id":"a","label":"A","role":"service"},{"id":"b","label":"B","role":"service"}],
- "edges":[{"id":"e1","from":"a","to":"b","label":"go"}]}

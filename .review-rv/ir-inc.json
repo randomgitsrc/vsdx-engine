@@ -1,6 +1,0 @@
-{"irVersion":"1.0","id":"inc","title":"Incremental Source","kind":"architecture",
- "containers":[{"id":"c1","label":"Layer One"},{"id":"c2","label":"Layer Two"}],
- "nodes":[{"id":"a","label":"Alpha","containerId":"c1"},{"id":"b","label":"Beta","containerId":"c1"},
-          {"id":"c","label":"Gamma","containerId":"c2"},{"id":"d","label":"Delta","containerId":"c2"}],
- "edges":[{"id":"e1","from":"a","to":"c","label":"calls"},{"id":"e2","from":"b","to":"d","label":"writes"}],
- "textBlocks":[{"id":"title","text":"Incremental Source","role":"title","box":{"x":1,"y":5.5,"width":5,"height":0.5},"align":"center"}]}

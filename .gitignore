@@ -59,7 +59,13 @@ desktop.ini
 # They must never be committed: `git add -A` will otherwise sweep them in.
 # Reviewer scratch dirs, one per review round. Use a pattern rather than listing
 # each round: forgetting to add r5 is exactly how 297 files got committed once.
+# Every reviewer scratch directory, not just the one name that was current when this rule was
+# written. `.review-rv` and `.review-final` were both committed — 1265 files, 5.7 MB — because the
+# rule listed `.review-scratch*/` and the directories were named something else.
+.review*/
 .review-scratch*/
+/.sm/
+/.[a-z][0-9]*/
 .p9/
 .lab/
 .scratch/

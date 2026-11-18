@@ -1,7 +1,0 @@
-{
-  "ok": false,
-  "error": {
-    "code": "unhandled",
-    "message": "InvalidOperationException: 拒绝输出：本次修改无法保证保真，可能损坏原有图形。形状 '8' 的几何行数 2 → 0。请改用只读方式检查，或报告该限制。"
-  }
-}

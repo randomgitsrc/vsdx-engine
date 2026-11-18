@@ -1,4 +1,0 @@
-{"irVersion":"1.0","id":"both","title":"Both","kind":"workflow",
- "nodes":[{"id":"ghost","label":"Ghost Node That Is Never Drawn"}],
- "edges":[{"id":"ge","from":"ghost","to":"ghost"}],
- "pages":[{"id":"p1","name":"Alpha","nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"}],"edges":[{"id":"ae","from":"a","to":"b"}]}]}

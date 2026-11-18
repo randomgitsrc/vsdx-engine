@@ -1,5 +1,0 @@
-{"irVersion":"1.0","id":"L","title":"Long labels test for typography","kind":"architecture",
- "containers":[{"id":"c1","label":"Application Layer With A Very Long Name"}],
- "nodes":[{"id":"a","label":"Payment Orchestration Service Alpha","containerId":"c1"},
-          {"id":"b","label":"Customer Identity Provider Beta","containerId":"c1"}],
- "edges":[{"id":"e1","from":"a","to":"b","label":"synchronous authenticated request"}]}

@@ -1,1 +1,0 @@
-{"irVersion":"1.0","id":"rel","nodes":[{"id":"a","label":"A","anchor":{"mode":"relative","x":7,"y":5}},{"id":"b","label":"B"}],"edges":[{"id":"e","from":"a","to":"b"}]}

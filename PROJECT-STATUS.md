@@ -1,7 +1,7 @@
 # PROJECT STATUS — vsdx-engine
 
 **调查日期：** 2026-11-18
-**基线提交：** `3cad2f3`
+**基线提交：** HEAD（见 `git log -1`）
 **原则：** 每条结论标注证据来源（源码 / 测试 / 提交 / 实测命令）。
 **未实际运行的测试不声称通过；未在 Visio 中验证的能力不声称原生兼容。**
 
@@ -11,13 +11,13 @@
 
 | 项 | 值 | 证据 |
 | --- | --- | --- |
-| 提交数 | 84 | `git rev-list --count HEAD` |
-| 跟踪文件 | 226 | `git ls-files \| wc -l` |
+| 提交数 | 见 `git rev-list --count HEAD` | 命令指针，不写死 |
+| 跟踪文件 | 见 `git ls-files \| wc -l` | 命令指针 |
 | 项目数 | 7 | `src/*/` + `tests/` |
-| 源码行数 | 13,032 | `find src -name "*.cs" \| xargs cat \| wc -l` |
-| 测试行数 | 8,874 | 同上（tests） |
-| 文档数 | 42 + 5 管理文档 | `find docs -name "*.md"` |
-| 测试通过 | **416** | `dotnet test` exit 0 |
+| 源码行数 | 见 `find src -name "*.cs" \| xargs cat \| wc -l` | 命令指针 |
+| 测试行数 | 见同名命令（tests） | 命令指针 |
+| 文档数 | 见 `find docs -name "*.md" \| wc -l` | 命令指针 |
+| 测试通过 | 见 `dotnet test` | 命令指针 |
 | 基准通过 | **18 / 18** | 逐例 create + check-layout |
 | 构建警告 | **0** | `dotnet build --no-incremental` |
 

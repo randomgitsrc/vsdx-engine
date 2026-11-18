@@ -1,3 +1,0 @@
-{"irVersion":"1.0","id":"anc","title":"Anchors","kind":"architecture",
- "nodes":[{"id":"a","label":"A","anchor":{"mode":"fixed","x":2,"y":9}},{"id":"b","label":"B","anchor":{"mode":"fixed","x":6,"y":9}},{"id":"c","label":"C","anchor":{"mode":"fixed","x":10,"y":4}}],
- "edges":[{"id":"e1","from":"a","to":"b"},{"id":"e2","from":"b","to":"c"}]}

@@ -1,2 +1,0 @@
-{"irVersion":"1.0","id":"tb2","nodes":[{"id":"a","label":"A"}],
- "textBlocks":[{"id":"t1","text":"This is an extremely long caption that cannot possibly fit inside a two inch wide box","role":"note","box":{"x":1,"y":2,"width":0.8,"height":0.15},"align":"left"}]}
