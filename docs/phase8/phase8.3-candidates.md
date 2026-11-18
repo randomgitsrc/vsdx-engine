@@ -521,3 +521,95 @@ var labelCenter = PointAlong(path, 0.5);
 检测器会继续按中点判断，无法确认错开是否有效。
 
 **未修复**。
+
+---
+
+## C10 【P2】IR 不携带 `LabelPosition`，协议入口无法移动标签
+
+**发现于：** C8 布局侧修复尝试（2026-11-18，HEAD `f3a381e`）
+
+### 实测
+
+C9 修复后，检测器已能读取 `edge.LabelPosition`。但通过 IR 设置它**无效**：
+
+```console
+$ execute --ir ir2.json          # e1/e2 设 0.25，e3/e4 设 0.75
+$ check-layout
+  label.overlaps-label (2)       # 与不设置时完全相同
+```
+
+### 根因
+
+```console
+$ grep -c "LabelPosition" src/Vsdx.Protocol/DiagramIr.cs
+0
+```
+
+`IrEdge` 没有该字段。模型（`Vsdx.Model.Edge`）有，Writer 会用，检测器现在也会读——
+**但协议入口不传递它**，所以经 `execute` 路径设置的值在 `DiagramIrConverter` 处就丢了。
+
+### 三处已通、一处断
+
+| 层 | 支持 `LabelPosition` |
+| --- | --- |
+| `Vsdx.Model.Edge` | ✅ 字段存在 |
+| `OfficeImoDocumentWriter` | ✅ 用于 `LabelPlacement` |
+| `LayoutAnalyzer` | ✅ C9 后已读取 |
+| **`Vsdx.Protocol.IrEdge`** | ❌ **无字段** |
+
+### 影响
+
+经 `execute` 路径（Agent 的主路径）**无法调整标签位置**，
+因此 C8 的"标签重叠"在协议层无解——只能靠自动避让，或走 `create` 路径手工写模型。
+
+### 候选修法
+
+给 `IrEdge` 加 `LabelPosition` 并在 `DiagramIrConverter` 中传递。
+属协议扩展，需按任务书 §4.9 评估兼容性：**新增可选字段是向后兼容的**。
+
+**未修复**。
+
+---
+
+## C11 【P1】Reader 不读回 `LabelPosition`，检测磁盘文件时永远用默认值
+
+**发现于：** C10 修复后的真实验证（2026-11-18，HEAD `f3a381e`）
+
+### 实测
+
+C10 修复后，IR 的 `labelPosition` 能到达模型。但经 `execute` 写盘后再读回：
+
+```
+e5: labelPosition=None label=SQL
+e7: labelPosition=None label=index
+```
+
+**写进去的值读不回来。**
+
+### 链路
+
+| 层 | `LabelPosition` |
+| --- | --- |
+| `IrEdge` | ✅ C10 后已加 |
+| `DiagramIrConverter` | ✅ C10 后已传 |
+| `Vsdx.Model.Edge` | ✅ 有字段 |
+| `Writer` | ✅ 用于 `LabelPlacement` |
+| `LayoutAnalyzer` | ✅ C9 后已读 |
+| **`OfficeImoDocumentReader`** | ❌ **不读回** |
+
+### 后果
+
+`check-layout` 与 `execute` 之后的质量检查都读磁盘文件，
+因此 `LabelPosition` 在那里**永远是 null → 默认 0.5**。
+
+所以：
+1. 用户设置 `labelPosition` 移动了标签，检测器看不见
+2. C9 的修复对磁盘路径**仍然无效**——它让分析器读了字段，但字段在磁盘模型里是空的
+3. C8 的布局侧修复无法通过 `check-layout` 验证
+
+### 候选修法
+
+Reader 从 `connector.LabelPlacement.Position` 读回 `LabelPosition`，
+与 Writer 写入的值对应。
+
+**未修复**。这一条与 C9 是同一问题的两段：C9 让分析器读字段，C11 让字段真的在磁盘模型里。

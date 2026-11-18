@@ -661,6 +661,17 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
                 : null,
             LabelColor = connector.TextStyle?.Color is { } labelColor
                 ? FormatColor(labelColor)
+                : null,
+
+            // Where the label sits along the route. The writer stores it in LabelPlacement; without
+            // reading it back, every check that inspects a real file saw null and assumed 0.5 —
+            // so moving a label to separate it from a neighbour had no observable effect.
+            // The writer always sets LabelPlacement (it carries the lift that keeps the stroke off
+            // the text), so a placement at the default 0.5 means "not specified" — restoring 0.5
+            // would turn every edge into an explicitly positioned one and lose that distinction.
+            LabelPosition = connector.LabelPlacement is { } placement
+                            && Math.Abs(placement.Position - 0.5) > 0.001
+                ? Math.Clamp(placement.Position, 0.05, 0.95)
                 : null
         };
 

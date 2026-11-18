@@ -183,6 +183,15 @@ public sealed class IrEdge
     /// <summary>Optional port hints: left|right|top|bottom|auto.</summary>
     public string? FromPort { get; set; }
     public string? ToPort { get; set; }
+
+    /// <summary>
+    /// Where along the route the label sits, 0 = source, 1 = target. Null means the default (0.5).
+    ///
+    /// Added because the model, the writer and the analyser all supported it while the IR did not:
+    /// an agent could not move a label away from a neighbouring one, so overlapping labels had no
+    /// protocol-level remedy. Optional, so existing documents keep working unchanged.
+    /// </summary>
+    public double? LabelPosition { get; set; }
 }
 
 public sealed class IrContainer
@@ -332,6 +341,7 @@ public static class DiagramIrConverter
                     Label = edge.Label ?? edge.Relation,
                     FromPort = edge.FromPort,
                     ToPort = edge.ToPort,
+                    LabelPosition = edge.LabelPosition,
                     EndArrow = RelationUsesArrow(edge.Relation) ? "triangle" : "none"
                 });
             }
