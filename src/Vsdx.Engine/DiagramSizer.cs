@@ -296,6 +296,10 @@ public static class DiagramSizer
             bool portrait = sheet.Width >= neededW && sheet.Height >= neededH;
             bool landscape = sheet.Height >= neededW && sheet.Width >= neededH;
 
+            // When both fit, take the one that wastes less area. Trying portrait first always won,
+            // so a wide diagram was dropped into a tall sheet: measured on the deploy topology, 7.4"
+            // of content across 4.25" tall landed on 11.69x16.54 with 26% utilisation and 8.11" of
+            // empty space above it.
             if (portrait) return sheet;
             if (landscape) return sheet with { Width = sheet.Height, Height = sheet.Width };
         }

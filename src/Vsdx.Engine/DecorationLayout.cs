@@ -158,6 +158,50 @@ public static class DecorationLayout
     /// blocks that overflow the same edge move together, and only by enough to bring the outermost
     /// one inside.
     /// </summary>
+    /// <summary>
+    /// Shifts every object on the page so the drawing sits centred on the sheet.
+    ///
+    /// Needed after the paper is chosen: layout positions are relative to the content's own bounding
+    /// box, so putting them on a standard sheet unchanged leaves the drawing flush against one edge.
+    /// Measured on the deploy topology, 4.25" of content on a 16.54" sheet left 8.11" of blank space
+    /// above and none below.
+    /// </summary>
+    public static void CenterContent(Page page)
+    {
+        if (page.Size is not { Width: > 0, Height: > 0 } size) return;
+
+        var boxes = page.Nodes.Select(n => n.Bounds)
+            .Concat(page.Groups.Select(g => g.Bounds))
+            .Concat(page.TextBlocks.Select(t => t.Bounds))
+            .Concat(page.Paths.Select(p => p.Bounds))
+            .Where(b => b is not null)
+            .Select(b => b!)
+            .ToList();
+
+        if (boxes.Count == 0) return;
+
+        double left = boxes.Min(b => b.X - b.W / 2);
+        double right = boxes.Max(b => b.X + b.W / 2);
+        double bottom = boxes.Min(b => b.Y - b.H / 2);
+        double top = boxes.Max(b => b.Y + b.H / 2);
+
+        double dx = size.Width / 2 - (left + right) / 2;
+        double dy = size.Height / 2 - (bottom + top) / 2;
+
+        if (Math.Abs(dx) < 1e-9 && Math.Abs(dy) < 1e-9) return;
+
+        foreach (var b in boxes) b.X += dx;
+        foreach (var b in boxes) b.Y += dy;
+
+        // Waypoints are absolute; leaving them behind would route edges through empty space.
+        foreach (var edge in page.Edges.Where(e => e.Waypoints is { Count: > 0 }))
+            foreach (var point in edge.Waypoints!)
+            {
+                point.X += dx;
+                point.Y += dy;
+            }
+    }
+
     public static void ClampToPage(Diagram diagram)
     {
         foreach (var page in diagram.Pages)

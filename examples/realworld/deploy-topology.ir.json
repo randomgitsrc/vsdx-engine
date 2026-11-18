@@ -1,36 +1,212 @@
-{"irVersion":"1.0","id":"deploy","kind":"network","title":"生产环境部署拓扑",
- "containers":[
-   {"id":"dmz","label":"DMZ 区","kind":"layer","order":3},
-   {"id":"app","label":"应用区","kind":"layer","order":2},
-   {"id":"data","label":"数据区","kind":"layer","order":1}],
- "nodes":[
-   {"id":"lb","label":"负载均衡\nHAProxy","role":"gateway","containerId":"dmz"},
-   {"id":"waf","label":"WAF","role":"gateway","containerId":"dmz"},
-   {"id":"cdn","label":"CDN 节点","role":"external","containerId":"dmz"},
-   {"id":"api1","label":"API 实例 1\n10.0.1.11","role":"service","containerId":"app"},
-   {"id":"api2","label":"API 实例 2\n10.0.1.12","role":"service","containerId":"app"},
-   {"id":"api3","label":"API 实例 3\n10.0.1.13","role":"service","containerId":"app"},
-   {"id":"wk1","label":"Worker 1","role":"service","containerId":"app"},
-   {"id":"wk2","label":"Worker 2","role":"service","containerId":"app"},
-   {"id":"pg1","label":"PG 主库\n10.0.2.11","role":"database","containerId":"data"},
-   {"id":"pg2","label":"PG 从库\n10.0.2.12","role":"database","containerId":"data"},
-   {"id":"rd","label":"Redis 哨兵","role":"storage","containerId":"data"},
-   {"id":"mq","label":"RabbitMQ","role":"queue","containerId":"data"}],
- "edges":[
-   {"id":"d1","from":"cdn","to":"waf","label":"回源"},
-   {"id":"d2","from":"waf","to":"lb","label":"清洗"},
-   {"id":"d3","from":"lb","to":"api1","label":"9000"},
-   {"id":"d4","from":"lb","to":"api2","label":"9000"},
-   {"id":"d5","from":"lb","to":"api3","label":"9000"},
-   {"id":"d6","from":"api1","to":"pg1","label":"5432"},
-   {"id":"d7","from":"api2","to":"pg1","label":"5432"},
-   {"id":"d8","from":"api3","to":"pg2","label":"5432"},
-   {"id":"d9","from":"api1","to":"rd","label":"6379"},
-   {"id":"d10","from":"api2","to":"rd","label":"6379"},
-   {"id":"d11","from":"wk1","to":"mq","label":"amqp"},
-   {"id":"d12","from":"wk2","to":"mq","label":"amqp"},
-   {"id":"d13","from":"wk1","to":"pg2","label":"只读"},
-   {"id":"d14","from":"wk2","to":"pg2","label":"只读"}],
- "textBlocks":[
-   {"id":"title","text":"生产环境部署拓扑","role":"title","box":{"x":8,"y":11,"width":8,"height":0.6},"align":"center"},
-   {"id":"legend","text":"蓝=入口  绿=应用  橙=数据","role":"legend","box":{"x":8,"y":0.7,"width":6,"height":0.3},"align":"center"}]}
+{
+  "irVersion": "1.0",
+  "id": "deploy",
+  "kind": "network",
+  "title": "生产环境部署拓扑",
+  "containers": [
+    {
+      "id": "dmz",
+      "label": "DMZ 区",
+      "kind": "layer",
+      "order": 3
+    },
+    {
+      "id": "app",
+      "label": "应用区",
+      "kind": "layer",
+      "order": 2
+    },
+    {
+      "id": "data",
+      "label": "数据区",
+      "kind": "layer",
+      "order": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "lb",
+      "label": "负载均衡\nHAProxy",
+      "role": "gateway",
+      "containerId": "dmz"
+    },
+    {
+      "id": "waf",
+      "label": "WAF",
+      "role": "gateway",
+      "containerId": "dmz"
+    },
+    {
+      "id": "cdn",
+      "label": "CDN 节点",
+      "role": "external",
+      "containerId": "dmz"
+    },
+    {
+      "id": "api1",
+      "label": "API 实例 1\n10.0.1.11",
+      "role": "service",
+      "containerId": "app"
+    },
+    {
+      "id": "api2",
+      "label": "API 实例 2\n10.0.1.12",
+      "role": "service",
+      "containerId": "app"
+    },
+    {
+      "id": "api3",
+      "label": "API 实例 3\n10.0.1.13",
+      "role": "service",
+      "containerId": "app"
+    },
+    {
+      "id": "wk1",
+      "label": "Worker 1",
+      "role": "service",
+      "containerId": "app"
+    },
+    {
+      "id": "wk2",
+      "label": "Worker 2",
+      "role": "service",
+      "containerId": "app"
+    },
+    {
+      "id": "pg1",
+      "label": "PG 主库\n10.0.2.11",
+      "role": "database",
+      "containerId": "data"
+    },
+    {
+      "id": "pg2",
+      "label": "PG 从库\n10.0.2.12",
+      "role": "database",
+      "containerId": "data"
+    },
+    {
+      "id": "rd",
+      "label": "Redis 哨兵",
+      "role": "storage",
+      "containerId": "data"
+    },
+    {
+      "id": "mq",
+      "label": "RabbitMQ",
+      "role": "queue",
+      "containerId": "data"
+    }
+  ],
+  "edges": [
+    {
+      "id": "d1",
+      "from": "cdn",
+      "to": "waf",
+      "label": "回源"
+    },
+    {
+      "id": "d2",
+      "from": "waf",
+      "to": "lb",
+      "label": "清洗"
+    },
+    {
+      "id": "d3",
+      "from": "lb",
+      "to": "api1",
+      "label": "9000"
+    },
+    {
+      "id": "d4",
+      "from": "lb",
+      "to": "api2",
+      "label": "9000"
+    },
+    {
+      "id": "d5",
+      "from": "lb",
+      "to": "api3",
+      "label": "9000"
+    },
+    {
+      "id": "d6",
+      "from": "api1",
+      "to": "pg1",
+      "label": "5432"
+    },
+    {
+      "id": "d7",
+      "from": "api2",
+      "to": "pg1",
+      "label": "5432"
+    },
+    {
+      "id": "d8",
+      "from": "api3",
+      "to": "pg2",
+      "label": "5432"
+    },
+    {
+      "id": "d9",
+      "from": "api1",
+      "to": "rd",
+      "label": "6379"
+    },
+    {
+      "id": "d10",
+      "from": "api2",
+      "to": "rd",
+      "label": "6379"
+    },
+    {
+      "id": "d11",
+      "from": "wk1",
+      "to": "mq",
+      "label": "amqp"
+    },
+    {
+      "id": "d12",
+      "from": "wk2",
+      "to": "mq",
+      "label": "amqp"
+    },
+    {
+      "id": "d13",
+      "from": "wk1",
+      "to": "pg2",
+      "label": "只读"
+    },
+    {
+      "id": "d14",
+      "from": "wk2",
+      "to": "pg2",
+      "label": "只读"
+    }
+  ],
+  "textBlocks": [
+    {
+      "id": "title",
+      "text": "生产环境部署拓扑",
+      "role": "title",
+      "box": {
+        "x": 5.2,
+        "y": 10.6,
+        "width": 5.0,
+        "height": 0.6
+      },
+      "align": "center"
+    },
+    {
+      "id": "legend",
+      "text": "蓝=入口  绿=应用  橙=数据",
+      "role": "legend",
+      "box": {
+        "x": 5,
+        "y": 4.2,
+        "width": 6,
+        "height": 0.3
+      },
+      "align": "center"
+    }
+  ]
+}

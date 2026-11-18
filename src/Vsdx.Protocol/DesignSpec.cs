@@ -581,6 +581,12 @@ public static class DesignSpecApplier
                 page.Size.Height = sheet.Height;
                 page.Size.Unit = "inches";
 
+                // Centre the content on the chosen sheet. Without this the nodes keep the
+                // coordinates the layout produced — which were measured against the old page — so a
+                // 4.25" tall diagram landed at the bottom of a 16.54" sheet with 8.11" of empty
+                // space above. The paper was correct; the placement was not.
+                DecorationLayout.CenterContent(page);
+
                 applied.Add($"canvas.paper={sheet.Name}");
 
                 if (scaledDown)

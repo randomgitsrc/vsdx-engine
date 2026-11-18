@@ -107,7 +107,10 @@ public sealed class CandidateTests
         // the quality report, not the axis swap. What must hold is that the variant is a valid
         // diagram in its own right.
         var wide = Sample();
-        wide.Pages[0].Size = new PageSize { Width = 24, Height = 8 };
+        // Sized so the transposed variant still fits: containers now reserve heading clearance, so
+        // an 8" short side left them overlapping after the axis swap. The assertion is about the
+        // variant being deliverable, not about how tightly the sheet can be packed.
+        wide.Pages[0].Size = new PageSize { Width = 24, Height = 12 };
 
         var recipes = new List<CandidateRecipe>
         {

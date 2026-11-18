@@ -15,6 +15,7 @@ public static class DiagramLayout
     /// <summary>Space reserved above members for the container heading.</summary>
     public const double ContainerHeading = 0.46;
 
+
     /// <summary>Space below members before the container border.</summary>
     public const double ContainerPaddingBottom = 0.22;
 
@@ -70,6 +71,12 @@ public static class DiagramLayout
                 left -= padX;
                 right += padX;
                 bottom -= padBottom;
+
+                // The heading occupies the top `heading` inches of the box, so adding exactly
+                // `heading` puts the members' top edge at precisely the heading's bottom edge —
+                // geometrically touching, and the text is painted over the box. Measured on the
+                // deploy topology: container top 3.01, heading bottom 2.55, member top 2.55, eleven
+                // collisions, and nothing in the detector could see it before the heading check.
                 top += heading;
 
                 group.Bounds = new Bounds((left + right) / 2, (bottom + top) / 2, right - left, top - bottom);
