@@ -28,11 +28,11 @@
 | 图片 | 🔬 **LAB** | 实验 2 手写 ForeignData 可行 | **Engine 零支持**：无媒体写入、无模型字段；渲染器仅占位 |
 | SVG 嵌入 | 🔬 **LAB** | 实验 3 手写可行，需补 Content-Type | **Engine 零支持** |
 | 复合符号 | ❌ MI | — | 建议走 Stencil（库已支持，未接入）而非自建 |
-| Z-order | ⚠️ II | `ShapeOrder` 读取但**从不写入** | 每次保存丢失 |
+| Z-order | ✅ IV | `VisioZOrderBridge` 恢复文档序 | 曾为 P1 缺陷，已修 |
 | 对象 ID 稳定 | ✅ IV | `RoundTrip_IdsAreStable` | — |
 | 语义/视觉属性分离 | ⚠️ II | `Node.Type` 存在但仅 Protocol 用 | Engine 布局不读 `Node.Type` |
 | 图形数据（Shape Data） | ✅ IV | `RoundTrip_ShapeDataSurvives` | — |
-| 多页 | ⚠️ II | 模型/读写/渲染均支持 | **协议层不支持** |
+| 多页 | ✅ IV | 模型/读写/渲染/协议均支持；实测 2 页 | 详见 §8 |
 
 **小结：** 11 类表达能力（任务 §4.1）中，模型可表达 4 类
 （几何图形、连接关系、组合、图形数据）。
@@ -145,7 +145,7 @@
 | 无操作往返 | ✅ IV | 实测 cells 完全一致 | — |
 | **外部无几何形状** | ⚠️ **II（P0 缺陷）** | **实测：每 shape 注入 Geometry** | **覆盖非矩形形状** |
 | 自定义几何保留 | ⚠️ II | 无样本 | 未验证 |
-| Z-order | ⚠️ II | 读取不写入 | — |
+| Z-order | ✅ IV | `VisioZOrderBridge`；保存后恢复文档序 | 详见 §1 |
 | 图片保留 | ⚠️ II | 无样本 | 未验证 |
 | 未映射对象保留 | ⚠️ II | 兼容性报告机制存在 | 但注入几何违反此原则 |
 | 多代往返 | ✅ IV | `ThreeGenerationsRemainStable` | — |
@@ -221,7 +221,7 @@
 | 未知约束码报告 | ✅ IV | `unknown_constraint` | — |
 | 状态分级 | ✅ IV | succeeded/partial/failed/degraded | — |
 | IR→模型映射回流 | ✅ IV | `objectMapping` | — |
-| 多页 | ❌ MI | IR 无 `pages` | — |
+| 多页 | ✅ IV | `DiagramIr.Pages`；实测 2 页各含节点与连线，`validate` 通过 | 曾误记为「IR 无 `pages`」 |
 | 能力声明（Engine 支持什么） | ⚠️ II | 只有 `unmetConstraints` 逐次报告 | 无静态能力清单 |
 | 降级声明 | ✅ IV | `degraded` 状态 | — |
 | 版本协商 | ✅ IV | `IsCompatible` | 主版本不匹配拒绝 |
@@ -246,18 +246,16 @@
 
 | 状态 | 数量 | 占比 |
 | --- | --- | --- |
-| ✅ Implemented & Verified | 77 | 62% |
-| ⚠️ Implemented but Incomplete | 20 | 16% |
+| ✅ Implemented & Verified | 81 | 65% |
+| ⚠️ Implemented but Incomplete | 17 | 14% |
 | 🔬 Format Feasible, No Engine Support | 2 | 2% |
 | 📄 Protocol Only | 0 | 0% |
 | 🧪 Experimental | 3 | 2% |
-| ❌ Missing | 16 | 13% |
+| ❌ Missing | 15 | 12% |
 | 🚫 Unsupported by Dependency | 6 | 5% |
 | ⛔ Not in Engine Scope | 1 | 1% |
 | **合计** | **125** | **100%** |
 
-> 计数口径：逐行统计 §1–§9 表格状态列的第一个标记，每条矩阵行计一次，脚本可复核。
->
 > **2026-11-18 增补**：章程 §5.1 要求矩阵覆盖「对象身份、增量修改」等维度，原表各只有一行。
 > 已补 §6a（对象身份，9 行）与 §6b（增量修改，12 行），合计由 106 增至 125。
 >
@@ -269,10 +267,10 @@
 > 它们既不是 `🚫`（格式支持），也不是 `⚠️ II`（产品有实现），
 > 而是"**格式允许、产品零支持**"。把它们混进任何一类都会误导工作量估算。
 
-**分布解读：** 核心执行路径（创建/布局/读写/检测/协议）已经很扎实（54% 已验证）。
-缺口集中在**表达丰富度**（形状语义、独立对象、资产）与**保真细节**（几何/Z-order），
-而不是基础能力缺失。这决定了 Phase 8 应"接入已有能力 + 补表达层"，
-而不是重建引擎。
+**分布解读：** 核心执行路径（创建 / 布局 / 读写 / 检测 / 协议 / 增量 / 身份）已验证。
+剩余缺口集中在**表达丰富度**——图片、SVG 嵌入、复合符号——而不是基础能力或保真细节：
+几何保留（`VisioGeometryPreserver`）与 Z-order（`VisioZOrderBridge`）均已实现。
 
-新增的 `🔬 LAB` 类（3 项）与 `❌ Missing`（17 项）合计 20 项（19%）是 Phase 8 的真实工作量——
-不是"接线"，是从零实现。
+`🔬 LAB`（2 项：图片、SVG）与 `❌ Missing`（16 项）仍是真实工作量，属"从零实现"而非"接线"。
+
+各项统计见 §10，由脚本逐行核对；`CapabilityMatrixTests` 保证摘要与行一致。
