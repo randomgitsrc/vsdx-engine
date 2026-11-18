@@ -298,6 +298,12 @@ public static class DiagramIrConverter
                 });
             }
 
+            // Every node used to get the same placeholder X, so the layout engine's ordering by
+            // Bounds.X had nothing to sort on and fell through to id order — alphabetical, and
+            // unrelated to how the author wrote the diagram. A small increasing offset preserves
+            // the declaration sequence through that sort without pretending to be a real position.
+            int declarationIndex = 0;
+
             foreach (var node in source.Nodes)
             {
                 var model = new Node
@@ -308,7 +314,7 @@ public static class DiagramIrConverter
                     Type = node.Role,
                     Shape = ShapeForRole(node.Role),
                     GroupId = node.ContainerId,
-                    Bounds = new Bounds(0, 0, 2.0, 0.9)
+                    Bounds = new Bounds(declarationIndex++ * 0.01, 0, 2.0, 0.9)
                 };
 
                 if (node.Attributes is { Count: > 0 })
