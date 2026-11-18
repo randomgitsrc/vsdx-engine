@@ -359,6 +359,7 @@ public static class LayoutAnalyzer
         // Containers are what the reader perceives as "bands" or "zones". Overlapping bands
         // make the whole diagram look broken, yet this was previously never checked.
         CheckGroupRelations(page, options, report);
+        CheckTextAgainstContainers(page, options, report);
 
         // ---- 7c. Row alignment and size uniformity ---------------------------
         CheckRowsAndSizes(nodes, options, page, report);
@@ -447,6 +448,57 @@ public static class LayoutAnalyzer
     /// hard constraint. Nested containers are exempt: a child is expected to sit inside its
     /// parent.
     /// </summary>
+    /// <summary>
+    /// Flags a text block sitting across a container's border.
+    ///
+    /// Text inside a band is normal — a zone label lives there. Text that straddles the edge is not:
+    /// measured on the cross-border order diagram, a title spanning y 8.20-8.80 met a container
+    /// spanning 5.85-8.76, so the heading overlapped the band's own title. Nothing reported it,
+    /// because the analyser only compared nodes with nodes and groups with groups.
+    ///
+    /// Straddling is distinguished from containment on purpose: a fully contained label is a design
+    /// choice, a label cut by the border is a defect.
+    /// </summary>
+    private static void CheckTextAgainstContainers(Page page, LayoutAnalyzerOptions options, LayoutReport report)
+    {
+        var groups = page.Groups.Where(g => g.Bounds is not null).ToList();
+        if (groups.Count == 0) return;
+
+        foreach (var text in page.TextBlocks)
+        {
+            var t = text.Bounds;
+
+            foreach (var group in groups)
+            {
+                var g = group.Bounds!;
+
+                double ix = OverlapExtentX(t, g);
+                double iy = OverlapExtentY(t, g);
+
+                // No intersection at all, or the label is entirely inside: both fine.
+                if (ix <= 0 || iy <= 0) continue;
+
+                bool inside = Encloses(g, t, 0);
+                if (inside) continue;
+
+                // Straddles the border: partly in, partly out on at least one axis.
+                double area = ix * iy;
+                if (area <= options.GroupOverlapAreaTolerance) continue;
+
+                report.Add(new LayoutIssue
+                {
+                    Code = "text.overlaps-container",
+                    Severity = "warning",
+                    Page = page.Name,
+                    Targets = new[] { text.Id, group.Id },
+                    Message = $"文本块 '{text.Id}' 横跨容器 '{group.Id}' 的边框（重叠 {ix:F2}\" × {iy:F2}\"）",
+                    RootCause = "装饰元素按作者坐标放置，容器由成员推导后扩展，两者未协调",
+                    RecommendedFix = "移动文本块到容器之外，或调整容器尺寸"
+                });
+            }
+        }
+    }
+
     private static void CheckGroupRelations(Page page, LayoutAnalyzerOptions options, LayoutReport report)
     {
         var groups = page.Groups.Where(g => g.Bounds is not null).ToList();
