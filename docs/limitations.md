@@ -39,7 +39,7 @@ JSON 模型**不是** VSDX 的等价表示。以下内容无法完整映射：
 
 | Visio 特性 | 状态 |
 | --- | --- |
-| 自定义 Geometry 段（手绘轮廓） | 保留原始几何（`PreservedGeometrySections`），但不进入 JSON 模型 |
+| 自定义 Geometry 段（手绘轮廓） | 保留在 `FreePath.Geometry`，未知行类型原样保留并记入兼容性报告 |
 | 主题 / StyleSheet 引用 | 包级主题部分保留；模型只用显式样式 |
 | Data Graphics、注释、签名 | 保留在包内，模型不建模 |
 | 动态连接线的高级路由参数 | 仅建模 `kind` / `waypoints` |
