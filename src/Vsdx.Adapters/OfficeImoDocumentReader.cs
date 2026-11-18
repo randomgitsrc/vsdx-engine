@@ -343,7 +343,11 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
                 Width = page.Width.ToInches(),
                 Height = page.Height.ToInches(),
                 Unit = "inches"
-            }
+            },
+
+            // The background is a PageSheet cell, which the library does not surface; read it from
+            // the package directly so a colour written by the spec comes back on round-trip.
+            Background = VisioBackgroundBridge.Read(vsdxPath, page.Id)
         };
 
         // OfficeIMO does not expose the raw Master attribute, so capture it from the part. Without

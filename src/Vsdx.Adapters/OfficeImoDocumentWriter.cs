@@ -173,6 +173,12 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         // Standalone text is not a connector or container, so it is written as native shapes.
         VisioTextBlockBridge.Apply(diagram, vsdxPath, compat);
 
+        // Page background lives in pages.xml's PageSheet, which none of the page-part bridges
+        // touch, so this needs no position in their order.
+        int backgrounds = VisioBackgroundBridge.Apply(diagram, vsdxPath);
+        if (backgrounds > 0)
+            compat.Info("write.background", $"写入了 {backgrounds} 个页面背景色");
+
         VisioMetadataBridge.Write(diagram, vsdxPath);
 
         return new WriteResult
