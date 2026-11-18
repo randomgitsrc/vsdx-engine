@@ -111,6 +111,22 @@ foreach (var memberId in group.Members)
 
 ---
 
+### 已修（2026-11-18）
+
+**缺口**：`CheckContainment` 只遍历 `group.Members`（节点），
+**从不读 `ParentId`**。所以子组逃出父组时它报 0 处——
+C1 刚建立的保证因此**没有任何检测守卫**。
+
+**修法**：追加子组检查。
+
+```csharp
+foreach (var child in page.Groups)
+    if (child.ParentId == group.Id && child.Bounds is { } c) { /* 比对四边 */ }
+```
+
+**验证**：5 项新测试（含三层嵌套），18 基准与真实嵌套图均无误报。
+
+C1 + C2 现在成对：布局保证包围，检测保证回归会被发现。
 ## C3 【P1】正交路由为多条边分配同一通道，导致线条重合
 
 **发现于：** 真实制图验证（`.lab/cross-border-orders`，2026-11-18）

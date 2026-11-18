@@ -273,6 +273,26 @@ public static class DiagramLayout
                         $"[node {nLeft:F2},{nBottom:F2}..{nRight:F2},{nTop:F2} vs group {gLeft:F2},{gBottom:F2}..{gRight:F2},{gTop:F2}]");
                 }
             }
+
+            // Child groups are containers too. Checking only members left the parent/child
+            // relationship unguarded: a nested group could sit half outside its parent and this
+            // method reported nothing, which is exactly the case C1 had to fix in the layout pass.
+            foreach (var child in page.Groups)
+            {
+                if (!string.Equals(child.ParentId, group.Id, StringComparison.Ordinal)) continue;
+                if (child.Bounds is not { } c) continue;
+
+                double cLeft = c.X - c.W / 2, cRight = c.X + c.W / 2;
+                double cBottom = c.Y - c.H / 2, cTop = c.Y + c.H / 2;
+
+                if (cLeft < gLeft - tolerance || cRight > gRight + tolerance ||
+                    cBottom < gBottom - tolerance || cTop > gTop + tolerance)
+                {
+                    problems.Add(
+                        $"group '{child.Id}' escapes parent group '{group.Id}' " +
+                        $"[group {cLeft:F2},{cBottom:F2}..{cRight:F2},{cTop:F2} vs parent {gLeft:F2},{gBottom:F2}..{gRight:F2},{gTop:F2}]");
+                }
+            }
         }
 
         return problems;
