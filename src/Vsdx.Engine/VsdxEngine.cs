@@ -84,8 +84,30 @@ public sealed class VsdxEngine
         if (options?.AutoLayout ?? true)
             OrthogonalRouter.Route(diagram);
 
+        // A structurally valid package can still hold a broken drawing. Container bounds are
+        // derived during the steps above, so this has to run after them: analysing the loaded
+        // model would find Bounds still null and skip every containment check.
+        //
+        // Reported rather than refused — the package is real and may be worth inspecting, and
+        // discarding the caller's work is worse than handing it back with a warning attached.
         Stamp(diagram, "create", outputPath);
         var result = _writer.Write(diagram, outputPath, options);
+
+        // Analyse what was actually written, not the model we handed over. Containers reach the
+        // package through the backend's own placement, so in-memory bounds are not evidence of
+        // what the file contains — measuring the model would report a clean layout while the
+        // delivered file had bands sitting on top of each other.
+        if (options?.ValidateAfterSave ?? true)
+        {
+            var written = _reader.Read(outputPath);
+            foreach (var issue in LayoutAnalyzer.Analyze(written.Diagram).Errors)
+            {
+                result.Compatibility.Warn(
+                    "layout." + issue.Code,
+                    string.IsNullOrEmpty(issue.Message) ? issue.Code : issue.Message,
+                    issue.Targets?.FirstOrDefault());
+            }
+        }
 
         if (options?.ValidateAfterSave ?? true)
         {

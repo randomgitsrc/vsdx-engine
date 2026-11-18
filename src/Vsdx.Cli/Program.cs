@@ -865,6 +865,14 @@ public static class Program
         if (report.Issues.Count == 0) Console.WriteLine("  compatibility: lossless");
     }
 
+    /// <summary>Prints the issues a batch item carries, when it has any.</summary>
+    private static void EmitBatchIssues(BatchItem item)
+    {
+        foreach (var issue in item.IssueDetails)
+            Console.WriteLine($"  {issue.Severity.ToUpperInvariant()} {issue.Code}: {issue.Message}");
+        if (item.IssueDetails.Count == 0) Console.WriteLine("  compatibility: lossless");
+    }
+
     private static void Emit(object payload) =>
         Console.WriteLine(JsonSerializer.Serialize(payload, JsonOut));
 

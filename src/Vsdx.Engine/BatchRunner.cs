@@ -27,7 +27,8 @@ public sealed class BatchRunner
                 Output = r.OutputPath,
                 Ok = !r.Compatibility.Errors.Any(),
                 Detail = $"shapes={r.ShapesWritten} connectors={r.ConnectorsWritten}",
-                Issues = r.Compatibility.Issues.Count
+                Issues = r.Compatibility.Issues.Count,
+                IssueDetails = r.Compatibility.Issues.ToList()
             };
         }));
 
@@ -61,7 +62,8 @@ public sealed class BatchRunner
                 Output = string.Join(";", r.Pages.Select(p => p.OutputPath)),
                 Ok = r.Pages.Count > 0 && !r.Compatibility.Errors.Any(),
                 Detail = $"{r.Pages.Count} page(s)",
-                Issues = r.Compatibility.Issues.Count
+                Issues = r.Compatibility.Issues.Count,
+                IssueDetails = r.Compatibility.Issues.ToList()
             };
         }));
 
@@ -99,7 +101,8 @@ public sealed class BatchRunner
                 Output = output,
                 Ok = true,
                 Detail = $"nodes={r.Diagram.Pages.Sum(p => p.Nodes.Count)} edges={r.Diagram.Pages.Sum(p => p.Edges.Count)}",
-                Issues = r.Compatibility.Issues.Count
+                Issues = r.Compatibility.Issues.Count,
+                IssueDetails = r.Compatibility.Issues.ToList()
             };
         }));
 
@@ -159,4 +162,10 @@ public sealed class BatchItem
     public string? Detail { get; set; }
     public string? Error { get; set; }
     public int Issues { get; set; }
+
+    /// <summary>
+    /// The issues themselves, not just how many. A count tells the caller something happened;
+    /// the messages tell them what, which is the difference between a warning and a riddle.
+    /// </summary>
+    public List<CompatibilityIssue> IssueDetails { get; set; } = new();
 }
