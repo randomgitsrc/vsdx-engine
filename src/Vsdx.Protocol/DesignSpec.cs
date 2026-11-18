@@ -270,17 +270,49 @@ public static class DesignSpecApplier
                 page.Size.Height = h;
                 page.Size.Unit = spec.Canvas.Unit;
 
+                string target = $"{w:0.##}x{h:0.##}";
+
                 if (spec.Canvas.ShrinkToFit)
                 {
                     var fit = DiagramSizer.FitPage(page, shrink: true);
+
+                    // Trimming a page the caller asked for is not "applied" — it is the request
+                    // being overridden to make the drawing fit. Saying so in `applied` alone hides
+                    // it: nobody checks the notes for the requirements that were dropped.
                     if (fit.Shrank)
+                    {
                         applied.Add("canvas.fixed+shrunk");
+                        unmet.Add(new UnmetConstraint
+                        {
+                            Code = "canvas.shrunk",
+                            Target = page.Name,
+                            Reason = $"请求 {target} 英寸，为容纳内容收缩为 " +
+                                     $"{page.Size.Width:0.##}x{page.Size.Height:0.##} 英寸"
+                        });
+                    }
                     else
+                    {
                         applied.Add("canvas.fixed");
+                    }
                 }
                 else
                 {
                     applied.Add("canvas.fixed");
+                }
+
+                // The other direction matters too: content larger than the requested sheet grows
+                // it, which is equally a size the caller did not ask for.
+                double overW = page.Size.Width - w;
+                double overH = page.Size.Height - h;
+                if (overW > 0.05 || overH > 0.05)
+                {
+                    unmet.Add(new UnmetConstraint
+                    {
+                        Code = "canvas.exceeded",
+                        Target = page.Name,
+                        Reason = $"请求 {target} 英寸，内容超出，实际为 " +
+                                 $"{page.Size.Width:0.##}x{page.Size.Height:0.##} 英寸"
+                    });
                 }
             }
             else
