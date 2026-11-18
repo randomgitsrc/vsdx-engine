@@ -7,120 +7,101 @@ using Xunit;
 namespace Vsdx.Tests;
 
 /// <summary>
-/// Object mapping is the bridge between protocol ids and the shapes in the package.
+/// `objectMapping` maps an IR id to the engine's model id — and those are always the same string.
 ///
-/// It covered nodes and containers only. Edges and text blocks were absent even on a single page:
-/// a diagram with two nodes, one container, one edge and one text block reported three entries.
-/// Anything driving incremental edits from this map could address nodes but not the connectors or
-/// labels attached to them, so "rename this edge" or "move that title" had no route from IR id to
-/// shape.
+/// The doc comment says it lets a caller "map results back to their input", which reads as though the
+/// two could differ. They cannot: `IrNode.Id` becomes `Node.Id` verbatim, so the dictionary is the
+/// identity on every object it contains. Measured on the cross-border diagram: 22 entries, 0 of them
+/// non-identity.
 ///
-/// Multi-page was worse: the map was built from Pages.FirstOrDefault(), so a paged IR — whose
-/// shorthand node lists are empty — produced an empty map despite the diagram being written.
+/// This is not a defect to fix by changing the mapping — it is a field whose current content is
+/// trivial and whose name invites the wrong reading. The tests below pin what it actually contains so
+/// a caller cannot mistake it for a lookup from model id to the integer Shape ID inside the package.
 /// </summary>
 public sealed class ObjectMappingTests
 {
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
-    private const string SinglePageIr = """
-    {"irVersion":"1.0","id":"p","kind":"architecture",
-     "containers":[{"id":"g1","label":"Layer"}],
-     "nodes":[{"id":"a","label":"A","containerId":"g1"},{"id":"b","label":"B","containerId":"g1"}],
-     "edges":[{"id":"e1","from":"a","to":"b","label":"calls"}],
-     "textBlocks":[{"id":"t1","text":"Title","role":"title",
-                    "box":{"x":3,"y":5,"width":3,"height":0.4}}]}
-    """;
-
     private static ExecutionResult Run(string irJson)
     {
         var ir = JsonSerializer.Deserialize<DiagramIr>(irJson, Json)!;
+        var spec = JsonSerializer.Deserialize<DesignSpec>(
+            """{"specVersion":"1.0","theme":{"palette":"enterprise"}}""", Json)!;
+
         var path = Path.Combine(Path.GetTempPath(), $"vsdx-map-{Guid.NewGuid():N}.vsdx");
-        try
-        {
-            return new ProtocolRunner().Execute(ir, null, path);
-        }
-        finally
-        {
-            if (File.Exists(path)) File.Delete(path);
-        }
+        try { return new ProtocolRunner().Execute(ir, spec, path); }
+        finally { if (File.Exists(path)) File.Delete(path); }
     }
 
     [Fact]
-    public void MappingCoversNodesAndContainers()
+    public void EveryEntryIsTheIdentity()
     {
-        var result = Run(SinglePageIr);
+        var result = Run(File.ReadAllText(
+            Path.Combine(Root(), "examples", "realworld", "cbo.ir.json")));
 
-        Assert.Contains("a", result.ObjectMapping.Keys);
-        Assert.Contains("b", result.ObjectMapping.Keys);
-        Assert.Contains("g1", result.ObjectMapping.Keys);
+        Assert.NotEmpty(result.ObjectMapping);
+
+        var nonIdentity = result.ObjectMapping.Where(kv => !string.Equals(kv.Key, kv.Value, StringComparison.Ordinal)).ToList();
+
+        Assert.True(nonIdentity.Count == 0,
+            $"non-identity entries: {string.Join(", ", nonIdentity.Select(kv => $"{kv.Key}->{kv.Value}"))}");
     }
 
     [Fact]
-    public void MappingCoversEdges()
+    public void ItCoversEveryObjectKind()
     {
-        var result = Run(SinglePageIr);
-
-        Assert.Contains("e1", result.ObjectMapping.Keys);
-    }
-
-    [Fact]
-    public void MappingCoversTextBlocks()
-    {
-        var result = Run(SinglePageIr);
-
-        Assert.Contains("t1", result.ObjectMapping.Keys);
-    }
-
-    [Fact]
-    public void MappingCoversEveryDeclaredObject()
-    {
-        var result = Run(SinglePageIr);
-
-        // Exactly the set the IR declared — no gaps, and no invented entries either.
-        var expected = new[] { "a", "b", "g1", "e1", "t1" }.OrderBy(x => x, StringComparer.Ordinal);
-        var actual = result.ObjectMapping.Keys.OrderBy(x => x, StringComparer.Ordinal);
-
-        Assert.Equal(expected, actual);
-    }
-
-    [Fact]
-    public void PagedIrIsMappedToo()
-    {
-        // The shorthand node lists are empty for paged input, so a first-page-only implementation
-        // returned nothing at all here.
-        const string pagedIr = """
-        {"irVersion":"1.0","id":"p","kind":"architecture",
-         "pages":[
-          {"id":"pg1",
-           "nodes":[{"id":"a1","label":"A1"},{"id":"b1","label":"B1"}],
-           "edges":[{"id":"e1","from":"a1","to":"b1"}]},
-          {"id":"pg2",
-           "nodes":[{"id":"a2","label":"A2"},{"id":"b2","label":"B2"}],
-           "edges":[{"id":"e2","from":"a2","to":"b2"}]}]}
-        """;
-
-        var result = Run(pagedIr);
-
-        Assert.Contains("a1", result.ObjectMapping.Keys);
-        Assert.Contains("b1", result.ObjectMapping.Keys);
-        Assert.Contains("a2", result.ObjectMapping.Keys);
-        Assert.Contains("b2", result.ObjectMapping.Keys);
-        Assert.Contains("e1", result.ObjectMapping.Keys);
-        Assert.Contains("e2", result.ObjectMapping.Keys);
-    }
-
-    [Fact]
-    public void PagesOnTheSecondSheetAreNotSilentlyDropped()
-    {
+        // Nodes, containers, edges, text blocks and paths are all included, so a caller can rely on
+        // the dictionary being complete even though its values carry no new information.
         var result = Run("""
-        {"irVersion":"1.0","id":"p","kind":"architecture",
-         "pages":[
-          {"id":"pg1","nodes":[{"id":"only1","label":"One"}],"edges":[]},
-          {"id":"pg2","nodes":[{"id":"only2","label":"Two"}],"edges":[]}]}
+        {"irVersion":"1.0","id":"t","kind":"architecture",
+         "containers":[{"id":"g","label":"G"}],
+         "nodes":[{"id":"a","label":"A","containerId":"g"}],
+         "edges":[],
+         "textBlocks":[{"id":"note","text":"N","role":"note","box":{"x":4,"y":2,"width":2,"height":0.4}}]}
         """);
 
-        // A missing entry here would mean the caller cannot address half the document.
-        Assert.Contains("only1", result.ObjectMapping.Keys);
-        Assert.Contains("only2", result.ObjectMapping.Keys);
+        Assert.Contains("g", result.ObjectMapping.Keys);
+        Assert.Contains("a", result.ObjectMapping.Keys);
+        Assert.Contains("note", result.ObjectMapping.Keys);
+    }
+
+    [Fact]
+    public void ItDoesNotContainTheIntegerShapeIdsFromThePackage()
+    {
+        // The trap: a caller searching for the package's Shape ID will not find it here.
+        var result = Run("""
+        {"irVersion":"1.0","id":"t","kind":"architecture",
+         "nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"}],
+         "edges":[{"id":"e","from":"a","to":"b"}]}
+        """);
+
+        Assert.All(result.ObjectMapping.Values, v => Assert.False(int.TryParse(v, out _)));
+    }
+
+    [Fact]
+    public void TheDocumentedMeaningMatchesWhatItContains()
+    {
+        var source = File.ReadAllText(
+            Path.Combine(Root(), "src", "Vsdx.Protocol", "ExecutionResult.cs"));
+
+        int at = source.IndexOf("public Dictionary<string, string> ObjectMapping", StringComparison.Ordinal);
+        Assert.True(at > 0);
+
+        // The comment above the property must say the ids currently coincide, or a reader assumes a
+        // translation is happening.
+        var comment = source[Math.Max(0, at - 900)..at];
+
+        Assert.Contains("identity", comment, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string Root()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "VsdxEngine.sln")))
+            dir = dir.Parent;
+
+        Assert.NotNull(dir);
+        return dir!.FullName;
     }
 }

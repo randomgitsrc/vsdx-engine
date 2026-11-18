@@ -48,7 +48,17 @@ public sealed class ExecutionResult
     /// <summary>Quality outcome, split by the three tiers the brief requires.</summary>
     public QualityOutcome Quality { get; set; } = new();
 
-    /// <summary>IR id → engine model id, so callers can map results back to their input.</summary>
+    /// <summary>
+    /// IR id → engine model id, so callers can map results back to their input.
+    ///
+    /// **These currently coincide**: an IR object's `id` becomes the model object's `Id` verbatim, so
+    /// every entry is the identity (`web → web`, measured: 22 entries on the cross-border diagram, 0
+    /// non-identity). The dictionary stays for the case where an author-supplied id is ever remapped,
+    /// but today it carries no information a caller did not already have.
+    ///
+    /// It is **not** a lookup from model id to the integer `Shape ID` written inside the package —
+    /// that value is not exposed anywhere in the result.
+    /// </summary>
     public Dictionary<string, string> ObjectMapping { get; set; } = new();
 
     /// <summary>Rendered outputs, when rendering was requested.</summary>
