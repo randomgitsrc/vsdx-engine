@@ -174,15 +174,22 @@ public sealed class DirectionMultiPageTests
     {
         var diagram = LaidOut(LayoutDirection.LeftToRight);
 
-        // A wide page becomes tall, so an element authored at (3, 7) must land at (7, 3):
-        // the coordinates change places, and so do width and height.
+        // A wide page becomes tall: coordinates change places, and then the sheet is reflected so
+        // the reading order runs left to right. A text block moves with the page but keeps its
+        // proportions, because writing stays horizontal.
+        //
+        // Measured for an element authored at (3, 7) with size 4.0 x 0.5 on this 14-wide page:
+        //   swap      -> (7, 3)
+        //   reflect X -> (14 - 7, 3) = (7, 3) — the page centre is 7, so this element happens to
+        //                land back on its own x. Width and height stay as authored, because text
+        //                keeps its proportions.
         var p1 = diagram.Pages[0];
 
         var text = p1.TextBlocks[0].Bounds;
         Assert.Equal(7, text.X, 2);
         Assert.Equal(3, text.Y, 2);
-        Assert.Equal(0.5, text.W, 2);
-        Assert.Equal(4, text.H, 2);
+        Assert.Equal(4, text.W, 2);
+        Assert.Equal(0.5, text.H, 2);
 
         var path = p1.Paths[0];
         var pathBounds = path.Bounds;

@@ -77,17 +77,20 @@ public sealed class DirectionDecorationPerPageTests
         // Before: p1 title (3,7,4,0.5), p2 title (5,6,2,0.4)
         DiagramLayout.Transpose(diagram);
 
+        // The block moves with the sheet but keeps its proportions: writing stays horizontal, so a
+        // 4.0 x 0.5 title must not come back as 0.5 x 4.0 — that is the shape that forced the words
+        // to stack vertically on the transposed data-flow diagram.
         var p1 = diagram.Pages[0].TextBlocks.Single(t => t.Id == "p1-title").Bounds;
         Assert.Equal(7, p1.X, 3);
         Assert.Equal(3, p1.Y, 3);
-        Assert.Equal(0.5, p1.W, 3);
-        Assert.Equal(4, p1.H, 3);
+        Assert.Equal(4, p1.W, 3);
+        Assert.Equal(0.5, p1.H, 3);
 
         var p2 = diagram.Pages[1].TextBlocks.Single(t => t.Id == "p2-title").Bounds;
         Assert.Equal(6, p2.X, 3);
         Assert.Equal(5, p2.Y, 3);
-        Assert.Equal(0.4, p2.W, 3);
-        Assert.Equal(2, p2.H, 3);
+        Assert.Equal(2, p2.W, 3);
+        Assert.Equal(0.4, p2.H, 3);
     }
 
     [Fact]
@@ -205,10 +208,11 @@ public sealed class DirectionDecorationPerPageTests
         {
             var size = page.Size!;
 
-            // A wide page became tall, so anything originally wider than tall is now taller.
+            // Text keeps its proportions: writing runs horizontally whatever the sheet does. A title
+            // that came back taller than wide would have had to stack its characters vertically.
             var title = page.TextBlocks.Single(t => t.Id.EndsWith("-title")).Bounds;
-            Assert.True(title.H > title.W,
-                $"{page.Name}: title {title.W:F2}x{title.H:F2} was not transposed");
+            Assert.True(title.W > title.H,
+                $"{page.Name}: title {title.W:F2}x{title.H:F2} should still be wider than tall");
 
             var path = page.Paths[0].Bounds;
             Assert.True(path.H > path.W,

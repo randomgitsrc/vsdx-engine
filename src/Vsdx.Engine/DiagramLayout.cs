@@ -113,7 +113,14 @@ public static class DiagramLayout
                 }
             }
 
-            foreach (var text in page.TextBlocks) SwapBounds(text.Bounds);
+            // Text blocks move with the sheet but keep their proportions. Swapping width and height
+            // turned a 4.00 x 0.60 title into 0.60 x 4.00, and the only way to set a horizontal
+            // title in a 0.60" column is to stack the characters — the heading ran top to bottom
+            // while the diagram ran left to right.
+            foreach (var text in page.TextBlocks)
+            {
+                (text.Bounds.X, text.Bounds.Y) = (text.Bounds.Y, text.Bounds.X);
+            }
 
             foreach (var path in page.Paths)
             {
@@ -153,6 +160,7 @@ public static class DiagramLayout
             var other => other
         };
     }
+
 
     /// <summary>Reflection across y = x maps an angle θ to 90° − θ.</summary>
     private static double? TransposeAngle(double? angle) =>
