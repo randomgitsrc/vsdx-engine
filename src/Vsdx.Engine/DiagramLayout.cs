@@ -15,6 +15,16 @@ public static class DiagramLayout
     /// <summary>Space reserved above members for the container heading.</summary>
     public const double ContainerHeading = 0.46;
 
+    /// <summary>
+    /// Breathing room a band's members keep below the container heading.
+    ///
+    /// Applied when re-seating nodes inside a derived container, so the row does not sit on the
+    /// heading's baseline. The container box itself does not add it: doing so made
+    /// `Compare_TransposedCandidateIsStillDeliverable` report `group.overlap`, because the advance
+    /// and the box then disagreed by exactly this amount. See docs/phase8/known-issues.md.
+    /// </summary>
+    public const double HeadingClearance = 0.12;
+
 
     /// <summary>Space below members before the container border.</summary>
     public const double ContainerPaddingBottom = 0.22;
@@ -76,7 +86,8 @@ public static class DiagramLayout
                 // `heading` puts the members' top edge at precisely the heading's bottom edge —
                 // geometrically touching, and the text is painted over the box. Measured on the
                 // deploy topology: container top 3.01, heading bottom 2.55, member top 2.55, eleven
-                // collisions, and nothing in the detector could see it before the heading check.
+                // collisions. The clearance keeps them apart; it is safe to add only now that
+                // `LayoutBanded` no longer adds the envelope on top of the container's own height.
                 top += heading;
 
                 group.Bounds = new Bounds((left + right) / 2, (bottom + top) / 2, right - left, top - bottom);

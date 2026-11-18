@@ -141,36 +141,52 @@ public sealed class FlowLayoutEngine : ILayoutEngine
 
         foreach (var row in rows)
         {
-            double rowHeight = row.Max(n => n.Bounds.H);
+            double nodeHeight = row.Max(n => n.Bounds.H);
             double rowWidth = row.Sum(n => n.Bounds.W) + options.NodeGapX * Math.Max(0, row.Count - 1);
 
             double x = options.PageMargin + 0.30;
             foreach (var node in row)
             {
                 node.Bounds.X = Round(x + node.Bounds.W / 2);
-                node.Bounds.Y = Round(y + rowHeight / 2);
+                node.Bounds.Y = Round(y - nodeHeight / 2);
                 x += node.Bounds.W + options.NodeGapX;
             }
 
             maxWidth = Math.Max(maxWidth, rowWidth);
 
-            // Advance by what the band will actually occupy once its container is derived.
-            //
-            // A band holding five nodes in a line is wider than one holding three, and the container
-            // is sized from that extent: derived heights came out 8.63 / 6.78 / 5.67 on the deploy
-            // diagram. Advancing by the row's node height instead leaves the bands too close, and
-            // after a transpose that deficit becomes horizontal overlap — measured on the transposed
-            // page, containers needed 2.12" from centre to centre and had 1.97", a 0.14" overlap.
+            // The container is derived from the members just placed, so it already includes heading
+            // and padding. Advancing by that height is the whole band; adding an envelope on top
+            // double-counts it, which is what made band gaps vary with band order — measured, two
+            // 1.23" containers sat 1.52" apart with a 0.55" gap requested.
+            // Derive the band's box, then re-seat its members against it. Placing nodes before the
+            // container exists means the two use different reference heights — the members were
+            // centred on their own height while the advance used the container's, which includes
+            // heading and padding plus the clearance. That difference is the 0.03" that made the
+            // transposed candidate overlap.
+            double advance = nodeHeight;
+
             var bandGroup = GroupFor(page, row);
             if (bandGroup is not null)
             {
                 DiagramLayout.Apply(new Diagram { Pages = { page } });
+
                 if (bandGroup.Bounds is { } derived)
-                    rowHeight = Math.Max(rowHeight, derived.H);
+                {
+                    advance = Math.Max(advance, derived.H);
+
+                    // Re-seat: the container's bottom padding and heading are now known, so centre
+                    // the row inside the box rather than against the raw cursor.
+                    double innerBottom = derived.Y - derived.H / 2 + DiagramLayout.ContainerPaddingBottom;
+                    double innerTop = derived.Y + derived.H / 2
+                                      - DiagramLayout.ContainerHeading - DiagramLayout.HeadingClearance;
+                    double centre = (innerBottom + innerTop) / 2;
+
+                    double ext = row.Max(n => n.Bounds.H);
+                    foreach (var node in row) node.Bounds.Y = Round(centre - ext / 2 + node.Bounds.H / 2);
+                }
             }
 
-            double envelope = DiagramLayout.ContainerHeading + DiagramLayout.ContainerPaddingBottom;
-            y -= rowHeight + envelope + options.BandGapY;
+            y -= advance + options.BandGapY;
         }
 
         DiagramLayout.Apply(new Diagram { Pages = { page } });
