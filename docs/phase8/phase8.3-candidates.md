@@ -421,3 +421,54 @@ page.AddToContainer(container.Id, memberIds, resizeToFit: group.AutoSize ?? true
 | true | +0.30 | 0 |
 
 默认值统一为 `false` 后，C6 的装饰避让随之生效，`text.overlaps-container` 消失。
+
+---
+
+## C8 【P1】连线标签互相重叠，且无检测
+
+**发现于：** 真实制图第四次复测（2026-11-18，HEAD `913d51b`）
+
+### 实测
+
+同一张跨境电商图，两条边的标签几乎落在一起：
+
+```
+gRPC  ~(4.17, 5.80)
+REST  ~(3.89, 5.65)     间距 0.32"，而标签宽约 0.5"
+```
+
+渲染图上可见：「gRPC」与「REST」上下压叠，读不出来。
+
+### 检测盲区
+
+```console
+$ grep -c "label.overlaps" src/Vsdx.Engine/LayoutAnalyzer.cs
+1
+```
+
+只有一个 `label.overlaps-node`（标签压节点），**没有标签与标签之间的检查**。
+因此 `check-layout` 报 91 分，零告警。
+
+### 与 C6 的同构之处
+
+C6 是"文本块与容器重叠检测缺失"，C8 是"标签与标签重叠检测缺失"——
+两者都属**检测器只覆盖部分对象对**的结构性问题：
+
+| 对象对 | 是否检查 |
+| --- | --- |
+| node ↔ node | ✅ `node.overlap` |
+| group ↔ group | ✅ `group.overlap` |
+| label ↔ node | ✅ `label.overlaps-node` |
+| **label ↔ label** | ❌ |
+| **textBlock ↔ group** | ✅ 已补（C6） |
+| **textBlock ↔ node** | ❌ |
+
+### 候选修法
+
+1. 检测：新增 `label.overlaps-label`，按标签估算包围盒比对
+2. 布局：标签避让（在已路由的线段上错开）
+
+**建议先做 1**：与 C6 同样的理由——先让问题可见，避让规则需要更多设计判断
+（标签该往哪边错？错多少？）。
+
+**未修复**，需独立任务。

@@ -171,6 +171,41 @@ public static class LayoutAnalyzer
             }
         }
 
+        // ---- 5b. Label against label --------------------------------------
+        // Labels were only ever compared with nodes. Two connectors meeting near the same point put
+        // their labels on top of each other, and nothing noticed: on the cross-border diagram "gRPC"
+        // and "REST" sat 0.32" apart while each is about 0.5" wide.
+        var labelled = new List<(Edge edge, Bounds box)>();
+        foreach (var edge in page.Edges)
+        {
+            if (string.IsNullOrWhiteSpace(edge.Label)) continue;
+            if (edge.From is null || edge.To is null) continue;
+            if (!nodeById.TryGetValue(edge.From, out var from) || !nodeById.TryGetValue(edge.To, out var to)) continue;
+
+            var path = RoutePoints(from, to, edge);
+            if (path.Count < 2) continue;
+
+            var center = PointAlong(path, 0.5);
+            double halfW = Math.Max(0.35, edge.Label.Length * 0.075);
+            labelled.Add((edge, new Bounds(center.X, center.Y, halfW, 0.16)));
+        }
+
+        for (int i = 0; i < labelled.Count; i++)
+        for (int j = i + 1; j < labelled.Count; j++)
+        {
+            if (!RectOverlapsRect(labelled[i].box, labelled[j].box, 0.02)) continue;
+
+            report.Add(new LayoutIssue
+            {
+                Code = "label.overlaps-label",
+                Severity = "warning",
+                Page = page.Name,
+                Targets = new[] { labelled[i].edge.Id, labelled[j].edge.Id },
+                Message = $"连线 '{labelled[i].edge.Id}' 的标签 '{labelled[i].edge.Label}' " +
+                          $"与 '{labelled[j].edge.Id}' 的标签 '{labelled[j].edge.Label}' 重叠"
+            });
+        }
+
         // ---- 6. Edge crossings ---------------------------------------------
         var edges = page.Edges
             .Where(e => e.From is not null && e.To is not null
