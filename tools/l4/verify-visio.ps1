@@ -92,15 +92,32 @@ try {
     }
 
     # --- 2. Free path: custom geometry survives as a real outline --------------
-    $customGeometry = 0
+    # A free path is written with NameU "FreePath" (see VisioFreePathBridge). Counting geometry
+    # rows instead would count every Circle and Hexagon — master shapes with 25+ rows — as custom
+    # geometry, and the previous `-ge 0` made the check pass unconditionally anyway.
+    $freePaths = @()
     foreach ($s in $page.Shapes) {
         try {
-            $rows = $s.RowCount(10)      # 10 = visSectionFirstComponent (Geometry)
-            if ($rows -gt 5) { $customGeometry++ }
+            if ($s.NameU -eq "FreePath") { $freePaths += $s }
         } catch { }
     }
-    Add-Check "custom-geometry-present" ($customGeometry -ge 0) `
-        "$customGeometry shape(s) with more than a rectangle's 5 geometry rows"
+    # A diagram may legitimately have no free paths — measured, cbo.ir.json has none. So this
+    # reports what it found rather than asserting a count it cannot know; the geometry check below
+    # only runs when paths exist, and is the one that can actually fail.
+    Write-Host ("  [INFO] {0} free path(s) on page 1" -f $freePaths.Count)
+
+    # Geometry must survive as real rows. Measured on a two-point path the engine writes MoveTo +
+    # LineTo, so a threshold of 6 would fail a correct file; two rows is the real minimum.
+    if ($freePaths.Count -ge 1) {
+        $withRows = 0
+        foreach ($f in $freePaths) {
+            try {
+                if ($f.RowCount(10) -ge 2) { $withRows++ }   # 10 = visSectionFirstComponent
+            } catch { }
+        }
+        Add-Check "free-path-geometry" ($withRows -eq $freePaths.Count) `
+            "$withRows/$($freePaths.Count) free path(s) carry geometry rows"
+    }
 
     # --- 3. Z-order is document order ----------------------------------------
     $order = @()
