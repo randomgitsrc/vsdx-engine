@@ -582,8 +582,12 @@ public static class Program
         }
 
         var finalReport = LayoutAnalyzer.Analyze(diagram);
-        var serialized = DiagramJson.Serialize(diagram);
-        DiagramJson.Save(DiagramJson.Deserialize(serialized), output);
+
+        // Write a real VSDX package. `DiagramJson.Save` writes the model JSON, which made `--output`
+        // a file named `.vsdx` containing JSON — every reader then failed with
+        // `zip.unreadable`, while the command exited 0 and printed a round count.
+        var writeOptions = new WriteOptions { AutoLayout = false, ValidateAfterSave = false };
+        new VsdxEngine().Create(diagram, output, writeOptions);
 
         if (json)
         {
