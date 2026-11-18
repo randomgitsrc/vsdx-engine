@@ -125,3 +125,27 @@ y += height + envelope + BandGapY;                 // 标题留给下一条泳�
 
 **若要继续**：真实场景与单元夹具的差异是关键线索——2 条泳道的夹具通过了，
 3 条泳道、不同 `order` 的真实场景没有。需要先查清这个差异，而不是再改一次放置逻辑。
+
+## 6. `edge.diagonal-across-band` 在 `Analyze` 路径下不可达
+
+**实测**：`LayoutAnalyzer.Analyze` 在分析前先调用 `OrthogonalRouter.Route(diagram)`，
+后者**无条件**执行：
+
+```csharp
+edge.Waypoints = attempt.Waypoints;
+edge.Kind = "rightAngle";      // 无条件改写
+```
+
+而该检查的前置条件是「**没有 waypoints**」且「`Kind` 不是 rightAngle」。
+路由之后所有边都不满足，因此检查**永远不会触发**——84 次场景遍历中确实一次都没有。
+
+**唯一能触发它的方式**是直接调用 `AnalyzePage` 并跳过路由，
+或手工构造一个绕过 `Analyze` 的模型（`RareCheckTests` 就是这样做的）。
+
+**同时发现**：`benchmarks/faults/fault-cross-region.json` 声称验证这一项，但它的四个节点
+**没有任何容器**，而该检查要求直线穿过「第三个容器」。这个用例从加入起就是死的，无测试引用。
+
+**处置**：删除该用例；`FaultCorpusTests` 现在要求「每个故障文件都必须被测试引用」，防止再出现。
+
+**未修的部分**：检查与路由的先后顺序。要让它在正常路径下生效，需要在路由前捕获作者几何
+（`Kind` 与端点），而不是在路由后读取。改动涉及 `Analyze` 的签名与 5 个调用点，本轮未完成。
