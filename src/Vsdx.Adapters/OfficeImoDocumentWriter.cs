@@ -289,6 +289,12 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         // even when the Visio shape id differs (for example after a rename).
         shape.SetUserCell("VsdxModelId", node.Id, prompt: "Agent VSDX Engine stable node id");
 
+        // The semantic role drives roleColors and palette lookup. Without persisting it, a model
+        // read back from the file has no roles left, so it can never be re-styled — the fill
+        // survives as a literal colour, which is what makes the loss easy to miss.
+        if (!string.IsNullOrWhiteSpace(node.Type))
+            shape.SetUserCell("VsdxRole", node.Type, prompt: "Agent VSDX Engine node role");
+
         ApplyStyle(shape, node.Style, isContainer: false, diagram);
 
         if (node.ShapeData is { Count: > 0 })

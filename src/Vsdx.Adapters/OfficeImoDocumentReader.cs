@@ -570,6 +570,9 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
             Text = shape.Text,
             Shape = MasterCatalog.ToModelKind(shape.MasterNameU),
             VisioShapeId = shape.Id,
+            // Restored from the cell the writer sets. Absent or blank means the node never had a
+            // role, which is a normal state rather than an error.
+            Type = UserCellOf(shape, "VsdxRole"),
             Bounds = new Bounds(shape.PinX.ToInches(), shape.PinY.ToInches(), shape.Width.ToInches(), shape.Height.ToInches()),
             Style = ReadStyle(shape),
             Layers = shape.LayerNames.Count > 0 ? shape.LayerNames.ToList() : null,
@@ -686,9 +689,16 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
     }
 
     /// <summary>Reads the engine-stamped stable id from a shape user cell, if present.</summary>
-    private static string? StableIdOf(OfficeIMO.Visio.VisioShape shape)
+    private static string? StableIdOf(OfficeIMO.Visio.VisioShape shape) => UserCellOf(shape, "VsdxModelId");
+
+    /// <summary>
+    /// Reads a named user cell, treating blank as absent. User cells are the package's extension
+    /// point for data Visio itself has no cell for; the engine uses them for the stable id and,
+    /// now, the node's semantic role.
+    /// </summary>
+    private static string? UserCellOf(OfficeIMO.Visio.VisioShape shape, string name)
     {
-        var value = shape.GetUserCellValue("VsdxModelId");
+        var value = shape.GetUserCellValue(name);
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 
