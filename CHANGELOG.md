@@ -2,12 +2,12 @@
 
 本文件记录对外可见的能力变化。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-## [Unreleased]
+## [0.9.0] — 未发布
 
-> **关于版本号：** `Directory.Build.props` 与 `vsdx-tool version` 目前都报 `1.0.0`，
-> 但该版本**尚未发布**（无 git tag、无 GitHub Release）。
-> 发布动作按章程 §3.2 需项目所有者批准，见 `docs/RELEASE-PROPOSAL.md`。
-> 若 L4 仍未验证，建议以 `0.9.0` 发布而非 `1.0.0`。
+**版本号定为 `0.9.0` 而非 `1.0.0`。** 理由：项目定义的核心承诺是「原生、可编辑的 VSDX」，
+而 L4（Visio 原生打开）从未执行。`1.0.0` 意味着承诺已验证；`0.9.0` 表示能力已建立但验证不完整。
+
+版本号现由程序集元数据驱动（`EngineInfo.Version`），不再有第二处硬编码。
 
 ### 未验证（发布前必读）
 

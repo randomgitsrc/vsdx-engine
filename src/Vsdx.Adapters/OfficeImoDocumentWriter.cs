@@ -7,7 +7,20 @@ namespace Vsdx.Adapters;
 /// <summary>Shared engine identity used in diagnostics.</summary>
 public static class EngineInfo
 {
-    public const string Version = "1.0.0";
+    /// <summary>
+    /// Read from the assembly rather than hardcoded: the version was declared in two places
+    /// (`Directory.Build.props` and here) and only one of them moved when it was changed, so
+    /// `vsdx-tool version` reported a number the build did not use.
+    /// </summary>
+    public static string Version { get; } =
+        System.Reflection.CustomAttributeExtensions
+            .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(
+                typeof(EngineInfo).Assembly)
+            ?.InformationalVersion
+            .Split('+')[0]
+        ?? typeof(EngineInfo).Assembly.GetName().Version?.ToString(3)
+        ?? "0.0.0";
+
     public const string Name = "Agent VSDX Engine";
 }
 

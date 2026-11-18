@@ -66,11 +66,34 @@ public sealed class ChangelogTests
     [Fact]
     public void ItSaysTheVersionIsNotReleasedYet()
     {
-        // Directory.Build.props already says 1.0.0; without this the two read as a contradiction.
         var changelog = Changelog();
 
-        Assert.Contains("尚未发布", changelog);
-        Assert.Contains("RELEASE-PROPOSAL", changelog);
+        Assert.Contains("未发布", changelog);
+    }
+
+    [Fact]
+    public void TheVersionComesFromTheAssembly()
+    {
+        // The version used to be declared twice — Directory.Build.props and EngineInfo.Version —
+        // and only one moved when it changed, so `vsdx-tool version` reported a number the build did
+        // not use. EngineInfo now reads the assembly.
+        var declared = Regex.Match(
+            File.ReadAllText(Path.Combine(Root(), "Directory.Build.props")),
+            @"<Version>([^<]+)</Version>").Groups[1].Value;
+
+        Assert.Equal(declared, Vsdx.Adapters.EngineInfo.Version);
+    }
+
+    [Fact]
+    public void TheVersionIsBelowOnePointOh()
+    {
+        // Pinned deliberately: 1.0.0 would claim the core promise is verified, and L4 has not run.
+        // Raising this without running L4 is a decision, not a mechanical bump.
+        var declared = Regex.Match(
+            File.ReadAllText(Path.Combine(Root(), "Directory.Build.props")),
+            @"<Version>([^<]+)</Version>").Groups[1].Value;
+
+        Assert.StartsWith("0.", declared);
     }
 
     [Fact]
