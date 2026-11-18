@@ -69,6 +69,63 @@ label.overlaps-label (4)
 - 连线正交（斜线允许）
 - 标签不重叠（只能减少，无法完全消除）
 
+
+## 三附、检测器实际覆盖的 23 类问题
+
+`check-layout` 与 `execute` 的 `quality` 字段会报告以下代码。**这是引擎能自动发现的问题全集。**
+
+### 节点与容器
+
+| 代码 | 含义 | 级别 |
+| --- | --- | --- |
+| `node.overlap` | 两个节点包围盒相交 | error |
+| `node.out-of-page` | 节点超出页面 | error |
+| `group.overlap` | 两个容器相交 | error |
+| `group.member-escapes` | 成员落在容器外 | error |
+| `group.gutter` | 容器之间间距过小 | warning |
+
+### 文字
+
+| 代码 | 含义 | 级别 |
+| --- | --- | --- |
+| `text.overflow-horizontal` | 文字横向放不下 | **error** |
+| `text.overflow-vertical` | 文字纵向放不下 | **error** |
+| `text.overlaps-node` | 文本块压在节点上 | warning |
+| `text.overlaps-container` | 文本块横跨容器边框 | warning |
+| `text.overlaps-text` | 两个文本块重叠 | warning |
+| `label.overlaps-node` | 连线标签落在节点上 | warning |
+| `label.overlaps-label` | 两个连线标签重叠 | warning |
+
+### 连线
+
+| 代码 | 含义 | 级别 |
+| --- | --- | --- |
+| `edge.crossing` | 两条连线交叉 | warning |
+| `edge.through-node` | 连线穿过节点 | **error** |
+| `edge.diagonal-across-band` | 斜线跨容器 | warning |
+| `edge.detour` | 连线绕行过长 | warning |
+| `edge.fan-in` / `edge.fan-out` | 扇入/扇出过多 | warning |
+
+### 排布与页面
+
+| 代码 | 含义 |
+| --- | --- |
+| `row.misaligned` | 同一行节点垂直偏移过大 |
+| `row.size-jitter` | 同一行节点尺寸差异过大 |
+| `spacing.too-tight` | 同行节点水平间距过小 |
+| `page.margins` | 内容边距偏大 | info |
+| `page.underused` | 页面利用率过低 | warning（严重时 error） |
+
+**error 级（令 `hardConstraintsPassed=false`）：**
+
+`node.overlap` · `node.out-of-page` · `group.overlap` · `group.member-escapes` ·
+`edge.through-node` · `text.overflow-horizontal` · `text.overflow-vertical`
+
+**warning / info 级（只影响 `score`）：** 其余全部。
+
+实测确认：**error 级 7 项，warning 14 项，info 1 项**（`page.margins`），
+另加 `page.underused` 的严重度按利用率动态计算（warning，严重时 error），合计 23 个代码。
+
 ## 四、能画好的
 
 - **分层架构图**：3–5 层容器，每层 3–6 节点
