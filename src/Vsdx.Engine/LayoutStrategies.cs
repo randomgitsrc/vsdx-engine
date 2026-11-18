@@ -182,6 +182,17 @@ public static class DiagramLayoutEngine
         {
             DiagramLayout.Transpose(diagram);
 
+            // The swap turns "grows upward" into "grows leftward", so the reading order reverses:
+            // measured, web landed at x=21.82 and bi at x=2.27 for an IR that reads web -> ... -> bi.
+            // Reflecting restores left-to-right. This lives here rather than inside Transpose
+            // because a reflection composed with the swap is no longer its own inverse.
+            DiagramLayout.MirrorHorizontally(diagram);
+
+            // Transposing swaps the page's own dimensions, so the decorations clamped inside the
+            // loop above were clamped against the old sheet. Re-clamp them against the new one, or
+            // a title drifts outside the page it has just been rotated into.
+            foreach (var page in diagram.Pages) ClampDecorationsToPage(page);
+
             // Transposing swaps every box's width and height, but the text inside was measured
             // against the pre-transpose shape: a wide label fitted a wide box, and after the swap
             // the same box is narrow and the label overflows. Re-derive the boxes so sizing follows

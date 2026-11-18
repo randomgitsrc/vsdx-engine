@@ -266,4 +266,50 @@ public static class DiagramLayout
 
         return problems;
     }
+
+    /// <summary>
+    /// Reflects every page about its vertical centre, so left and right trade places.
+    ///
+    /// Needed because the layered engine stacks bands upward and transposing turns "up" into "left":
+    /// measured, a chain declared web -> sdk -> ... -> bi came out with web at x=21.82 and bi at
+    /// x=2.27, i.e. reading right-to-left.
+    ///
+    /// Kept out of <see cref="Transpose(Page)"/> on purpose. Swapping is its own inverse; composing
+    /// it with a reflection is not — `(x,y) -> (y, W-x)` applied twice gives `(W-x, W-y)`, which is
+    /// a half turn. Callers rely on transposing twice restoring the page, so the reflection is a
+    /// separate step the pipeline asks for when it wants a left-to-right result.
+    /// </summary>
+    public static void MirrorHorizontally(Diagram diagram)
+    {
+        foreach (var page in diagram.Pages)
+        {
+            double width = page.Size?.Width ?? 0;
+            if (width <= 0) continue;
+
+            double Flip(double x) => width - x;
+
+            foreach (var node in page.Nodes) node.Bounds.X = Flip(node.Bounds.X);
+
+            foreach (var group in page.Groups)
+            {
+                if (group.Bounds is not null) group.Bounds.X = Flip(group.Bounds.X);
+            }
+
+            foreach (var text in page.TextBlocks) text.Bounds.X = Flip(text.Bounds.X);
+            foreach (var path in page.Paths) path.Bounds.X = Flip(path.Bounds.X);
+
+            foreach (var edge in page.Edges)
+            {
+                if (edge.FromPoint is not null) edge.FromPoint.X = Flip(edge.FromPoint.X);
+                if (edge.ToPoint is not null) edge.ToPoint.X = Flip(edge.ToPoint.X);
+
+                if (edge.Waypoints is null) continue;
+                foreach (var point in edge.Waypoints)
+                {
+                    if (point is null) continue;
+                    point.X = Flip(point.X);
+                }
+            }
+        }
+    }
 }

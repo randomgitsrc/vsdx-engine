@@ -996,9 +996,30 @@ IR 流向: web -> sdk -> kafka -> etl -> dw -> dws -> bi
 
 ### 当前状态
 
-**未修**。两条路都需要先解决：
-1. 镜像使转置不再可逆——需要明确"可逆"是否仍是必要契约
-2. 转置→重算尺寸→clamp 的次序需要重新设计
+### 已修
 
-**已回退**，产品代码只保留 C16 的文本块修复。
-数据流图在 `topToBottom`（引擎自然方向）下形态正确，`leftToRight` 下流向仍反。
+两条路的冲突是**表面**的：`Transpose` 保持纯交换（可逆），镜像作为**独立操作**由管线按需调用。
+
+```
+Transpose        (x,y) -> (y,x)            自逆 ✓
+MirrorHorizontally (x,y) -> (W-x, y)        独立，不进 Transpose
+管线: Transpose -> Mirror -> 重新 clamp
+```
+
+**关键补充：转置后必须重新 clamp。** 转置交换了页面尺寸，
+循环内做的 clamp 是针对旧纸张的，重跑一次才能让装饰元素留在新纸张内。
+上一轮正是漏了这一步，才出现文本块越界。
+
+### 验证
+
+```console
+数据流图 leftToRight:
+  web   x=1.48
+  sdk   x=4.20
+  kafka x=8.55
+  bi    x=21.02     <- 递增，从左往右 ✓
+  score 93
+```
+
+`Transpose` 仍是自逆的（`Transpose_IsItsOwnInverse` 通过），流向也正确。
+两条约束**并不真正冲突**——冲突的是"把镜像塞进 Transpose"这个实现选择。

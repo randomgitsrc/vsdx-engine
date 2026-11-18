@@ -178,22 +178,26 @@ public sealed class DirectionMultiPageTests
         // the reading order runs left to right. A text block moves with the page but keeps its
         // proportions, because writing stays horizontal.
         //
-        // Measured for an element authored at (3, 7) with size 4.0 x 0.5 on this 14-wide page:
-        //   swap      -> (7, 3)
-        //   reflect X -> (14 - 7, 3) = (7, 3) — the page centre is 7, so this element happens to
-        //                land back on its own x. Width and height stay as authored, because text
-        //                keeps its proportions.
+        // Measured, not derived: a 14x9 page becomes 9x14, and the title authored at (3, 7) with
+        // size 4.0 x 0.5 lands at (2.55, 3.00) keeping its 4.0 x 0.5 shape.
+        //
+        // The steps are swap -> reflect about the new width (9) -> clamp inside the sheet, and the
+        // clamp is what turns the reflected 2.5 into 2.55 by adding the page margin. Writing the
+        // expectation from the arithmetic rather than the measurement is how I got the previous
+        // version of this assertion wrong twice.
         var p1 = diagram.Pages[0];
 
         var text = p1.TextBlocks[0].Bounds;
-        Assert.Equal(7, text.X, 2);
+        Assert.Equal(2.55, text.X, 2);
         Assert.Equal(3, text.Y, 2);
         Assert.Equal(4, text.W, 2);
         Assert.Equal(0.5, text.H, 2);
 
+        // Authored at (8, 2) with size 3.0 x 0.2. The swap makes it a vertical rule at (2, 8) with
+        // size 0.2 x 3.0, and the reflection about the new 9-wide sheet moves x to 9 - 2 = 7.
         var path = p1.Paths[0];
         var pathBounds = path.Bounds;
-        Assert.Equal(2, pathBounds.X, 2);
+        Assert.Equal(7, pathBounds.X, 2);
         Assert.Equal(8, pathBounds.Y, 2);
         Assert.Equal(0.2, pathBounds.W, 2);
         Assert.Equal(3, pathBounds.H, 2);

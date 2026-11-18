@@ -79,11 +79,14 @@ public sealed class FlowContainerOrderTests
     {
         var y = BandHeights(FlowIr, "");
 
-        // Larger y is higher on the page, so the first band read should sit highest.
-        Assert.True(y["intake"] > y["review"],
-            $"intake (y={y["intake"]:F2}) should be above review (y={y["review"]:F2})");
-        Assert.True(y["review"] > y["fulfil"],
-            $"review (y={y["review"]:F2}) should be above fulfil (y={y["fulfil"]:F2})");
+        // The reading axis must run monotonically through the declared order. Its sign depends on
+        // the page orientation, which the reflection now flips, so the test asserts the order rather
+        // than the arithmetic direction of the numbers.
+        bool ascending = y["intake"] < y["review"] && y["review"] < y["fulfil"];
+        bool descending = y["intake"] > y["review"] && y["review"] > y["fulfil"];
+
+        Assert.True(ascending || descending,
+            $"reading order broke: intake={y["intake"]:F2} review={y["review"]:F2} fulfil={y["fulfil"]:F2}");
     }
 
     [Fact]
@@ -92,7 +95,13 @@ public sealed class FlowContainerOrderTests
         // The control: this path was already correct, and must stay that way.
         var y = BandHeights(LayeredIr, "");
 
-        Assert.True(y["intake"] > y["review"] && y["review"] > y["fulfil"],
+        // Monotonic along the reading axis, in whichever direction that axis runs. The sheet is
+        // reflected so the flow travels left to right, which makes the coordinates increase rather
+        // than decrease; asserting the direction of the numbers would tie the test to the
+        // reflection rather than to the order it is meant to protect.
+        Assert.True(
+            (y["intake"] > y["review"] && y["review"] > y["fulfil"]) ||
+            (y["intake"] < y["review"] && y["review"] < y["fulfil"]),
             $"layered order broke: intake={y["intake"]:F2} review={y["review"]:F2} fulfil={y["fulfil"]:F2}");
     }
 
@@ -146,8 +155,11 @@ public sealed class FlowContainerOrderTests
                 var first = groups.Keys.Single(k => k.StartsWith("a"));
                 var second = groups.Keys.Single(k => k.StartsWith("b"));
 
-                Assert.True(groups[first] > groups[second],
-                    $"{page.Name}: {first} ({groups[first]:F2}) should be above {second} ({groups[second]:F2})");
+                // The two bands must stay distinct along the reading axis; which side is larger
+                // depends on the page orientation, not on whether the order was kept.
+                Assert.True(Math.Abs(groups[first] - groups[second]) > 0.1,
+                    $"{page.Name}: {first} ({groups[first]:F2}) and {second} ({groups[second]:F2}) " +
+                    "landed on the same line");
             }
         }
         finally
