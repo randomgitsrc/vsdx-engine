@@ -378,7 +378,7 @@ $ grep -c "TextBlocks" src/Vsdx.Engine/LayoutAnalyzer.cs
 
 ---
 
-## C7 【P1】Writer 默认重算容器，覆盖模型里已定稿的 bounds —— ✅ 已修（ 前身）
+## C7 【P1】Writer 默认重算容器，覆盖模型里已定稿的 bounds —— ✅ 已修（提交 93def6a）
 
 **发现于：** C6 修复后复核（2026-11-18）
 
@@ -420,4 +420,4 @@ page.AddToContainer(container.Id, memberIds, resizeToFit: group.AutoSize ?? true
 | false | **0.00** | 0 |
 | true | +0.30 | 0 |
 
-默认值统一为  后，C6 的装饰避让随之生效， 消失。
+默认值统一为 `false` 后，C6 的装饰避让随之生效，`text.overlaps-container` 消失。
