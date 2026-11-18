@@ -34,6 +34,19 @@ VSDX 本身是 ZIP/OPC + XML 的开放包，程序完全可以读写，难点在
 
 ---
 
+## 当前状态：0.9.0（prerelease）
+
+**核心承诺尚未验证。** 本项目要交付的是「原生、可编辑的 VSDX」，但文件**从未在 Microsoft Visio
+中打开过**——本机无 Visio，WPS 不可替代。全部证据止于 L1（包结构）、L2（读回）、L3（渲染）。
+
+因此版本号是 `0.9.0` 而非 `1.0.0`：能力已建立，验证不完整。详见
+[`docs/limitations.md`](docs/limitations.md)。
+
+已建立的能力见 [`docs/capability-boundaries.md`](docs/capability-boundaries.md)，
+其中同时写明**不能画什么**（时序图、状态机语义）和**即使好图也不保证什么**
+（列对齐 ±0.3″、正交路由、零标签重叠）。
+
+
 ## 快速开始
 
 ```bash
@@ -137,7 +150,7 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 | 命令 | 作用 |
 | --- | --- |
 | `create --input model.json --output out.vsdx` | 由 JSON 模型创建 VSDX |
-| `--layout layered\|flow\|tree\|grid\|auto` | 自动布局（`auto` 按图形类型选择策略） |
+| `--layout layered\|flow\|tree\|grid\|swimlane\|manual\|auto` | 自动布局（`auto` 按图形类型选择策略） |
 | `--fit-text --fit-page --recenter` | 按文字推导尺寸、页面贴合内容、内容居中 |
 | `inspect --input out.vsdx [--json]` | 读取并报告结构（节点/连线/分组/图层/Shape Data） |
 | `export-model --input out.vsdx --output model.json` | 导出 JSON 模型 |
@@ -153,6 +166,39 @@ vsdx-tool diff --before demo/architecture.vsdx --after demo/architecture_v2.vsdx
 | `version --json` | 工具 / 后端 / 模型版本 |
 
 所有命令支持 `--json`，输出稳定可解析。退出码：`0` 成功，`1` 有错误，`2` 用法错误。
+
+### 内容与外观分离：`execute`
+
+`create` 的 JSON 同时承载内容与外观。若要在**不改内容**的前提下调整配色、字号或纸张，
+用 `execute`：内容放 IR 文件，外观放 DesignSpec 文件。
+
+```bash
+vsdx-tool execute --ir diagram.ir.json --spec design.json --output diagram.vsdx --json
+```
+
+```json
+{
+  "specVersion": "1.0",
+  "layout": "auto",
+  "canvas": { "mode": "paper" },
+  "theme": { "palette": "enterprise" },
+  "typography": { "baseSize": 12, "minReadableSize": 9 }
+}
+```
+
+| 字段 | 取值 | 作用 |
+| --- | --- | --- |
+| `layout` | `auto` `layered` `flow` `tree` `grid` `swimlane` `manual` | 布局策略 |
+| `direction` | `leftToRight` `topToBottom` | 不填则按结构推断（有容器→纵向） |
+| `canvas.mode` | `auto` `fixed` `paper` | `paper` 吸附 A5/A4/A3/A2/Tabloid |
+| `theme.palette` | `enterprise` `muted` `technical` `midnight` | 角色配色 |
+| `typography.minReadableSize` | 磅值 | 字号下限，**可单独使用** |
+
+`--json` 的输出里，`appliedDesignNotes` 说明实际执行了什么，`unmetConstraints` 列出
+**每一条未能满足的请求及原因**——引擎不静默丢弃请求。交付前应检查
+`quality.hardConstraintsPassed`。
+
+完整字段见 [`skill/SKILL.md`](skill/SKILL.md) 与 [`docs/api.md`](docs/api.md)。
 完整参数见 [docs/api.md](docs/api.md)，或 `vsdx-tool --help`。
 
 ### 批量处理
