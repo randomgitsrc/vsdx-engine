@@ -34,7 +34,30 @@ public sealed class OfficeImoVsdxRenderer : IDiagramRenderer
                 .Concat(p.Connectors.Select(c => c.Label))));
 
         var resolver = new FontResolver(request.FontSearchPaths);
-        var fontFile = resolver.Resolve(requiresCjk, request.FontFile);
+
+        // Resolve from the document's own fonts before falling back to "whatever is available".
+        // Without this the preview drew every diagram in the same face regardless of what the file
+        // asked for: Georgia, Courier New and a nonexistent font produced identical PNGs, so the
+        // preview disagreed with the deliverable it was meant to represent.
+        //
+        // An explicit --font-file still wins; this only supplies the value when the caller did not.
+        string? fontFile = null;
+        if (string.IsNullOrWhiteSpace(request.FontFile))
+        {
+            var requested = FirstRequestedFamily(pages);
+            if (requested is not null)
+            {
+                fontFile = resolver.ResolveByFamily(requested, requiresCjk);
+                if (fontFile is null)
+                {
+                    result.Compatibility.Warn("render.font-missing",
+                        $"文档请求字体 '{requested}'，本机未安装，已回退到可用字体。预览与交付物可能不一致。",
+                        requested);
+                }
+            }
+        }
+
+        fontFile ??= resolver.Resolve(requiresCjk, request.FontFile);
         result.FontUsed = fontFile;
 
         if (requiresCjk && fontFile is null)
@@ -185,5 +208,32 @@ public sealed class OfficeImoVsdxRenderer : IDiagramRenderer
         {
             return (0, 0);
         }
+    }
+
+    /// <summary>
+    /// The first font family the document actually asks for, or null when it names none.
+    ///
+    /// Fonts are per-shape, but the renderer resolves a single face for the whole page. Taking the
+    /// first declared family makes the common case (one family for the diagram) render correctly,
+    /// and is honest about the limitation rather than pretending to per-shape resolution.
+    /// </summary>
+    private static string? FirstRequestedFamily(IEnumerable<VisioPage> pages)
+    {
+        foreach (var page in pages)
+        {
+            foreach (var shape in page.Shapes)
+            {
+                var family = shape.TextStyle?.FontFamily;
+                if (!string.IsNullOrWhiteSpace(family)) return family;
+            }
+
+            foreach (var connector in page.Connectors)
+            {
+                var family = connector.TextStyle?.FontFamily;
+                if (!string.IsNullOrWhiteSpace(family)) return family;
+            }
+        }
+
+        return null;
     }
 }

@@ -119,4 +119,129 @@ public sealed class FontResolver
             return Array.Empty<string>();
         }
     }
+
+    /// <summary>
+    /// Reads the family name from a TrueType/OpenType file's `name` table.
+    ///
+    /// The `name` table is a public binary format (a tag, an offset, a length, then string records),
+    /// so this needs no font library and no external process. Returns null for anything that is not
+    /// a parseable font rather than throwing: a directory scan will meet files that are not fonts.
+    /// </summary>
+    public static string? ReadFamilyName(string path)
+    {
+        byte[] data;
+        try
+        {
+            if (!File.Exists(path)) return null;
+            data = File.ReadAllBytes(path);
+        }
+        catch (IOException) { return null; }
+        catch (UnauthorizedAccessException) { return null; }
+
+        if (data.Length < 12) return null;
+
+        int numTables = (data[4] << 8) | data[5];
+        if (numTables <= 0) return null;
+
+        int nameOffset = -1;
+        for (int i = 0; i < numTables; i++)
+        {
+            int record = 12 + i * 16;
+            if (record + 16 > data.Length) break;
+
+            if (data[record] != 'n' || data[record + 1] != 'a'
+                || data[record + 2] != 'm' || data[record + 3] != 'e') continue;
+
+            nameOffset = (data[record + 8] << 24) | (data[record + 9] << 16)
+                       | (data[record + 10] << 8) | data[record + 11];
+            break;
+        }
+
+        if (nameOffset < 0 || nameOffset + 6 > data.Length) return null;
+
+        int count = (data[nameOffset + 2] << 8) | data[nameOffset + 3];
+        int stringOffset = (data[nameOffset + 4] << 8) | data[nameOffset + 5];
+
+        for (int i = 0; i < count; i++)
+        {
+            int record = nameOffset + 6 + i * 12;
+            if (record + 12 > data.Length) break;
+
+            int platformId = (data[record] << 8) | data[record + 1];
+            int nameId = (data[record + 6] << 8) | data[record + 7];
+            int length = (data[record + 8] << 8) | data[record + 9];
+            int offset = (data[record + 10] << 8) | data[record + 11];
+
+            // nameId 1 is the family. Platform 3 is Windows, which stores UTF-16BE.
+            if (nameId != 1 || platformId != 3) continue;
+
+            int start = nameOffset + stringOffset + offset;
+            if (start + length > data.Length) continue;
+
+            return System.Text.Encoding.BigEndianUnicode.GetString(data, start, length);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Finds an installed font file whose family matches <paramref name="family"/>, or null.
+    ///
+    /// Null rather than a substitute: quietly drawing in some other face would leave the caller
+    /// believing their font was used, which is the failure this method exists to end.
+    /// </summary>
+    public string? ResolveByFamily(string? family, bool requiresCjk)
+    {
+        if (string.IsNullOrWhiteSpace(family)) return null;
+
+        foreach (var candidate in EnumerateFontFiles(requiresCjk))
+        {
+            var name = ReadFamilyName(candidate);
+            if (name is null) continue;
+            if (!string.Equals(name.Trim(), family.Trim(), StringComparison.OrdinalIgnoreCase)) continue;
+
+            LastResolved = candidate;
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private IEnumerable<string> EnumerateFontFiles(bool requiresCjk)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var candidate in _searchPaths)
+            if (File.Exists(candidate) && seen.Add(candidate)) yield return candidate;
+
+        foreach (var dir in FontDirectories)
+        {
+            if (!Directory.Exists(dir)) continue;
+
+            IEnumerable<string> files;
+            try
+            {
+                files = Directory.EnumerateFiles(dir, "*.*", SearchOption.AllDirectories);
+            }
+            catch (IOException) { continue; }
+            catch (UnauthorizedAccessException) { continue; }
+
+            foreach (var file in files)
+            {
+                var ext = Path.GetExtension(file);
+                if (!ext.Equals(".ttf", StringComparison.OrdinalIgnoreCase)
+                 && !ext.Equals(".otf", StringComparison.OrdinalIgnoreCase)) continue;
+
+                if (seen.Add(file)) yield return file;
+            }
+        }
+    }
+
+    private static readonly string[] FontDirectories =
+    {
+        "/usr/share/fonts",
+        "/usr/local/share/fonts",
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local/share/fonts"),
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".fonts")
+    };
 }
