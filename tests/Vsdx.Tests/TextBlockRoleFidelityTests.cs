@@ -43,15 +43,15 @@ public sealed class TextBlockRoleFidelityTests
     }
 
     [Theory]
-    [InlineData("title", "title")]
-    [InlineData("subtitle", "subtitle")]
-    [InlineData("legend", "legend")]
-    [InlineData("note", "note")]
-    [InlineData("annotation", "annotation")]
-    [InlineData("caption", "caption")]
-    public void TheRoleSurvivesWhateverTheIdIs(string id, string role)
+    [InlineData("title")]
+    [InlineData("subtitle")]
+    [InlineData("legend")]
+    [InlineData("note")]
+    [InlineData("annotation")]
+    [InlineData("caption")]
+    public void TheRoleSurvivesWhateverTheIdIs(string role)
     {
-        // A neutral id: no prefix the reader could infer from.
+        // A neutral id: no prefix the reader could infer from, so only the stored role can survive.
         var written = RoundTrip("tb1", role);
 
         var block = written.Pages[0].TextBlocks.Single();
