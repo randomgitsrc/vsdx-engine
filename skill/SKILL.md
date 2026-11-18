@@ -256,6 +256,70 @@ Iterate until it looks right. "The file was produced" is not acceptance.
 
 ---
 
+## 5b. Separate design from content: `execute` with a DesignSpec
+
+`create` takes one JSON that carries both *what the diagram says* and *how it looks*. When you want to
+re-style the same content — a different palette, a bigger base size, a printable sheet — use
+`execute`, which keeps the content in an **IR** file and the appearance in a **DesignSpec** file.
+
+```bash
+vsdx-tool execute --ir diagram.ir.json --spec design.json --output diagram.vsdx --json
+```
+
+The same IR with a different spec is a different drawing, and that is the point: you can iterate on
+appearance without touching the content, and you can prove which spec produced which file.
+
+### The spec fields that matter
+
+| Field | Values | Effect |
+| --- | --- | --- |
+| `layout` | `auto` · `layered` · `flow` · `tree` · `grid` · `swimlane` · `manual` | Arrangement; `auto` picks from the IR's `kind` |
+| `direction` | `leftToRight` · `topToBottom` | Reading direction. **Unstated** resolves by structure: contained diagrams go top-to-bottom, container-less flows go left-to-right |
+| `theme.palette` | `enterprise` · `muted` · `technical` · `midnight` | Role-based colours. An unknown name is reported as `theme.palette-unknown` |
+| `theme.background` | `#RRGGBB` | Page background, written into `pages.xml` |
+| `typography.baseSize` | points | Target size of a node title; the other five tiers scale from it |
+| `typography.minReadableSize` | points | Floor. Works **on its own** — you do not need `baseSize` |
+| `typography.fontFamily` | family name | Registers a `FaceName` so the file names the font it wants |
+| `canvas.mode` | `auto` · `fixed` · `paper` | `auto` fits the content · `fixed` honours width/height · `paper` snaps to a standard sheet |
+| `containerLayouts` | `{"containerId": "grid"}` | Re-lay one container, leaving the rest alone |
+| `hardConstraints` | `[{"code": "require_title"}]` | Requests that can be violated and are checked |
+
+### Making the output printable
+
+`canvas.mode=auto` fits the page to the content, which produces a custom size a print dialog has to
+guess at. Ask for a standard sheet instead:
+
+```json
+{"specVersion": "1.0", "canvas": {"mode": "paper"}}
+```
+
+That picks the smallest standard sheet — A5, A4, A3, A2, Tabloid — in whichever orientation fits, and
+reports `canvas.scaled` if nothing standard was large enough. Measured on the reference diagrams, all
+three land on A3; **A4 does not hold them**, because their content genuinely needs that area.
+
+### Read the result, do not assume it
+
+`execute --json` reports what happened:
+
+```
+status        succeeded | partial | failed
+appliedDesignNotes   the steps that ran, and the values they chose
+unmetConstraints     every request that could not be honoured, with a reason
+```
+
+`status: partial` means the file was written but some request was not fully met — read
+`unmetConstraints` before delivering. The engine's rule is that a request is either honoured or listed;
+nothing is accepted and silently dropped.
+
+Two things worth checking on every run:
+
+- `appliedDesignNotes` now names the direction it chose (`direction=topToBottom (auto)`), so you can
+  tell portrait from landscape without opening the file.
+- `quality.hardConstraintsPassed` is the gate. Seven issue codes are errors — the two you are most
+  likely to hit are `text.overflow-horizontal` and `text.overflow-vertical`, both meaning text is
+  being clipped rather than merely placed awkwardly.
+
+
 ## 6. Modify an existing diagram incrementally
 
 **Never regenerate the whole diagram to apply an edit.** Load the model, change only what
