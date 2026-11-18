@@ -1,0 +1,18 @@
+{"irVersion":"1.0","id":"order-flow","kind":"workflow","title":"订单履约泳道",
+ "containers":[
+   {"id":"lane-user","label":"用户","kind":"lane","order":3},
+   {"id":"lane-sys","label":"系统","kind":"lane","order":2},
+   {"id":"lane-warehouse","label":"仓储","kind":"lane","order":1}],
+ "nodes":[
+   {"id":"submit","label":"提交订单","role":"actor","containerId":"lane-user"},
+   {"id":"pay","label":"支付","role":"actor","containerId":"lane-user"},
+   {"id":"validate","label":"校验库存","role":"service","containerId":"lane-sys"},
+   {"id":"reserve","label":"锁定库存","role":"service","containerId":"lane-sys"},
+   {"id":"pick","label":"拣货","role":"service","containerId":"lane-warehouse"},
+   {"id":"ship","label":"发货","role":"queue","containerId":"lane-warehouse"}],
+ "edges":[
+   {"id":"e1","from":"submit","to":"validate","label":"提交"},
+   {"id":"e2","from":"validate","to":"reserve","label":"通过"},
+   {"id":"e3","from":"pay","to":"reserve","label":"已付"},
+   {"id":"e4","from":"reserve","to":"pick","label":"出库单"},
+   {"id":"e5","from":"pick","to":"ship","label":"打包"}]}

@@ -1,0 +1,105 @@
+{
+ "irVersion": "1.0",
+ "id": "org",
+ "kind": "org",
+ "title": "技术组织架构",
+ "nodes": [
+  {
+   "id": "cto",
+   "label": "CTO",
+   "role": "service"
+  },
+  {
+   "id": "backend",
+   "label": "后端组",
+   "role": "service"
+  },
+  {
+   "id": "frontend",
+   "label": "前端组",
+   "role": "service"
+  },
+  {
+   "id": "data",
+   "label": "数据组",
+   "role": "service"
+  },
+  {
+   "id": "api",
+   "label": "API 平台",
+   "role": "service"
+  },
+  {
+   "id": "infra",
+   "label": "基础设施",
+   "role": "service"
+  },
+  {
+   "id": "web",
+   "label": "Web 应用",
+   "role": "service"
+  },
+  {
+   "id": "mobile",
+   "label": "移动端",
+   "role": "service"
+  },
+  {
+   "id": "warehouse",
+   "label": "数仓",
+   "role": "database"
+  },
+  {
+   "id": "bi",
+   "label": "BI 报表",
+   "role": "service"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "cto",
+   "to": "backend"
+  },
+  {
+   "id": "e2",
+   "from": "cto",
+   "to": "frontend"
+  },
+  {
+   "id": "e3",
+   "from": "cto",
+   "to": "data"
+  },
+  {
+   "id": "e4",
+   "from": "backend",
+   "to": "api"
+  },
+  {
+   "id": "e5",
+   "from": "backend",
+   "to": "infra"
+  },
+  {
+   "id": "e6",
+   "from": "frontend",
+   "to": "web"
+  },
+  {
+   "id": "e7",
+   "from": "frontend",
+   "to": "mobile"
+  },
+  {
+   "id": "e8",
+   "from": "data",
+   "to": "warehouse"
+  },
+  {
+   "id": "e9",
+   "from": "data",
+   "to": "bi"
+  }
+ ]
+}
