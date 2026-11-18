@@ -490,6 +490,9 @@ public static class LayoutAnalyzer
                     // overwhelmingly empty means the deliverable is mostly whitespace, which the
                     // reader perceives as broken. Graduated severity makes that distinction
                     // actionable instead of hiding both cases behind one info line.
+                    // Graduated: a page barely larger than its content is a style question, a mostly
+                    // blank one reads as broken. The error branch makes the score zero outright, so its
+                    // SoftWeight below is never read — kept at 0 rather than 3 to say so.
                     Severity = ratio < options.SeverelyUnderusedRatio ? "error" : "warning",
                     Page = page.Name,
                     Message = $"图形只占页面的 {ratio:P0}；考虑缩小页面或加大间距",
@@ -498,6 +501,8 @@ public static class LayoutAnalyzer
                         : "页面留白偏多",
                     RecommendedFix = "启用 --fit-page 让页面贴合内容，或减小间距/字号",
                     SuggestedLevel = FixLevel.Local,
+                    // 0 when this is an error: `Score` returns 0 before any weight is applied. The value
+                    // is documentation of that fact, not a lever.
                     SoftWeight = ratio < options.SeverelyUnderusedRatio ? 0 : 3
                 });
             }
