@@ -255,8 +255,12 @@ public sealed class ProtocolContractTests
         Assert.Single(result.Renders);
         Assert.True(result.Renders[0].Bytes > 1000);
         Assert.True(result.Quality.Score > 0);
-        Assert.True(result.Quality.RequiresVisualReview,
-            "the engine must not claim its score is a visual verdict");
+        // `requiresVisualReview` tracks whether anything was flagged, not "always ask a human". This
+        // assertion used to demand `true` unconditionally, which made the flag meaningless; see
+        // VisualReviewFlagTests.
+        Assert.Equal(
+            result.Quality.HardViolations + result.Quality.SoftViolations > 0,
+            result.Quality.RequiresVisualReview);
     }
 
     [Fact]

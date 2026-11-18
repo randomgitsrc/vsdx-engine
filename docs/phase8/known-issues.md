@@ -99,3 +99,29 @@ decision: Accepted
 
 **若要收紧**：在 `Evaluate` 中拒绝「分数下降超过阈值」的候选。阈值取值需要判断，
 且会改变 `repair` 的行为，属产品决策，未擅自实施。
+
+## 5. 泳道标题预留（本轮尝试失败，已回退）
+
+**现象**：泳道图 `order-swimlane` 的**全部 6 个节点**都落在泳道标题区，
+占 `100 → 88` 的全部扣分。
+
+**根因（已确认）**：`SwimlaneLayoutEngine` 先放置节点、再加 envelope：
+```csharp
+var (width, height) = PlaceRow(row, y, options);   // 节点以 y 为中心
+double envelope = Heading + PaddingBottom;
+y += height + envelope + BandGapY;                 // 标题留给下一条泳道
+```
+`LayoutBanded` 有同样的错误，已在轮 25 修复；泳道引擎漏了。
+
+**四次尝试，全部回退**：
+
+1. 调整泳道内的放置顺序（先留 envelope）—— 被 `DiagramLayout.Apply` 抹掉
+2. 在 `DiagramLayout` 全局加 `HeadingClearance` —— 让 `Compare_TransposedCandidateIsStillDeliverable`
+   报 `group.overlap`（两次容器差 0.03"，与 clearance 的量级一致）
+3. 修 `LayoutBanded` 的 `totalHeight` 估算 —— 仍失败
+4. 只在泳道引擎内预留 + 推导后扩展 lane 的 box —— 单元测试通过，但真实 3 泳道场景仍有冲突
+
+**当前状态**：已回退到 HEAD，905 项测试通过。泳道标题问题**未修**，检测器会报告。
+
+**若要继续**：真实场景与单元夹具的差异是关键线索——2 条泳道的夹具通过了，
+3 条泳道、不同 `order` 的真实场景没有。需要先查清这个差异，而不是再改一次放置逻辑。
