@@ -33,9 +33,12 @@ public static class Palettes
             ["gateway"] = "#F2B705",
             ["service"] = "#70AD47",
             ["decision"] = "#F2B705",
-            ["queue"] = "#C55A11",
-            ["database"] = "#C55A11",
-            ["storage"] = "#C55A11",
+            // #C85D14, not #C55A11: on #111111 the original measured 4.36:1, 0.14 short of WCAG AA.
+            // The text colour is already near-black, so only the fill could move, and three units per
+            // channel reaches 4.52 — a difference no reader can see, against a measurable failure.
+            ["queue"] = "#C85D14",
+            ["database"] = "#C85D14",
+            ["storage"] = "#C85D14",
             ["monitor"] = "#7F7F7F",
             ["external"] = "#9DC3E6"
         },

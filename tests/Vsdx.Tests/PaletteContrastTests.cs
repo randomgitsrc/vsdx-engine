@@ -28,7 +28,12 @@ public sealed class PaletteContrastTests
     /// <summary>WCAG 2.1 AA for large text (18pt, or 14pt bold).</summary>
     private const double AALarge = 3.0;
 
-    private static readonly string[] KnownBelowAa = { "enterprise:database", "enterprise:queue", "enterprise:storage" };
+    /// <summary>
+    /// Empty: every role colour now meets AA. This list used to name the three that did not —
+    /// `enterprise`'s database, queue and storage at 4.36:1 on #111111 — and served as a baseline so a
+    /// new entry could not land below AA unnoticed. It stays as the mechanism, with nothing in it.
+    /// </summary>
+    private static readonly string[] KnownBelowAa = Array.Empty<string>();
 
     private static (double R, double G, double B) Parse(string hex)
     {
@@ -105,9 +110,9 @@ public sealed class PaletteContrastTests
     }
 
     [Fact]
-    public void OnlyTheThreeKnownRolesFallBelowAa()
+    public void NoRoleColourFallsBelowAa()
     {
-        // Pinned so a new palette entry cannot quietly land below AA without this test saying so.
+        // The baseline is empty: a new palette entry that lands below AA fails here by name.
         var below = new List<string>();
 
         foreach (var name in Palettes.Names)
