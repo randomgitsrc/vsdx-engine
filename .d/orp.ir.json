@@ -1,4 +1,0 @@
-{"irVersion":"1.0","id":"t","kind":"architecture",
- "nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"},{"id":"lone","label":"孤立"}],
- "edges":[{"id":"e","from":"a","to":"b"}],
- "textBlocks":[{"id":"title","text":"标题","role":"title","box":{"x":3,"y":5,"width":4,"height":0.5}}]}

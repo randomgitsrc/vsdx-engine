@@ -64,3 +64,8 @@ desktop.ini
 .lab/
 .scratch/
 *.review.json
+
+# Single-letter dot directories. Verification steps create short-lived fixtures in these
+# (`mkdir -p .d`, `.v`, `.q` …) and `git add -A` swept 13 of them into history once already.
+# A pattern beats a list: the previous round-by-round enumeration missed r5 and let 297 files in.
+/.[a-z]/
