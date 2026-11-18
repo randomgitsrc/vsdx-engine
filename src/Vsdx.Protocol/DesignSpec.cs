@@ -289,18 +289,52 @@ public static class DesignSpecApplier
         // --- Theme ---------------------------------------------------------
         if (spec.Theme?.RoleColors is { Count: > 0 })
         {
+            // `default` is a fallback for roles the map does not name, not a role itself — so it
+            // must not be looked up as one, or a diagram with a `default` role would shadow it.
+            spec.Theme.RoleColors.TryGetValue("default", out var fallbackColour);
+
+            // One complaint per role, however many nodes carry it: the problem is the map, not the
+            // nodes, and repeating it per node turns a signal into noise.
+            var uncovered = new SortedSet<string>(StringComparer.Ordinal);
+            int coloured = 0;
+
             foreach (var page in diagram.Pages)
             {
                 foreach (var node in page.Nodes)
                 {
                     if (node.Type is null) continue;
-                    if (!spec.Theme.RoleColors.TryGetValue(node.Type, out var colour)) continue;
+
+                    string? colour = null;
+                    if (spec.Theme.RoleColors.TryGetValue(node.Type, out var explicitColour))
+                        colour = explicitColour;
+                    else if (fallbackColour is not null)
+                        colour = fallbackColour;
+                    else
+                    {
+                        // Skipping silently left the caller with a successful run and an uncoloured
+                        // node — the misspelt-key case. Naming the role is the whole fix.
+                        uncovered.Add(node.Type);
+                        continue;
+                    }
+
                     node.Style ??= new ShapeStyle();
                     node.Style.Fill = colour;
                     node.Style.TextColor = ColorUtil.ReadableTextColor(colour);
+                    coloured++;
                 }
             }
-            applied.Add("theme.roleColors");
+
+            if (coloured > 0) applied.Add("theme.roleColors");
+
+            foreach (var role in uncovered)
+            {
+                unmet.Add(new UnmetConstraint
+                {
+                    Code = "theme.role-uncovered",
+                    Target = role,
+                    Reason = $"角色 '{role}' 不在 roleColors 中，且未提供 default 回退，该角色未被着色"
+                });
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(spec.Theme?.Background))
