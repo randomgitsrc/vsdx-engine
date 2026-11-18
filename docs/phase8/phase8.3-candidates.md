@@ -1273,6 +1273,29 @@ $ execute --spec '{"layout":"flow"}'   # 有容器的图
 
 **已回退，产品代码无改动，611 测试通过。**
 
-**建议**：让 `DiagramIRConverter` 或 spec 路径为容器显式设 `AutoSize=true`，
-与基准图一致。这是最小改动，且能让转置后的重算生效。但我未能验证，
-因为时间已投入过多；下轮可从这一点入手。
+### 上一轮的建议被证伪（第三轮）
+
+"给容器设 `AutoSize=true`" **无效**：实测 `AutoSize=true` 与 `null` 的容器高度完全相同
+（都是 5.67/8.63/6.78，顶部都在 9.19）。
+
+### 真正的差异：成员关系的来源
+
+| 路径 | 容器的 `Members` | 由谁布局 |
+| --- | --- | --- |
+| `create`（基准图） | **空（0）** | `DiagramLayout` 通过 `Node.GroupId` 推导 |
+| `execute`（spec 图） | **有值** | `Flow.LayoutBanded` 读取 `Members` |
+
+实测基准模型：`members=0,0,0`、`Bounds=null`、节点 `GroupId=grp_in/grp_rev/grp_ful`。
+`Flow` 的 `LayoutBanded` 只筛 `Members.Count > 0`，所以**基准图的容器根本没进 Flow**.
+
+而 `DiagramIrConverter` 会 `Members.Add(node.Id)`（`:335`），
+所以 spec 路径的容器有成员，`Flow` 接管它们，然后被转置压扁。
+
+**结论**：两个引擎对"成员关系"有两种表示，`Members` 与 `GroupId`，
+不同路径填充其中一个。`deploy` 因此走上了基准图从未走过的代码路径。
+
+**这是 C20 的真正根因**，但修它意味着统一成员关系的表示——
+影响 `DiagramLayout`、`Flow`、`Writer`、`Reader` 四处，不是局部改动。
+
+**未修**。若修，应让 `DiagramLayout` 与 `Flow` 同时接受 `GroupId`，
+或让转换器不再填 `Members` 而统一走 `GroupId`。
