@@ -645,7 +645,19 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
             LineColor = FormatColor(connector.LineColor),
             LineWeight = connector.LineWeight > 0 ? connector.LineWeight : null,
             LinePattern = connector.LinePattern,
-            Layers = connector.LayerNames.Count > 0 ? connector.LayerNames.ToList() : null
+            Layers = connector.LayerNames.Count > 0 ? connector.LayerNames.ToList() : null,
+
+            // Label typography is written by the writer and was never read back, so a spec that
+            // set an edge label font produced a file whose model could not reproduce it.
+            LabelFont = string.IsNullOrWhiteSpace(connector.TextStyle?.FontFamily)
+                ? null
+                : connector.TextStyle!.FontFamily,
+            LabelFontSize = connector.TextStyle?.Size is double labelSize && labelSize > 0
+                ? labelSize
+                : null,
+            LabelColor = connector.TextStyle?.Color is { } labelColor
+                ? FormatColor(labelColor)
+                : null
         };
 
         if (connector.Waypoints.Count > 0)

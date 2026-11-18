@@ -120,31 +120,76 @@ public static class DesignSpecApplier
         var unmet = new List<UnmetConstraint>();
 
         // --- Typography ----------------------------------------------------
-        if (spec.Typography.BaseSize is double baseSize || spec.Typography.FontFamily is not null)
+        if (spec.Typography.BaseSize is not null || spec.Typography.FontFamily is not null)
         {
+            var family = spec.Typography.FontFamily;
+            var baseSize = spec.Typography.BaseSize;
+
+            // BaseSize names the target size of a node title, not one size for everything. The
+            // remaining tiers keep their proportions by scaling from NodeTitle, so raising it makes
+            // the whole diagram read bigger without flattening the hierarchy into one size.
+            var defaults = new TypeScale();
+            double requested = baseSize ?? defaults.NodeTitle;
+            double scale = baseSize is null ? 1.0 : requested / defaults.NodeTitle;
+
+            double Tier(double basePt)
+            {
+                if (baseSize is null) return basePt;
+                double wanted = basePt * scale;
+                double clamped = Math.Max(wanted, spec.Typography.MinReadableSize);
+
+                if (clamped > wanted && Math.Abs(clamped - wanted) > 0.01)
+                {
+                    unmet.Add(new UnmetConstraint
+                    {
+                        Code = "typography.min_size",
+                        Reason = $"{basePt:0.#}pt 档按 {requested:0.#}pt 基准缩放后为 {wanted:0.#}pt，" +
+                                 $"低于可读下限 {spec.Typography.MinReadableSize:0.#}pt，已提升"
+                    });
+                }
+
+                return clamped;
+            }
+
+            void ApplyFamily(ShapeStyle style)
+            {
+                if (family is not null) style.Font ??= family;
+            }
+
             foreach (var page in diagram.Pages)
             {
                 foreach (var node in page.Nodes)
                 {
                     node.Style ??= new ShapeStyle();
-                    if (spec.Typography.BaseSize is double size)
-                    {
-                        var clamped = Math.Max(size, spec.Typography.MinReadableSize);
-                        if (clamped < size)
-                        {
-                            unmet.Add(new UnmetConstraint
-                            {
-                                Code = "typography.min_size",
-                                Target = node.Id,
-                                Reason = $"请求 {size}pt 低于可读下限 {spec.Typography.MinReadableSize}pt，已提升"
-                            });
-                        }
-                        node.Style.FontSize = clamped;
-                    }
-                    if (spec.Typography.FontFamily is not null)
-                        node.Style.Font = spec.Typography.FontFamily;
+                    if (baseSize is not null) node.Style.FontSize ??= Tier(defaults.NodeTitle);
+                    ApplyFamily(node.Style);
+                }
+
+                // Container headings are a separate tier; leaving them at the writer's hardcoded
+                // 12pt is what made a "14pt diagram" only 14pt inside the boxes.
+                foreach (var group in page.Groups)
+                {
+                    group.Style ??= new ShapeStyle();
+                    if (baseSize is not null) group.Style.FontSize ??= Tier(defaults.RegionTitle);
+                    ApplyFamily(group.Style);
+                }
+
+                foreach (var edge in page.Edges)
+                {
+                    if (baseSize is not null && edge.LabelFontSize is null)
+                        edge.LabelFontSize = Tier(defaults.EdgeLabel);
+                    if (family is not null) edge.LabelFont ??= family;
+                }
+
+                foreach (var text in page.TextBlocks)
+                {
+                    text.Style ??= new ShapeStyle();
+                    if (baseSize is not null)
+                        text.Style.FontSize ??= Tier(DesignSpecApplier.TierForRole(text.Role, defaults));
+                    ApplyFamily(text.Style);
                 }
             }
+
             applied.Add("typography");
         }
 
@@ -569,6 +614,23 @@ public static class DesignSpecApplier
             }
         };
     }
+
+    /// <summary>
+    /// Maps a text block's semantic role to its place in the type scale.
+    ///
+    /// Mirrors the mapping the renderer uses; a caption should not be sized like a diagram title
+    /// just because both happen to be text blocks.
+    /// </summary>
+    private static double TierForRole(string? role, TypeScale scale) => role?.ToLowerInvariant() switch
+    {
+        "title" => scale.DiagramTitle,
+        "subtitle" => scale.RegionTitle,
+        "caption" => scale.NodeCaption,
+        "legend" => scale.NodeCaption,
+        "note" => scale.Annotation,
+        _ => scale.NodeCaption
+    };
+
 }
 
 public sealed class DesignApplication
