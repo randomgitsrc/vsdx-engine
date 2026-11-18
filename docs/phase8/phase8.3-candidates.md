@@ -252,7 +252,8 @@ for (int i = 0; i < columns.Count - 1; i++)
 - 通道搜索范围限制在两端节点的 x 区间内，避免越界
 - `check-layout` 增加 `edge.overlap`（共线重合）检测
 
-**未修复**，不属当前任务范围。
+
+**已修。`VisioBackgroundBridge` 写入 `pages.xml` 的 `PageBackground`；实测 `#123456` 落盘并读回。**
 
 ---
 
@@ -311,7 +312,8 @@ $ grep -c "Circle|Ellipse|Diamond" src/Vsdx.Engine/TextLayout.cs
 **需要先有视觉准则**：圆形节点内的文字应当换行还是应当放大节点？
 两者都合理，取决于设计意图，宜与 Agent 的图形语义一起定。
 
-**未修复**，需独立任务。
+
+**已修。`ShapeGeometry.InscribedFactor` 按形状给出内接系数；实测圆形节点无 `text.overflow`。**
 
 ---
 
@@ -363,7 +365,8 @@ $ grep -c "Circle|Ellipse|Diamond" src/Vsdx.Engine/TextLayout.cs
 padding 改为字号的函数：`padding = basePadding * (fontSize / TypeScale.NodeTitle)`，
 并设下限避免小字号时文字贴边。
 
-**未修复**，需独立任务——它会改变所有既有产物的节点尺寸，需要单独的回归验证。
+
+**已修。padding 改为文字比例（20%/22%）并设下限；实测节点高度 0.82~1.85 → 0.60~1.85。**
 
 ---
 
@@ -418,7 +421,8 @@ $ grep -c "TextBlocks" src/Vsdx.Engine/LayoutAnalyzer.cs
 **建议先做 2**：让问题可见比自动修复更安全——自动推挤可能在
 用户刻意让标题压在色带上时误判。
 
-**未修复**，需独立任务。
+
+**已修。`text.overlaps-container` 与 `text.overlaps-node` 均已实现；实测状态机图报 4 处。**
 
 ---
 
@@ -564,7 +568,8 @@ var labelCenter = PointAlong(path, 0.5);
 **这一条必须先修**：否则 C8 的布局侧修复（错开标签）无法验证——
 检测器会继续按中点判断，无法确认错开是否有效。
 
-**未修复**。
+
+**已修。`LayoutAnalyzer` 通过 `LabelFraction(edge)` 读取 `LabelPosition`。**
 
 ---
 
@@ -611,7 +616,8 @@ $ grep -c "LabelPosition" src/Vsdx.Protocol/DiagramIr.cs
 给 `IrEdge` 加 `LabelPosition` 并在 `DiagramIrConverter` 中传递。
 属协议扩展，需按任务书 §4.9 评估兼容性：**新增可选字段是向后兼容的**。
 
-**未修复**。
+
+**已修。`IrEdge.LabelPosition` 已加并透传；实测 0.25/0.75 到达模型。**
 
 ---
 
@@ -656,7 +662,8 @@ e7: labelPosition=None label=index
 Reader 从 `connector.LabelPlacement.Position` 读回 `LabelPosition`，
 与 Writer 写入的值对应。
 
-**未修复**。这一条与 C9 是同一问题的两段：C9 让分析器读字段，C11 让字段真的在磁盘模型里。
+
+**已修。Reader 从 `LabelPlacement` 读回；实测往返后 `labelPosition=0.25/0.75` 且无重叠。**
 
 ---
 
@@ -1006,7 +1013,7 @@ tests  35 项失败 / 561 通过
 
 18 个基准全部通过；592 项测试通过。
 
-**这一条优先级曾高于 C14：C14 是"布局不理想"，C15 是"语义与名字相反"。现已修复。**
+**已修。** 这一条优先级曾高于 C14：C14 是"布局不理想"，C15 是"语义与名字相反"。
 
 ---
 
@@ -1482,8 +1489,8 @@ score 100（不变）   利用率 78% -> 47%
 而 `check-layout` **报 0 处**——`text.overlaps-container` 只查容器，
 **没有 `text.overlaps-node`**。
 
-已补上：实测状态机图报 4 处，score 100 -> 88。
-18 个基准 0 处误报。这是 C6 记录的同一盲区（`textBlock ↔ node` 未覆盖），现已闭合。
+**已修（C22 撤回，但发现真实缺陷）。** 补上 `text.overlaps-node`：实测状态机图报 4 处，
+score 100 -> 88；18 个基准 0 处误报。这是 C6 记录的同一盲区（`textBlock ↔ node` 未覆盖），现已闭合。
 
 ---
 
