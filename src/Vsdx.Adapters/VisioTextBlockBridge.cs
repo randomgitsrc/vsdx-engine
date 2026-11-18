@@ -62,8 +62,16 @@ public static class VisioTextBlockBridge
         XDocument doc;
         using (var stream = entry.Open()) doc = XDocument.Load(stream);
 
+        // An empty page serialises as a self-closing <PageContents/> with no <Shapes> child.
+        // That happens whenever a diagram consists only of text blocks — a title-only sheet. The
+        // old code treated a missing container as "nothing to do" and dropped every block; it has
+        // to be created instead, or the deliverable is a blank page.
         var shapesContainer = doc.Descendants(VisioNs + "Shapes").FirstOrDefault();
-        if (shapesContainer is null) return 0;
+        if (shapesContainer is null)
+        {
+            shapesContainer = new XElement(VisioNs + "Shapes");
+            doc.Root!.Add(shapesContainer);
+        }
 
         var usedIds = new HashSet<int>(
             doc.Descendants(VisioNs + "Shape")
@@ -102,6 +110,8 @@ public static class VisioTextBlockBridge
 
         if (written == 0) return 0;
 
+        EnsureFaceNames(zip, pageModel);
+
         entry.Delete();
         var replacement = zip.CreateEntry(entryName, CompressionLevel.Optimal);
         using var writer = new StreamWriter(replacement.Open(), new System.Text.UTF8Encoding(false));
@@ -137,20 +147,35 @@ public static class VisioTextBlockBridge
         AddCell(shape, "LinePattern", "0");
 
         var style = block.Style;
-        if (style?.TextColor is not null) AddCell(shape, "Color", style.TextColor);
-        if (style?.Font is not null) AddCell(shape, "Font", style.Font);
 
         double size = style?.FontSize ?? SizeForRole(block.Role);
         size = Math.Max(size, MinReadablePt);
 
+        // Colour and font belong in Character/Row, not on the shape. The reader resolves text
+        // style through shape.TextStyle, which is populated from this section — bare shape-level
+        // cells were written and unreadable at once.
+        //
+        // They have to move together with the rest of the row. Writing them into a row that lacks
+        // a valid Size breaks the whole section: measured, doing that lost the fontSize that had
+        // previously worked, which is worse than leaving colour unset.
         var character = new XElement(VisioNs + "Section", new XAttribute("N", "Character"));
-        character.Add(new XElement(VisioNs + "Row", new XAttribute("IX", "0"),
+        var row = new XElement(VisioNs + "Row", new XAttribute("IX", "0"),
             new XElement(VisioNs + "Cell",
                 new XAttribute("N", "Size"),
                 new XAttribute("V", Num(size / 72.0)),
                 new XAttribute("U", "PT")),
             new XElement(VisioNs + "Cell", new XAttribute("N", "Style"),
-                new XAttribute("V", style?.Italic == true ? "2" : "0"))));
+                new XAttribute("V", style?.Italic == true ? "2" : "0")));
+
+        if (style?.Font is not null)
+            row.Add(new XElement(VisioNs + "Cell", new XAttribute("N", "Font"),
+                new XAttribute("V", style.Font)));
+
+        if (style?.TextColor is not null)
+            row.Add(new XElement(VisioNs + "Cell", new XAttribute("N", "Color"),
+                new XAttribute("V", style.TextColor)));
+
+        character.Add(row);
         if (style?.Bold == true)
             character.Descendants(VisioNs + "Cell")
                 .First(c => (string?)c.Attribute("N") == "Style")
@@ -198,4 +223,63 @@ public static class VisioTextBlockBridge
 
     private static string Num(double value) =>
         Math.Round(value, 6).ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// Registers the fonts the text blocks use in `document.xml`.
+    ///
+    /// This is not optional bookkeeping. Text blocks are created by patching page XML after the
+    /// package is saved, so they bypass the library's own font registration. Without a matching
+    /// `FaceName` entry the reader cannot resolve `shape.TextStyle` and every property comes back
+    /// null — the cells are present and correct in the file, and unreadable at the same time.
+    /// </summary>
+    private static void EnsureFaceNames(ZipArchive zip, Page pageModel)
+    {
+        var families = pageModel.TextBlocks
+            .Select(b => b.Style?.Font)
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .Select(f => f!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (families.Count == 0) return;
+
+        var entry = zip.GetEntry("visio/document.xml");
+        if (entry is null) return;
+
+        XDocument doc;
+        using (var stream = entry.Open()) doc = XDocument.Load(stream);
+
+        var declared = new HashSet<string>(
+            doc.Descendants(VisioNs + "FaceName")
+                .Select(e => (string?)e.Attribute("NameU"))
+                .Where(n => !string.IsNullOrEmpty(n))
+                .Select(n => n!),
+            StringComparer.OrdinalIgnoreCase);
+
+        var missing = families.Where(f => !declared.Contains(f)).ToList();
+        if (missing.Count == 0) return;
+
+        var container = doc.Descendants(VisioNs + "FaceNames").FirstOrDefault();
+        if (container is null)
+        {
+            container = new XElement(VisioNs + "FaceNames");
+            var root = doc.Root!;
+            var stylesheets = root.Element(VisioNs + "StyleSheets");
+            if (stylesheets is not null) stylesheets.AddBeforeSelf(container);
+            else root.AddFirst(container);
+        }
+
+        foreach (var family in missing)
+        {
+            container.Add(new XElement(VisioNs + "FaceName",
+                new XAttribute("NameU", family),
+                new XAttribute("CharSets", "0"),
+                new XAttribute("UnicodeRanges", "0-255")));
+        }
+
+        entry.Delete();
+        var replacement = zip.CreateEntry("visio/document.xml", CompressionLevel.Optimal);
+        using var writer = new StreamWriter(replacement.Open(), new System.Text.UTF8Encoding(false));
+        doc.Save(writer);
+    }
 }
