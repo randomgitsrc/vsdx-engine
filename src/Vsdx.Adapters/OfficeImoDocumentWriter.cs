@@ -30,6 +30,8 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
 
         DiagramJson.Normalize(diagram);
 
+        ReportUnsupportedStyleFields(diagram, compat);
+
         var doc = VisioDocument.Create(vsdxPath);
         doc.UseMastersByDefault = true;
         doc.WriteMasterDeltasOnly = false;
@@ -490,5 +492,55 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         int suffix = 1;
         while (used.Contains(candidate)) candidate = $"{desired}-{suffix++}";
         return candidate;
+    }
+
+    /// <summary>
+    /// Names the style fields the model and schema accept but this writer cannot express.
+    ///
+    /// Opacity, shadow, radius, lineJoin and paddingBottom are declared in
+    /// `schemas/diagram.schema.json` and have properties on <see cref="ShapeStyle"/>, yet nothing
+    /// downstream reads them. Without this scan a caller can set all five, be told the write was
+    /// lossless, and receive a file where none of them took effect — accepted by the protocol,
+    /// permitted by the schema, ignored at execution, and silent.
+    ///
+    /// Reported per field rather than as one lump: "a style was dropped" does not tell the caller
+    /// what to remove or work around.
+    /// </summary>
+    private static void ReportUnsupportedStyleFields(Diagram diagram, CompatibilityReport compat)
+    {
+        var dropped = new SortedSet<string>(StringComparer.Ordinal);
+        var owners = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        void Inspect(ShapeStyle? style, string owner)
+        {
+            if (style is null) return;
+
+            if (style.Opacity is not null) Note("opacity");
+            if (style.Shadow is not null) Note("shadow");
+            if (style.Radius is not null) Note("radius");
+            if (style.LineJoin is not null) Note("lineJoin");
+            if (style.PaddingBottom is not null) Note("paddingBottom");
+
+            void Note(string field)
+            {
+                dropped.Add(field);
+                owners.TryAdd(field, owner);
+            }
+        }
+
+        foreach (var page in diagram.Pages)
+        {
+            foreach (var node in page.Nodes) Inspect(node.Style, node.Id);
+            foreach (var group in page.Groups) Inspect(group.Style, group.Id);
+            foreach (var path in page.Paths) Inspect(path.Style, path.Id);
+            foreach (var text in page.TextBlocks) Inspect(text.Style, text.Id);
+        }
+
+        if (dropped.Count == 0) return;
+
+        compat.Warn(
+            "style.unsupported",
+            $"以下样式字段已接受但当前无法写入 VSDX，将被丢弃：{string.Join(", ", dropped)}",
+            owners[dropped.First()]);
     }
 }
