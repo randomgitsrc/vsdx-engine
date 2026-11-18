@@ -378,7 +378,7 @@ $ grep -c "TextBlocks" src/Vsdx.Engine/LayoutAnalyzer.cs
 
 ---
 
-## C7 【P1】Writer 默认重算容器，覆盖模型里已定稿的 bounds
+## C7 【P1】Writer 默认重算容器，覆盖模型里已定稿的 bounds —— ✅ 已修（ 前身）
 
 **发现于：** C6 修复后复核（2026-11-18）
 
@@ -412,4 +412,12 @@ page.AddToContainer(container.Id, memberIds, resizeToFit: group.AutoSize ?? true
 统一 `AutoSize ?? false`，或让 `DesignSpecApplier` 显式设置 `AutoSize=false`。
 **需要先确认 `AddToContainer` 的 resize 是否必要**——它可能是为了容纳成员的边框。
 
-**未修复**。它与 C6 是同一问题的两面：C6 让重叠可见，C7 说明为什么避让算不准。
+**已修。** 对照实验证明 resize 不必要：
+
+| AutoSize | 模型与磁盘偏差 | 成员包含问题 |
+| --- | --- | --- |
+| null（原默认） | **+0.30** | 0 |
+| false | **0.00** | 0 |
+| true | +0.30 | 0 |
+
+默认值统一为  后，C6 的装饰避让随之生效， 消失。

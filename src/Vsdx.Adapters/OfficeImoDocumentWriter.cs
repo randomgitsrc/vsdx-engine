@@ -121,7 +121,13 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
                 if (memberIds.Count == 0) continue;
                 try
                 {
-                    page.AddToContainer(container.Id, memberIds, resizeToFit: group.AutoSize ?? true);
+                    // Default false, matching the explicit-bounds path below. When this defaulted to
+                    // true, a container derived by the engine was recomputed on the way out — a top
+                    // at 8.46 became 8.76 — so anything computed against container bounds before the
+                    // write was working from a coordinate that no longer existed. A controlled run
+                    // confirmed the resize is unnecessary: with false, written geometry matches the
+                    // model and every member is still contained.
+                    page.AddToContainer(container.Id, memberIds, resizeToFit: group.AutoSize ?? false);
                 }
                 catch (Exception ex)
                 {
