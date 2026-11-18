@@ -26,6 +26,7 @@
 | [`phase8/capability-matrix.md`](phase8/capability-matrix.md) | 106 项能力逐条状态（完整/部分/缺失/格式可行） |
 | [`phase8/palette-contrast.md`](phase8/palette-contrast.md) | 40 个角色色的 WCAG 实测值 |
 | [`phase8/scale-benchmark.md`](phase8/scale-benchmark.md) | 规模实测曲线（200–5000 节点） |
+| [`phase8/score-weights.md`](phase8/score-weights.md) | 评分权重表，以及「为何是这个权重」的缺口 |
 
 ## 阶段记录
 
