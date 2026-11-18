@@ -145,6 +145,12 @@ public static class DiagramLayoutEngine
         Diagram diagram, LayoutOptions? options = null, LayoutStrategy? strategyOverride = null)
     {
         options ??= new LayoutOptions();
+
+        // Membership reaches the model by two routes — a container's Members list and a node's
+        // GroupId — and only some producers fill both. Every engine below reads Members, so a
+        // diagram carrying membership only in GroupId would be laid out as if it had no containers.
+        NormaliseMembership(diagram);
+
         var strategy = strategyOverride ?? options.Strategy;
         var engine = Create(strategy);
 
@@ -291,4 +297,39 @@ public static class DiagramLayoutEngine
     /// <summary>Parses a strategy name, falling back to Layered. Use <see cref="TryParse"/> when
     /// the caller needs to know the value was not understood.</summary>
     public static LayoutStrategy Parse(string? value) => TryParse(value, out var strategy) ? strategy : strategy;
+
+    /// <summary>
+    /// Brings <see cref="Group.Members"/> and <see cref="Node.GroupId"/> into agreement before layout.
+    ///
+    /// The model declares that Members is "kept in sync with Node.GroupId", but nothing performs that
+    /// sync, so the two carriers diverge by origin: benchmark JSON names only `group_id`, while the
+    /// IR converter fills both. Every layout engine reads Members, so a diagram whose membership
+    /// lives only in `group_id` looks like it has no containers at all — measured on
+    /// benchmarks/workflow/medium, members 0,0,0 alongside three populated groupIds.
+    ///
+    /// Filling Members from GroupId is the safer direction: GroupId already participates in the
+    /// incremental editor, nesting bridges and serialisation, and it is the field authors write.
+    /// Idempotent, so calling it on a model that already agrees changes nothing.
+    /// </summary>
+    public static int NormaliseMembership(Diagram diagram)
+    {
+        int added = 0;
+
+        foreach (var page in diagram.Pages)
+        {
+            var byGroup = page.Groups.ToDictionary(g => g.Id, StringComparer.Ordinal);
+
+            foreach (var node in page.Nodes)
+            {
+                if (node.GroupId is not { } groupId) continue;
+                if (!byGroup.TryGetValue(groupId, out var group)) continue;
+                if (group.Members.Contains(node.Id, StringComparer.Ordinal)) continue;
+
+                group.Members.Add(node.Id);
+                added++;
+            }
+        }
+
+        return added;
+    }
 }
