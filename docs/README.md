@@ -12,6 +12,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
+| [`../README.md`](../README.md) | **项目总览与快速开始**——第一次接触本项目从这里进 |
 | [`../skill/SKILL.md`](../skill/SKILL.md) | Agent 使用指南：选图型、写模型、`create` 与 `execute` 两条路径、读结果 |
 | [`api.md`](api.md) | CLI 与 C# API 完整参数 |
 | [`installation.md`](installation.md) | 安装与环境要求 |
@@ -23,16 +24,17 @@
 | --- | --- |
 | [`architecture.md`](architecture.md) | 七个项目的分层与依赖方向 |
 | [`dependencies.md`](dependencies.md) | 外部依赖清单与选择理由 |
-| [`phase8/capability-matrix.md`](phase8/capability-matrix.md) | 106 项能力逐条状态（完整/部分/缺失/格式可行） |
+| [`phase8/capability-matrix.md`](phase8/capability-matrix.md) | 能力逐条状态（完整/部分/缺失/格式可行），文末有汇总表 |
 | [`phase8/palette-contrast.md`](phase8/palette-contrast.md) | 40 个角色色的 WCAG 实测值 |
 | [`phase8/scale-benchmark.md`](phase8/scale-benchmark.md) | 规模实测曲线（200–5000 节点） |
 | [`phase8/score-weights.md`](phase8/score-weights.md) | 评分权重表，以及「为何是这个权重」的缺口 |
-| [`phase8/known-issues.md`](phase8/known-issues.md) | **当前仍未解决的 8 项**，每项写明为何未修 |
+| [`phase8/known-issues.md`](phase8/known-issues.md) | **当前仍未解决的问题**，每项写明为何未修 |
 | [`phase8/phase8.3-checkpoint.md`](phase8/phase8.3-checkpoint.md) | 阶段检查点：做了什么、未解什么 |
 
 ## 阶段记录
 
-`phase8/` 下有 34 个文件，大部分是**过程记录**——审查轮次、评审包、阶段性报告。
+`phase8/` 下有几十份文件（`ls docs/phase8/*.md | wc -l`），大部分是**过程记录**——审查轮次、评审包、
+阶段性报告。
 它们是决策依据，不是入门材料。
 
 | 文件 | 性质 |
