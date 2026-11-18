@@ -90,7 +90,10 @@ public sealed class TypographySpec
 
 public sealed class ThemeSpec
 {
-    /// <summary>Named palette: enterprise | office | technical | muted.</summary>
+    /// <summary>
+    /// Named palette: enterprise | muted | technical | midnight. An unknown name is reported as
+    /// `theme.palette-unknown` rather than silently ignored.
+    /// </summary>
     public string? Palette { get; set; }
 
     public string? Background { get; set; }

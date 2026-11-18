@@ -6,73 +6,184 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "specVersion": { "type": "string", "pattern": "^1\\.[0-9]+$", "default": "1.0" },
+    "specVersion": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$",
+      "default": "1.0"
+    },
     "layout": {
       "type": "string",
       "description": "'auto' picks from the IR kind. 'manual' keeps supplied anchors.",
-      "enum": ["auto", "layered", "flow", "tree", "grid", "manual"],
+      "enum": [
+        "auto",
+        "layered",
+        "flow",
+        "tree",
+        "grid",
+        "swimlane",
+        "manual"
+      ],
       "default": "auto"
     },
-    "direction": { "type": "string", "enum": ["leftToRight", "topToBottom"], "default": "leftToRight" },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "leftToRight",
+        "topToBottom"
+      ],
+      "default": "leftToRight"
+    },
     "spacing": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "nodeGapX": { "type": "number", "minimum": 0.1 },
-        "bandGapY": { "type": "number", "minimum": 0.1 }
+        "nodeGapX": {
+          "type": "number",
+          "minimum": 0.1
+        },
+        "bandGapY": {
+          "type": "number",
+          "minimum": 0.1
+        }
       }
     },
     "canvas": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "mode": { "type": "string", "enum": ["auto", "fixed"], "default": "auto" },
-        "width": { "type": "number", "exclusiveMinimum": 0 },
-        "height": { "type": "number", "exclusiveMinimum": 0 },
-        "unit": { "type": "string", "enum": ["inches", "cm", "mm"], "default": "inches" },
-        "shrinkToFit": { "type": "boolean", "default": true }
+        "mode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "fixed",
+            "paper"
+          ],
+          "default": "auto",
+          "description": "auto 贴合内容 · fixed 采纳 width/height · paper 吸附标准纸张"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unit": {
+          "type": "string",
+          "enum": [
+            "inches",
+            "cm",
+            "mm"
+          ],
+          "default": "inches"
+        },
+        "shrinkToFit": {
+          "type": "boolean",
+          "default": true
+        }
       }
     },
     "typography": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "fontFamily": { "type": "string" },
-        "baseSize": { "type": "number", "minimum": 4, "maximum": 48 },
-        "minReadableSize": { "type": "number", "minimum": 6, "default": 8 }
+        "fontFamily": {
+          "type": "string"
+        },
+        "baseSize": {
+          "type": "number",
+          "minimum": 4,
+          "maximum": 48
+        },
+        "minReadableSize": {
+          "type": "number",
+          "minimum": 6,
+          "default": 8
+        }
       }
     },
     "containerLayouts": {
       "type": "object",
       "description": "Per-container strategy override, keyed by container id.",
-      "additionalProperties": { "type": "string", "enum": ["layered", "flow", "tree", "grid", "manual"] }
+      "additionalProperties": {
+        "type": "string",
+        "enum": [
+          "layered",
+          "flow",
+          "tree",
+          "grid",
+          "manual"
+        ]
+      }
     },
-    "hardConstraints": { "type": "array", "items": { "$ref": "#/$defs/constraint" } },
-    "softConstraints": { "type": "array", "items": { "$ref": "#/$defs/constraint" } },
+    "hardConstraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      }
+    },
+    "softConstraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      }
+    },
     "theme": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "palette": { "type": "string" },
-        "background": { "type": "string" },
-        "roleColors": { "type": "object", "additionalProperties": { "type": "string" } }
+        "palette": {
+          "type": "string",
+          "enum": [
+            "enterprise",
+            "muted",
+            "technical",
+            "midnight"
+          ],
+          "description": "命名配色；未知名字会报告 theme.palette-unknown"
+        },
+        "background": {
+          "type": "string"
+        },
+        "roleColors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
       }
     }
   },
   "$defs": {
     "constraint": {
       "type": "object",
-      "required": ["code"],
+      "required": [
+        "code"
+      ],
       "additionalProperties": false,
       "properties": {
         "code": {
           "type": "string",
-          "enum": ["min_page_utilisation", "max_edge_detour", "no_edge_crossing",
-                   "max_nodes_per_band", "require_title", "max_page_width", "no_hard_violations"]
+          "enum": [
+            "min_page_utilisation",
+            "max_edge_detour",
+            "no_edge_crossing",
+            "max_nodes_per_band",
+            "require_title",
+            "max_page_width",
+            "no_hard_violations"
+          ]
         },
-        "value": { "type": "number" },
-        "target": { "type": "string" },
-        "note": { "type": "string" }
+        "value": {
+          "type": "number"
+        },
+        "target": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
       }
     }
   }

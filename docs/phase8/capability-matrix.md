@@ -65,7 +65,7 @@
 | Typography 层级 | ⚠️ II | `TextLayout.TypeScale` 六级 | 但容器标题/连线标签字号是**固定**的 |
 | `theme.roleColors` | ✅ IV | `DesignSpec.cs:224-238` | 真正执行 |
 | `theme.background` | ✅ IV | `DesignSpec.cs:240-244` | 真正执行 |
-| **`theme.palette`** | 📄 **PO** | **仅声明，无读取方** | **协议接受但静默忽略** |
+| **`theme.palette`** | ✅ **IV** | `Palettes` + spec 应用；实测 `applied: theme.palette=enterprise`，节点得 `#70AD47`/`#C55A11` | 四套：enterprise/muted/technical/midnight；未知名报 `theme.palette-unknown` |
 | 样式继承 | ❌ MI | 无 | 每个对象独立 `ShapeStyle` |
 | 局部覆盖 | ⚠️ II | Node 级 style 可覆盖 | 无"角色默认 → 对象覆盖"链 |
 | 透明度 / Opacity | ❌ MI | 无字段 | — |
@@ -204,10 +204,10 @@
 
 | 状态 | 数量 | 占比 |
 | --- | --- | --- |
-| ✅ Implemented & Verified | 59 | 56% |
+| ✅ Implemented & Verified | 60 | 57% |
 | ⚠️ Implemented but Incomplete | 18 | 17% |
 | 🔬 Format Feasible, No Engine Support | 2 | 2% |
-| 📄 Protocol Only | 1 | 1% |
+| 📄 Protocol Only | 0 | 0% |
 | 🧪 Experimental | 3 | 3% |
 | ❌ Missing | 16 | 15% |
 | 🚫 Unsupported by Dependency | 6 | 6% |
@@ -216,8 +216,9 @@
 
 > 计数口径：逐行统计 §1–§9 表格状态列的第一个标记，每条矩阵行计一次，脚本可复核。
 >
-> **2026-11-18 复核**：自由路径已从 `🔬` 变为 `✅`，故 `🔬` 由 3 项降为 2 项（图片、SVG），
-> `✅` 由 57 增至 59（自由路径 + 独立文本）。计数由脚本逐行核对。
+> **2026-11-18 复核**：`theme.palette` 由 `📄 PO`（"仅声明，无读取方"）改为 `✅ IV`——
+> 实测早已实现，文档把自己的能力说少了。`📄` 因此归零，`✅` 增至 60。
+> 同一轮自由路径与独立文本也由未实现改为已实现。计数由脚本逐行核对。
 >
 > `🔬 LAB`（现 2 项：图片、SVG）的引入是矩阵的关键区分：
 > 它们既不是 `🚫`（格式支持），也不是 `⚠️ II`（产品有实现），
