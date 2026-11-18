@@ -1484,3 +1484,50 @@ score 100（不变）   利用率 78% -> 47%
 
 已补上：实测状态机图报 4 处，score 100 -> 88。
 18 个基准 0 处误报。这是 C6 记录的同一盲区（`textBlock ↔ node` 未覆盖），现已闭合。
+
+---
+
+## C23 【P1】`layout=manual` 的坐标被 `canvas.auto` 的 recenter 破坏
+
+**发现于：** 时序图手工摆放可行性验证（2026-11-18，HEAD `e7cb6ae`）
+
+### 现象
+
+`layout=manual` 承诺"保留作者坐标"。给 5 个参与者写 `anchor: {mode:"fixed", x:…, y:9}`：
+
+| canvas 模式 | 实际 y | 是否符合 manual 承诺 |
+| --- | --- | --- |
+| `auto`（默认） | **1.5** | ❌ 坐标被重排 |
+| `fixed`（16x12） | **9.0** | ✅ 保留 |
+
+两者相差 7.5"。
+
+### 根因
+
+`DesignSpecApplier` 的 canvas 阶段，`auto` 分支执行：
+
+```csharp
+DiagramSizer.Recenter(page);
+DiagramSizer.FitPage(page, shrink: true);
+applied.Add("canvas.auto");
+```
+
+`Recenter` 平移整页内容，**不区分是布局引擎放的还是作者写的**。
+而 `manual` 的意义正是"不动作者的坐标"。
+
+### 为什么之前没发现
+
+既有测试用的是 `create` 路径（无 spec），或 spec 的 `canvas` 恰好是 `fixed`。
+`manual` + 默认 `auto` canvas 这个组合此前没有用例。
+
+### 影响
+
+**`layout=manual` 下，默认的 spec 会悄悄改变作者坐标**，而 `applied` 只写 `canvas.auto`，
+不说明它动了节点。这违反了 manual 的核心承诺。
+
+### 候选修法
+
+manual 模式下跳过 `Recenter`（只做 `FitPage` 的页面扩展，不平移内容），
+或报告 `canvas.recentered` 让调用方知道坐标被改。
+
+**未修**。
