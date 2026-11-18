@@ -131,7 +131,13 @@ public static class DesignSpecApplier
         var unmet = new List<UnmetConstraint>();
 
         // --- Typography ----------------------------------------------------
-        if (spec.Typography.BaseSize is not null || spec.Typography.FontFamily is not null)
+        // `minReadableSize` alone is a valid request: the caller may keep the default scale and only
+        // raise the floor. Requiring baseSize or a font family made that a silent no-op — measured,
+        // `{"typography":{"minReadableSize":20}}` returned succeeded with `unmet: []` and left every
+        // size at its default.
+        if (spec.Typography.BaseSize is not null ||
+            spec.Typography.FontFamily is not null ||
+            spec.Typography.MinReadableSize > TypeScale.MinReadablePt)
         {
             var family = spec.Typography.FontFamily;
             var baseSize = spec.Typography.BaseSize;
@@ -146,8 +152,9 @@ public static class DesignSpecApplier
 
             double Tier(double basePt)
             {
-                if (baseSize is null) return basePt;
-                double wanted = basePt * scale;
+                // The floor applies even without a base size: a caller who asks for 20pt minimum and
+                // leaves the scale alone still means it.
+                double wanted = baseSize is null ? basePt : basePt * scale;
                 double clamped = Math.Max(wanted, spec.Typography.MinReadableSize);
 
                 // Once per tier, not once per object: the clamp is a property of the scale, and
@@ -175,7 +182,10 @@ public static class DesignSpecApplier
                 foreach (var node in page.Nodes)
                 {
                     node.Style ??= new ShapeStyle();
-                    if (baseSize is not null) node.Style.FontSize ??= Tier(defaults.NodeTitle);
+                    // Always go through Tier: it returns the tier size unchanged when no base size
+                    // was given, and raises it to the floor when one was. Guarding on baseSize here
+                    // meant a floor-only request set no size at all.
+                    node.Style.FontSize ??= Tier(defaults.NodeTitle);
                     ApplyFamily(node.Style);
                 }
 
@@ -184,13 +194,13 @@ public static class DesignSpecApplier
                 foreach (var group in page.Groups)
                 {
                     group.Style ??= new ShapeStyle();
-                    if (baseSize is not null) group.Style.FontSize ??= Tier(defaults.RegionTitle);
+                    group.Style.FontSize ??= Tier(defaults.RegionTitle);
                     ApplyFamily(group.Style);
                 }
 
                 foreach (var edge in page.Edges)
                 {
-                    if (baseSize is not null && edge.LabelFontSize is null)
+                    if (edge.LabelFontSize is null)
                         edge.LabelFontSize = Tier(defaults.EdgeLabel);
                     if (family is not null) edge.LabelFont ??= family;
                 }
@@ -198,8 +208,10 @@ public static class DesignSpecApplier
                 foreach (var text in page.TextBlocks)
                 {
                     text.Style ??= new ShapeStyle();
-                    if (baseSize is not null)
-                        text.Style.FontSize ??= Tier(DesignSpecApplier.TierForRole(text.Role, defaults));
+                    // Unconditional, like nodes and containers: Tier returns the tier size when no
+                    // base size was given and raises it to the floor when one was. Measured with
+                    // `minReadableSize: 30`, a note stayed at the bridge's hardcoded 8pt.
+                    text.Style.FontSize ??= Tier(DesignSpecApplier.TierForRole(text.Role, defaults));
                     ApplyFamily(text.Style);
                 }
             }
@@ -695,8 +707,18 @@ public static class DesignSpecApplier
 
             case "require_title":
             {
-                satisfied = !string.IsNullOrWhiteSpace(diagram.Name);
-                detail = "缺少图表标题";
+                // A title must be visible on the page, not merely present as a name. `Diagram.Name`
+                // is filled from `ir.Id` when no title is given, so it is never empty — measured, an
+                // IR with no title satisfied this constraint while its page carried no text at all.
+                bool hasTextTitle = diagram.Pages.Any(p => p.TextBlocks.Any(t =>
+                    !string.IsNullOrWhiteSpace(t.Text) &&
+                    (string.Equals(t.Role, "title", StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(t.Role, "subtitle", StringComparison.OrdinalIgnoreCase))));
+
+                // Only a visible block counts. `Diagram.Name` cannot: it falls back to `ir.Id`, so
+                // it is always populated and made the constraint impossible to violate.
+                satisfied = hasTextTitle;
+                detail = "缺少图表标题（需要 role=title 的文本块）";
                 break;
             }
 
