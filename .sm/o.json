@@ -1,0 +1,71 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "succeeded",
+  "message": "执行完成，硬约束全部满足",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "typography",
+    "theme.palette=enterprise",
+    "sizing",
+    "layout=Flow, direction=auto",
+    "label.spread",
+    "container.bands",
+    "canvas.auto"
+  ],
+  "unmetConstraints": [],
+  "warnings": [
+    {
+      "code": "write.text-block",
+      "message": "写入了 1 个独立文本块",
+      "target": "订单状态机"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 0,
+    "score": 100,
+    "issueCodes": [],
+    "pageUtilisation": {
+      "订单状态机": 0.775203572366693
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "created": "created",
+    "paid": "paid",
+    "picking": "picking",
+    "shipped": "shipped",
+    "delivered": "delivered",
+    "closed": "closed",
+    "refunding": "refunding",
+    "failed": "failed",
+    "t1": "t1",
+    "t2": "t2",
+    "t3": "t3",
+    "t4": "t4",
+    "t5": "t5",
+    "t6": "t6",
+    "t7": "t7",
+    "t8": "t8",
+    "t9": "t9",
+    "t10": "t10",
+    "title": "title"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.sm/o.vsdx"
+  ],
+  "durationMs": 408,
+  "completedUtc": "2026-11-18T08:07:54.394775+00:00"
+}

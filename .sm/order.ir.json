@@ -1,0 +1,23 @@
+{"irVersion":"1.0","id":"order-fsm","kind":"workflow","title":"订单状态机",
+ "nodes":[
+   {"id":"created","label":"已创建","role":"start"},
+   {"id":"paid","label":"已支付","role":"service"},
+   {"id":"picking","label":"拣货中","role":"service"},
+   {"id":"shipped","label":"已发货","role":"service"},
+   {"id":"delivered","label":"已签收","role":"finish"},
+   {"id":"closed","label":"已关闭","role":"finish"},
+   {"id":"refunding","label":"退款中","role":"service"},
+   {"id":"failed","label":"支付失败","role":"error"}],
+ "edges":[
+   {"id":"t1","from":"created","to":"paid","label":"支付成功"},
+   {"id":"t2","from":"created","to":"failed","label":"支付失败"},
+   {"id":"t3","from":"failed","to":"created","label":"重试"},
+   {"id":"t4","from":"paid","to":"picking","label":"开始拣货"},
+   {"id":"t5","from":"paid","to":"refunding","label":"申请退款"},
+   {"id":"t6","from":"picking","to":"shipped","label":"出库"},
+   {"id":"t7","from":"shipped","to":"delivered","label":"签收"},
+   {"id":"t8","from":"refunding","to":"closed","label":"退款完成"},
+   {"id":"t9","from":"delivered","to":"closed","label":"归档"},
+   {"id":"t10","from":"picking","to":"refunding","label":"缺货退款"}],
+ "textBlocks":[
+   {"id":"title","text":"订单状态机","role":"title","box":{"x":6,"y":10.5,"width":6,"height":0.6},"align":"center"}]}
