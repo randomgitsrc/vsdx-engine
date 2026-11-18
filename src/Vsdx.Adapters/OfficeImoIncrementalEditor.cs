@@ -307,7 +307,10 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
             model.Metadata.SourceFile = Path.GetFullPath(sourceVsdxPath);
         }
 
-        if (options.ValidateAfterSave) doc.RequestRecalcOnOpen();
+        // Driven by its own flag: `ValidateAfterSave` asks the engine to check the output, which has
+        // nothing to do with asking Visio to recompute on open. Borrowing it meant `--no-validate`
+        // silently disabled recalculation too.
+        if (options.RequestRecalc) doc.RequestRecalcOnOpen();
         doc.Save(outputVsdxPath);
 
         // P0: the backend synthesises a rectangle for any shape that had no geometry. Strip those

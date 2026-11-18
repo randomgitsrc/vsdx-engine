@@ -63,10 +63,10 @@ public sealed class LosslessFlagTests
                 var report = result.Compatibility;
 
                 // Notes are expected — the writer describes what it did.
-                Assert.NotEmpty(report.Issues.Where(i => i.Severity == "info"));
+                Assert.Contains(report.Issues, i => i.Severity == "info");
 
                 // None of them is an error or a warning, so nothing was lost.
-                Assert.Empty(report.Issues.Where(i => i.Severity is "error" or "warning"));
+                Assert.DoesNotContain(report.Issues, i => i.Severity is "error" or "warning");
                 Assert.True(report.Lossless, "a clean round trip reported itself as lossy");
             }
             finally { if (File.Exists(output)) File.Delete(output); }

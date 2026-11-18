@@ -242,7 +242,8 @@ public static class Program
         var result = engine.Update(input, model, output, new UpdateOptions
         {
             DeleteMissing = options.Has("delete-missing"),
-            ValidateAfterSave = !options.Has("no-validate")
+            ValidateAfterSave = !options.Has("no-validate"),
+            RequestRecalc = !options.Has("no-recalc")
         });
 
         if (json)
@@ -1000,7 +1001,7 @@ public static class Help
 
               update        Apply a JSON model onto an existing VSDX (incremental)
                               --input <source.vsdx> --model <model.json> --output <file.vsdx>
-                              [--delete-missing] [--no-validate] [--json]
+                              [--delete-missing] [--no-validate] [--no-recalc] [--json]
 
               render        Render a VSDX to PNG or SVG
                               --input <file.vsdx> --format <png|svg> [--output <path>]

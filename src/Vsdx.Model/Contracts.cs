@@ -190,6 +190,14 @@ public sealed class WriteOptions
 
 public sealed class UpdateOptions
 {
+    /// <summary>
+    /// Ask the backend to flag the document for recalculation when opened.
+    ///
+    /// Separate from <see cref="ValidateAfterSave"/>: the editor used to drive this from the validation
+    /// flag, so `--no-validate` also silently stopped the recalculation request.
+    /// </summary>
+    public bool RequestRecalc { get; init; } = true;
+
     /// <summary>When true, objects in the package but missing from the model are deleted.</summary>
     public bool DeleteMissing { get; init; }
     /// <summary>Derive container bounds and route orthogonal edges before applying.</summary>
