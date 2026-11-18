@@ -42,3 +42,24 @@ error 级（`node.overlap`、`group.overlap` 等 7 项）不参与加权——�
 合理的做法是按「读者能否看懂」逐一论证据，而不是凭直觉：
 例如 `text.overflow-*` 已经因内容丢失而列为 error，那 `label.overlaps-label` 只是难读，
 两者的相对权重应当有量化的可见性依据（字号、对比度、遮挡面积）。
+
+## 检测项的实测覆盖（2026-11-19）
+
+把 6 个示例 × 7 种布局 × 2 个方向（84 次组合）全部跑过一遍，**24 项检测只有 14 项被触发过**。
+
+| 路径 | 覆盖项 |
+| --- | --- |
+| 场景遍历 | 14 |
+| 故障注入基准（`benchmarks/faults/`） | +4 |
+| 本轮手工构造 | +4（`text.overflow-vertical`、`edge.fan-in`、`edge.fan-out`、`page.underused`） |
+
+**仍未在任何测试中被触发的：**
+
+| 检测码 | 为何难以触发 |
+| --- | --- |
+| `group.gutter` | 条件为 `0 ≤ gutter < 0.06`——容器几乎相贴但不重叠，临界状态 |
+| `edge.diagonal-across-band` | 需要斜线跨容器，引擎通常走正交路由 |
+| `container.heading-collision` | 有 3 个测试引用，但都是**修复后**通过的用例，可能从未真正触发 |
+
+`group.gutter` 与 `edge.diagonal-across-band` 的**纳入/排除逻辑本身未经检验**——
+如果比较符号写反，没有任何测试会发现。这属于已知的验证缺口，不是已知缺陷。
