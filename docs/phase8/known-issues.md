@@ -135,6 +135,21 @@ $ execute --ir checkout-sequence.ir.json
 
 详见 `limitations.md` §11。
 
+## 8. 极简模型下 palette 不生效
+
+**实测**：一个单节点、无容器的模型，`enterprise` 与 `midnight` 都产出色值
+`fill=#FFFFFF stroke=#000000`——**两套 palette 产出的 PNG 相同**。
+
+同样的两套 palette 用在 `cbo`（3 层容器、多种角色）上，PNG **不同**。
+
+**原因**：palette 通过 `roleColors` 作用于角色色与容器色带；一个无容器的单节点既没有
+容器色带，也没有角色差异可比。
+
+**为何未修**：这与「角色到颜色」的设计一致——单一形状没有可比较的对象。
+但**容易被误判**：用它做 palette 验证会得出"palette 无效"的错误结论（本轮就是这样发现的）。
+
+**规避**：验证 palette 时用带容器或多角色的图。`RoleShapeClaimsTests` 固定了这一点。
+
 ---
 
 ## 已量化、不构成待决问题的

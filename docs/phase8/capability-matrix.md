@@ -70,8 +70,8 @@
 | 局部覆盖 | ⚠️ II | Node 级 style 可覆盖 | 无"角色默认 → 对象覆盖"链 |
 | 透明度 / Opacity | ❌ MI | 无字段 | — |
 | 阴影 / Effects | ❌ MI | 无 | — |
-| 语义样式角色 | ⚠️ II | `roleColors` 按 `Node.Type` | 但形状不随角色变化（§3） |
-| 多套视觉风格 | 🧪 EX | 可改颜色/字号 | 未验证能否产出"明显不同"的风格 |
+| 语义样式角色 | ✅ IV | `roleColors` + `MasterCatalog` 角色→形状映射 | 实测 `database`→`Process`、`decision`→`Diamond`、`process`→`Rectangle` |
+| 多套视觉风格 | ✅ IV | `theme.palette` | 实测 `enterprise` 与 `midnight` 渲染为不同 PNG（MD5 不同） |
 | Renderer 与 VSDX 一致 | ✅ IV | 渲染总重开磁盘 VSDX | 结构性保证 |
 
 ---
@@ -258,11 +258,11 @@
 
 | 状态 | 数量 | 占比 |
 | --- | --- | --- |
-| ✅ Implemented & Verified | 78 | 64% |
-| ⚠️ Implemented but Incomplete | 17 | 14% |
+| ✅ Implemented & Verified | 80 | 66% |
+| ⚠️ Implemented but Incomplete | 16 | 13% |
 | 🔬 Format Feasible, No Engine Support | 2 | 2% |
 | 📄 Protocol Only | 0 | 0% |
-| 🧪 Experimental | 3 | 2% |
+| 🧪 Experimental | 2 | 2% |
 | ❌ Missing | 15 | 12% |
 | 🚫 Unsupported by Dependency | 6 | 5% |
 | **合计** | **121** | **100%** |
