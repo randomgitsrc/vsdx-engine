@@ -591,11 +591,16 @@ public static class DesignSpecApplier
 
                 if (scaledDown)
                 {
+                    // `scaledDown` means only "no standard sheet was large enough, so the largest was
+                    // used". Nothing shrinks the drawing — the previous wording said the content had
+                    // been scaled to fit, which was untrue: measured, a 73" chain on a 17" Tabloid
+                    // left 32 nodes outside the page while the report claimed it had been fitted.
                     unmet.Add(new UnmetConstraint
                     {
                         Code = "canvas.scaled",
                         Target = page.Name,
-                        Reason = $"内容按 {sheet.Name}（{sheet.Width:0.##}x{sheet.Height:0.##} 英寸）缩放以适配"
+                        Reason = $"内容超出最大的标准纸张 {sheet.Name}（{sheet.Width:0.##}x{sheet.Height:0.##} 英寸）"
+                                 + "，未缩小内容；超出的部分在页面之外"
                     });
                 }
             }
