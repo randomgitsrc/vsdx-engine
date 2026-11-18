@@ -349,20 +349,30 @@ public static class DesignSpecApplier
         // the same pale blue and the diagram read as one undifferentiated block. Bands get a
         // restrained tint from the palette instead, and lanes get a distinctly lighter one so
         // the two structures stay distinguishable.
-        var bandFills = new[] { "#EAF3FB", "#EDF7ED", "#FDF2E9", "#F2E9F7", "#EAF6F6" };
-        var bandStrokes = new[] { "#9DC3E6", "#A9D08E", "#F4B183", "#C5A3D9", "#93CCCC" };
-        var bandText = new[] { "#1F4E79", "#375623", "#833C0B", "#4B1F6F", "#1F5C5C" };
+        // Fallback tints for diagrams without a palette. These existed before palettes did, so
+        // containers would not be left on the writer's default grey; that job is now shared with
+        // the palette, which supplies its own sequence when one is named.
+        var fallbackBands = new[]
+        {
+            new Palettes.BandColour("#EAF3FB", "#9DC3E6", "#1F4E79"),
+            new Palettes.BandColour("#EDF7ED", "#A9D08E", "#375623"),
+            new Palettes.BandColour("#FDF2E9", "#F4B183", "#833C0B"),
+            new Palettes.BandColour("#F2E9F7", "#C5A3D9", "#4B1F6F"),
+            new Palettes.BandColour("#EAF6F6", "#93CCCC", "#1F5C5C")
+        };
+
+        var bands = palette?.Bands is { Count: > 0 } paletteBands ? paletteBands : fallbackBands;
 
         foreach (var page in diagram.Pages)
         {
             int index = 0;
             foreach (var group in page.Groups)
             {
-                int slot = index % bandFills.Length;
+                var band = bands[index % bands.Count];
                 group.Style ??= new ShapeStyle();
-                group.Style.Fill ??= bandFills[slot];
-                group.Style.Stroke ??= bandStrokes[slot];
-                group.Style.TextColor ??= bandText[slot];
+                group.Style.Fill ??= band.Fill;
+                group.Style.Stroke ??= band.Stroke;
+                group.Style.TextColor ??= band.Text;
                 group.Style.Bold ??= true;
                 group.Style.HAlign ??= "left";
                 index++;
