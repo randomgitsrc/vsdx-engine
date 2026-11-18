@@ -1,0 +1,119 @@
+{
+ "irVersion": "1.0",
+ "id": "checkout",
+ "kind": "workflow",
+ "title": "下单支付时序",
+ "nodes": [
+  {
+   "id": "user",
+   "label": "用户",
+   "role": "actor"
+  },
+  {
+   "id": "web",
+   "label": "前端",
+   "role": "client"
+  },
+  {
+   "id": "order",
+   "label": "订单服务",
+   "role": "service"
+  },
+  {
+   "id": "pay",
+   "label": "支付服务",
+   "role": "service"
+  },
+  {
+   "id": "gw",
+   "label": "支付网关",
+   "role": "external"
+  },
+  {
+   "id": "mq",
+   "label": "消息队列",
+   "role": "queue"
+  }
+ ],
+ "edges": [
+  {
+   "id": "s1",
+   "from": "user",
+   "to": "web",
+   "label": "1 提交订单"
+  },
+  {
+   "id": "s2",
+   "from": "web",
+   "to": "order",
+   "label": "2 创建订单"
+  },
+  {
+   "id": "s3",
+   "from": "order",
+   "to": "pay",
+   "label": "3 发起支付"
+  },
+  {
+   "id": "s4",
+   "from": "pay",
+   "to": "gw",
+   "label": "4 请求扣款"
+  },
+  {
+   "id": "s5",
+   "from": "gw",
+   "to": "pay",
+   "label": "5 扣款成功"
+  },
+  {
+   "id": "s6",
+   "from": "pay",
+   "to": "order",
+   "label": "6 支付完成"
+  },
+  {
+   "id": "s7",
+   "from": "order",
+   "to": "mq",
+   "label": "7 发布事件"
+  },
+  {
+   "id": "s8",
+   "from": "order",
+   "to": "web",
+   "label": "8 返回结果"
+  },
+  {
+   "id": "s9",
+   "from": "web",
+   "to": "user",
+   "label": "9 展示成功"
+  }
+ ],
+ "textBlocks": [
+  {
+   "id": "title",
+   "text": "下单支付时序",
+   "role": "title",
+   "box": {
+    "x": 6,
+    "y": 6.5,
+    "width": 6,
+    "height": 0.6
+   },
+   "align": "center"
+  },
+  {
+   "id": "note",
+   "text": "注：3-5 为同步调用，7 为异步",
+   "role": "note",
+   "box": {
+    "x": 3,
+    "y": 8.5,
+    "width": 6,
+    "height": 0.3
+   }
+  }
+ ]
+}
