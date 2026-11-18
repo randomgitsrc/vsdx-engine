@@ -10,13 +10,13 @@
 
 ## 一、当前可发布物
 
-| 项 | 状态 |
-| --- | --- |
-| 版本号 | `0.9.0`（`Directory.Build.props`，`EngineInfo` 从程序集读取） |
-| 打包 | ✅ `dotnet pack` 成功产出 `Vsdx.Engine.1.0.0.nupkg` |
-| Git tag | ⬜ **无任何 tag** |
-| CHANGELOG | ✅ `CHANGELOG.md`（`[Unreleased]`，与版本号的关系已注明） |
-| 质量 | 755 测试通过，18/18 基准通过 |
+| 项 | 状态 | 核对方式 |
+| --- | --- | --- |
+| 版本号 | `0.9.0`（`Directory.Build.props`，`EngineInfo` 从程序集读取） | `grep Version Directory.Build.props` |
+| 打包 | ✅ `dotnet pack` 产出 `AgentVsdx.Engine.Tool.0.9.0.nupkg` | `ls artifacts/` |
+| Git tag | ✅ **`v0.9.0` 已推送** | `git tag --list` |
+| CHANGELOG | ✅ 含 `[0.9.0]` 与 `[Unreleased]` 两段 | `grep -nE '^## \[' CHANGELOG.md` |
+| 质量 | 见 `dotnet test` 与基准脚本 | — |
 
 ## 二、发布前必须解决的一项
 
@@ -37,15 +37,15 @@
 但版本号 1.0.0 本身是一个更强的信号——它意味着"我们验证过"。
 0.9.0 + 明确的限制声明，比 1.0.0 + 脚注更诚实。
 
-## 三、发布前准备清单
+## 三、发布准备清单（全部完成）
 
 - [x] 打包可成功
 - [x] 测试与基准通过
 - [x] 限制文档已如实标注（`docs/limitations.md` §1、§10）
 - [x] CHANGELOG（`CHANGELOG.md`）
-- [ ] 独立审查（本轮已完成一次，覆盖 P0/P1/P2 共 15 项）
-- [ ] 版本号确认（1.0.0 或 0.9.0）
-- [ ] Git tag 与 GitHub Release
+- [x] 独立审查（覆盖 P0/P1/P2 共 15 项）
+- [x] 版本号确认：`0.9.0`（理由见上）
+- [x] Git tag `v0.9.0` 与 GitHub Release（标记为 prerelease）
 
 ## 四、已完成与剩余
 
