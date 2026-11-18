@@ -25,14 +25,23 @@ public sealed class TypeScale
     public double LineHeightFactor { get; init; } = 1.28;
 
     /// <summary>
-    /// Horizontal padding inside a node, in inches. Comfortable breathing room matters more
-    /// than minimality: a box whose text nearly touches the border reads as cramped even
-    /// though nothing overflows.
+    /// Horizontal padding as a fraction of the text width, with <see cref="MinNodePaddingX"/> as a
+    /// floor.
+    ///
+    /// It used to be a flat 0.30in, which does not work across font sizes: at 14pt that is 43% of
+    /// the label width and at 8pt it is 58%, so small-font diagrams were sized mostly by
+    /// whitespace. A ratio keeps the visual breathing room constant instead.
     /// </summary>
-    public double NodePaddingX { get; init; } = 0.30;
+    public double NodePaddingRatio { get; init; } = 0.20;
 
-    /// <summary>Vertical padding inside a node, in inches.</summary>
-    public double NodePaddingY { get; init; } = 0.22;
+    /// <summary>Smallest horizontal padding, so short labels never touch the border.</summary>
+    public double MinNodePaddingX { get; init; } = 0.15;
+
+    /// <summary>Vertical padding as a fraction of the line height, floored like the horizontal one.</summary>
+    public double NodePaddingRatioY { get; init; } = 0.22;
+
+    /// <summary>Smallest vertical padding.</summary>
+    public double MinNodePaddingY { get; init; } = 0.11;
 
     /// <summary>
     /// Derives a scale from canvas size and node count. Larger canvases and sparser diagrams
@@ -106,9 +115,14 @@ public static class TextLayout
         double textHeight = lines.Length * lineHeight;
         double textWidth = widest;
 
+        // Padding accompanies the text rather than being fixed: a 24pt label should not share the
+        // 0.30in margin of an 8pt one, and an 8pt one should not be mostly margin.
+        double padX = Math.Max(scale.MinNodePaddingX, textWidth * scale.NodePaddingRatio);
+        double padY = Math.Max(scale.MinNodePaddingY, textHeight * scale.NodePaddingRatioY);
+
         return new MeasuredText(
-            textWidth + scale.NodePaddingX * 2,
-            textHeight + scale.NodePaddingY * 2,
+            textWidth + padX * 2,
+            textHeight + padY * 2,
             lines.Length,
             fontSize);
     }
@@ -143,7 +157,7 @@ public static class TextLayout
         if (string.IsNullOrWhiteSpace(text))
             return (text ?? "", Measure(text, fontSize, bold, scale));
 
-        double usable = Math.Max(0.2, maxWidthIn - scale.NodePaddingX * 2);
+        double usable = Math.Max(0.2, maxWidthIn - Math.Max(scale.MinNodePaddingX, maxWidthIn * scale.NodePaddingRatio / 2) * 2);
         double widthFactor = bold ? BoldWidthFactor : 1.0;
         var output = new List<string>();
 

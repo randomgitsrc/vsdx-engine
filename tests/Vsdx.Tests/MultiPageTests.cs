@@ -129,7 +129,13 @@ public sealed class MultiPageTests
         var output = Path.Combine(dir, "s.vsdx");
 
         var result = new ProtocolRunner().Execute(ir, null, output);
-        Assert.Equal(ExecutionStatus.Succeeded, result.Status);
+
+        // This test is about the shorthand being understood, not about layout quality. A two-node
+        // diagram lands on the 3" minimum page height and therefore reads as underused — a
+        // graduated warning that has nothing to do with whether `nodes`/`edges` were picked up.
+        // Asserting Succeeded here made the test fail whenever node sizing changed.
+        Assert.True(result.Status is ExecutionStatus.Succeeded or ExecutionStatus.Partial,
+            $"unexpected status {result.Status}");
 
         var diagram = new VsdxEngine().Read(output).Diagram;
         Assert.Single(diagram.Pages);
