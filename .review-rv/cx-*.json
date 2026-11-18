@@ -1,0 +1,7 @@
+{
+  "ok": false,
+  "error": {
+    "code": "file.not-found",
+    "message": "IR not found: ../../examples/realworld/*.ir.json"
+  }
+}

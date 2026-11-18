@@ -1,0 +1,3 @@
+{"irVersion":"1.0","id":"bg","title":"Bg","kind":"workflow",
+ "nodes":[{"id":"a","label":"A","role":"service","attributes":{"owner":"team-x","sla":"99.9"}},{"id":"b","label":"B","role":"queue"}],
+ "edges":[{"id":"e1","from":"a","to":"b","relation":"publishes"}]}

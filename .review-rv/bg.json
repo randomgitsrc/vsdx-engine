@@ -1,0 +1,125 @@
+{
+  "id": "bg",
+  "name": "Bg",
+  "pageSize": {
+    "width": 4.25,
+    "height": 3,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Bg",
+      "nameU": "Bg",
+      "visioId": 0,
+      "size": {
+        "width": 4.25,
+        "height": 3,
+        "unit": "inches"
+      },
+      "background": "#FFEEDD",
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "A",
+          "type": "service",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 1.2,
+            "y": 0.825,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "shapeData": {
+            "owner": "team-x",
+            "sla": "99.9"
+          },
+          "shapeDataLabels": {},
+          "imported": true
+        },
+        {
+          "id": "b",
+          "name": "B",
+          "type": "queue",
+          "text": "B",
+          "shape": "Parallelogram",
+          "visioShapeId": "b",
+          "bounds": {
+            "x": 3.05,
+            "y": 0.825,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "a",
+          "to": "b",
+          "kind": "straight",
+          "label": "publishes",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e1"
+        }
+      ],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "b",
+        "e1"
+      ],
+      "paths": [],
+      "textBlocks": []
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-18T10:10:16.3633934+00:00",
+    "modified": "2026-11-18T10:10:16.4058502+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.review-rv/bg.vsdx",
+    "sourceHash": "1ff07a4f0cb057e8108defc30b550ba4714c76880a89923412f5121e62e3b851",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-18T10:10:16.4324369+00:00",
+        "action": "create",
+        "target": "bg.vsdx",
+        "detail": "pages=1, nodes=2, edges=1",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}

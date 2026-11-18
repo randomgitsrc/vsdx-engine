@@ -638,7 +638,11 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
             if (container is null) continue;
             try
             {
-                page.AddToContainer(container.Id, memberShapeIds, resizeToFit: group.AutoSize ?? true);
+                // Default false, matching OfficeImoDocumentWriter. The two paths disagreed: the
+                // writer was changed for C7 and this one was not, so an update resized containers
+                // the caller had not touched — measured, editing one node's text grew every
+                // container by 0.38". The charter requires unmodified content to survive an edit.
+                page.AddToContainer(container.Id, memberShapeIds, resizeToFit: group.AutoSize ?? false);
             }
             catch (Exception ex)
             {
