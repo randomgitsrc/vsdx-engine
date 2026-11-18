@@ -45,10 +45,18 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
 
         foreach (var pageModel in diagram.Pages)
         {
+            // The model's numbers are in the model's unit, and the package stores inches. Passing
+            // the value through unchanged declared inches over a centimetre figure: a 10x8 cm page
+            // was written as 10x8 inches, 2.5x too large. UnitFactor already knew the conversion;
+            // this path never called it, while the incremental editor did — so create and update
+            // disagreed about the same model.
+            var pageSize = pageModel.Size ?? diagram.PageSize;
+            double unitFactor = MasterCatalog.UnitFactor(pageSize?.Unit);
+
             var page = doc.AddPage(
                 pageModel.Name ?? pageModel.Id,
-                MasterCatalog.Inches(pageModel.Size?.Width ?? diagram.PageSize?.Width ?? 11.0),
-                MasterCatalog.Inches(pageModel.Size?.Height ?? diagram.PageSize?.Height ?? 8.5),
+                MasterCatalog.Inches((pageSize?.Width ?? 11.0) * unitFactor),
+                MasterCatalog.Inches((pageSize?.Height ?? 8.5) * unitFactor),
                 VisioMeasurementUnit.Inches,
                 pageModel.VisioId,
                 null);
