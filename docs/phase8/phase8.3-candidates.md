@@ -209,3 +209,62 @@ for (int i = 0; i < columns.Count - 1; i++)
 - `check-layout` 增加 `edge.overlap`（共线重合）检测
 
 **未修复**，不属当前任务范围。
+
+---
+
+## C4 【P1】文字尺寸不区分形状，圆形/菱形节点必裁切
+
+**发现于：** 真实制图复测（阶段 A 第二轮，2026-11-18，HEAD `67821aa`）
+
+### 实测
+
+三节点 + 两容器的执行路径图，`typography.baseSize=14`：
+
+```console
+$ check-layout enterprise.vsdx
+  score=0/100
+  text.overflow-horizontal (2)
+    [error] 'web' 最长行约 0.82" 宽，实际 0.70"
+    [error] 'app' 最长行约 0.78" 宽，实际 0.70"
+```
+
+```
+web    shape=Circle     box=0.70x0.70   font=14
+app    shape=Circle     box=0.70x0.70   font=14
+order  shape=Rectangle  box=1.38x0.70   font=14   ← 同字号，宽度是圆的 2 倍
+```
+
+### 根因
+
+`DiagramSizer` 与 `TextLayout` **完全不读 `Node.Shape`**：
+
+```console
+$ grep -c "Circle|Ellipse|Diamond" src/Vsdx.Engine/TextLayout.cs
+0
+```
+
+所有节点按**矩形**计算内接文字区域。但圆内能容纳文字的宽度约为直径的 70%
+（内接正方形），菱形更小（约 50%）。因此：
+
+- 圆形节点：文字按矩形量，实际放不下 → 必裁切
+- 菱形节点：更严重
+- 六边形：介于两者之间
+
+### 为什么现在才暴露
+
+缺陷 20 把裁切从 `warning` 升为 `error` 之前，这类图只是 `score` 偏低，
+仍报 `hard=true`。升级后它立即变成硬失败。
+
+**这不是缺陷 20 引入的回归，而是它揭露的既有问题。** 缺陷 20 的做法仍然正确：
+裁切不该被当作可交付。
+
+### 候选修法
+
+1. 按形状算内接系数（圆 0.70、菱形 0.50、六边形 0.75），据此放大框体
+2. 或：`DiagramSizer` 按形状设定最小边长
+3. `TextLayout` 的换行估算也应知道可用宽度是内接区域，而非整个包围盒
+
+**需要先有视觉准则**：圆形节点内的文字应当换行还是应当放大节点？
+两者都合理，取决于设计意图，宜与 Agent 的图形语义一起定。
+
+**未修复**，需独立任务。
