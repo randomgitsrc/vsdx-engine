@@ -48,6 +48,7 @@ public static class VisioMetadataBridge
                 Modified = diagram.Metadata.Modified,
                 SourceFile = diagram.Metadata.SourceFile,
                 Description = diagram.Metadata.Description,
+                Source = diagram.Metadata.Source,
                 Tags = diagram.Metadata.Tags,
                 Generator = diagram.Metadata.Generator,
                 Backend = diagram.Metadata.Backend,
@@ -97,6 +98,7 @@ public static class VisioMetadataBridge
                 Modified = persisted.Modified,
                 SourceFile = persisted.SourceFile,
                 Description = persisted.Description,
+                Source = persisted.Source,
                 Tags = persisted.Tags,
                 Generator = persisted.Generator,
                 Backend = persisted.Backend,
@@ -210,6 +212,7 @@ public static class VisioMetadataBridge
         public string? Backend { get; set; }
         public string? BackendVersion { get; set; }
         public string? Description { get; set; }
+        public string? Source { get; set; }
         public Dictionary<string, string>? Tags { get; set; }
         public List<PersistedChange> History { get; set; } = new();
     }

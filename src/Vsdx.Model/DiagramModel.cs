@@ -337,6 +337,12 @@ public sealed class Metadata
     public string ModelVersion { get; set; } = Vsdx.Model.ModelVersion.Current;
     public string? SourceFile { get; set; }
 
+    /// <summary>
+    /// Where the diagram content came from, as the author declared it. Distinct from
+    /// <see cref="SourceFile"/>, which incremental editing overwrites with the VSDX being edited.
+    /// </summary>
+    public string? Source { get; set; }
+
     /// <summary>Free-text description carried from the IR. Persisted in the package.</summary>
     public string? Description { get; set; }
 

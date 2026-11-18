@@ -255,7 +255,15 @@ public static class DiagramIrConverter
             {
                 // Carried rather than dropped: these were parsed and then silently discarded.
                 Description = ir.Metadata?.Description,
-                Tags = ir.Metadata?.Tags
+                Tags = ir.Metadata?.Tags,
+
+                // `Source` maps to its own field, not `SourceFile` — incremental editing rewrites that
+                // one with the VSDX path, so sharing it would lose which of the two a value meant.
+                Source = ir.Metadata?.Source,
+
+                // Honour the caller's timestamp when given. It was ignored, so the package reported the
+                // moment it was generated — a different value wearing the same name.
+                Created = ir.Metadata?.Created ?? default
             },
             ModelVersion = ModelVersion.Current
         };
