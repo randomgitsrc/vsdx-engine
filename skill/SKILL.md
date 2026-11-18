@@ -94,32 +94,33 @@ Minimal but complete example:
   "id": "order-platform",
   "name": "订单平台架构图",
   "type": "architecture",
-  "pageSize": { "width": 18.0, "height": 11.0, "unit": "inches" },
+  "pageSize": { "width": 6.0, "height": 9.0, "unit": "inches" },
   "background": "#FFFFFF",
   "style": { "font": "Microsoft YaHei", "fontSize": 11 },
   "pages": [{
     "id": "page-0",
     "name": "Architecture",
-    "size": { "width": 18.0, "height": 11.0, "unit": "inches" },
+    "size": { "width": 6.0, "height": 9.0, "unit": "inches" },
     "groups": [
       { "id": "grp_svc", "name": "服务层  Service Layer", "kind": "container",
         "autoSize": true,
+        "bounds": { "x": 3.0, "y": 4.5, "w": 3.6, "h": 6.0 },
         "style": { "fill": "#EDF7ED", "stroke": "#A9D08E", "textColor": "#375623",
                    "bold": true, "hAlign": "left" } }
     ],
     "nodes": [
       { "id": "api", "text": "API 网关\nKong", "shape": "hexagon",
-        "bounds": { "x": 5.50, "y": 9.70, "w": 2.40, "h": 1.00 },
+        "bounds": { "x": 3.0, "y": 7.0, "w": 2.40, "h": 1.00 },
         "groupId": "grp_svc",
         "style": { "fill": "#F2B705", "stroke": "#BF8F00", "textColor": "#3F2E00",
                    "fontSize": 11, "bold": true },
         "shapeData": { "owner": "platform-team", "sla": "99.95%" } },
       { "id": "orders", "text": "订单服务\nOrder Service", "shape": "rounded",
-        "bounds": { "x": 5.50, "y": 6.45, "w": 2.20, "h": 1.00 },
+        "bounds": { "x": 3.0, "y": 4.5, "w": 2.20, "h": 1.00 },
         "groupId": "grp_svc",
         "style": { "fill": "#70AD47", "textColor": "#FFFFFF", "bold": true } },
       { "id": "db", "text": "PostgreSQL", "shape": "process",
-        "bounds": { "x": 5.50, "y": 3.30, "w": 2.20, "h": 1.10 },
+        "bounds": { "x": 3.0, "y": 2.0, "w": 2.20, "h": 1.10 },
         "style": { "fill": "#C55A11", "textColor": "#FFFFFF" } }
     ],
     "edges": [
