@@ -180,6 +180,13 @@ public static class OrthogonalRouter
         }
         else if (!fromHorizontal && !toHorizontal)
         {
+            // Both ends leave vertically. When they also share a column the honest answer is a
+            // straight drop between them, and trying that first matters: the channel list only
+            // contains gaps *between* columns, so a same-column pair has no channel of its own and
+            // used to fall through to the outermost lane on the page.
+            if (Math.Abs(a.X - b.X) < 0.5)
+                candidates.Add(new List<Point> { a, b });
+
             foreach (var lane in lanes.OrderBy(l => Math.Abs(l - (a.Y + b.Y) / 2)))
                 candidates.Add(new List<Point> { a, new(a.X, lane), new(b.X, lane), b });
         }
