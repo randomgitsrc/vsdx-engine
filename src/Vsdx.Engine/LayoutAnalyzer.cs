@@ -638,8 +638,17 @@ public static class LayoutAnalyzer
             var a = groups[i];
             var b = groups[j];
 
-            // Skip genuinely nested containers: one fully contains the other.
-            bool nested = Encloses(a.Bounds!, b.Bounds!, 0) || Encloses(b.Bounds!, a.Bounds!, 0);
+            // Skip genuinely nested containers: one fully contains the other. Identical boxes are
+            // NOT nesting — two containers occupying the same space is the worst case, and treating
+            // it as nesting made the check silent on it. Measured: a flow diagram placed three
+            // containers on exactly y[0.55,1.78] and reported no group.overlap at all.
+            bool identical = Math.Abs(a.Bounds!.X - b.Bounds!.X) < 1e-6 &&
+                             Math.Abs(a.Bounds.Y - b.Bounds.Y) < 1e-6 &&
+                             Math.Abs(a.Bounds.W - b.Bounds.W) < 1e-6 &&
+                             Math.Abs(a.Bounds.H - b.Bounds.H) < 1e-6;
+
+            bool nested = !identical &&
+                          (Encloses(a.Bounds, b.Bounds, 0) || Encloses(b.Bounds, a.Bounds, 0));
             if (nested) continue;
 
             double ix = OverlapExtentX(a.Bounds!, b.Bounds!);

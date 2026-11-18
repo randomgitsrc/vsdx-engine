@@ -17,9 +17,13 @@ public sealed class SwimlaneLayoutEngine : ILayoutEngine
 
     public LayoutResult Layout(Page page, LayoutOptions options)
     {
+        // A stated `order` decides; geometry is the fallback. Reading only `Bounds.Y` meant an
+        // `order` from 2 to 9 moved nothing — a protocol field the schema accepts that silently
+        // changed no output, which is the case the charter forbids.
         var lanes = page.Groups
             .Where(g => string.Equals(g.Kind, "lane", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(g => g.Bounds?.Y ?? 0)
+            .OrderByDescending(g => g.Order ?? int.MinValue)
+            .ThenByDescending(g => g.Bounds?.Y ?? 0)
             .ToList();
 
         if (lanes.Count == 0)
