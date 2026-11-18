@@ -51,6 +51,34 @@ var childGroups = page.Groups
 
 ---
 
+### 已修（2026-11-18，提交 `待填`）
+
+**根因**：`DiagramLayout.OrderGroups` 让**父组先于子组**处理
+（`Visit(parent)` 在 `ordered.Add(group)` 之前）。
+计算父组 bounds 时，子组取的是它**被推导前**的旧 bounds。
+
+**修法**：改为**子组优先**——父组的范围依赖子组最终位置，所以子组必须先定稿。
+
+```csharp
+void Visit(Group group)
+{
+    foreach (var child in page.Groups)
+        if (child.ParentId == group.Id) Visit(child);
+    ordered.Add(group);   // 子组已先加入
+}
+```
+
+**验证**：
+
+```console
+夹具（显式 bounds，父不包围子）:  False -> True
+三层嵌套（outer/inner/deep）:    全部包围
+18 个基准 / 三场景:              不受影响
+```
+
+原测试 `LayoutPipelineDoesNotGuaranteeParentGroupEnclosesChildGroup`
+（记录此限制）已改写为**断言包围成立**，若回归会立即失败。
+
 ## C2 【P2】`CheckContainment` 不检查父 Group 对子 Group
 
 **发现于：** 同上

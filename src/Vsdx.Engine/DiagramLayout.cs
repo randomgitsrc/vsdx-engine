@@ -218,11 +218,22 @@ public static class DiagramLayout
         var ordered = new List<Group>();
         var visiting = new HashSet<string>(StringComparer.Ordinal);
 
+        // Children first, then their parent.
+        //
+        // A parent's extent is derived from where its children ended up, so the children must be
+        // final before the parent is computed. Walking parent-first read the child's *authored*
+        // box — measured: parent 6.90 x 5.68, child 2.60 x 1.62, child not inside the parent,
+        // which is exactly the containment guarantee this pass exists to provide.
         void Visit(Group group)
         {
             if (ordered.Contains(group)) return;
             if (!visiting.Add(group.Id)) return; // cycle guard
-            if (group.ParentId is not null && byId.TryGetValue(group.ParentId, out var parent)) Visit(parent);
+
+            foreach (var child in page.Groups)
+            {
+                if (string.Equals(child.ParentId, group.Id, StringComparison.Ordinal)) Visit(child);
+            }
+
             ordered.Add(group);
             visiting.Remove(group.Id);
         }

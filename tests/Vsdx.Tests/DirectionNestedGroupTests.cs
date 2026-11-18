@@ -331,14 +331,14 @@ public sealed class DirectionNestedGroupTests
         //
         // Recording both facts separately, so neither "the gap is fixed" nor "the gap was papered
         // over" can pass unnoticed.
-        Assert.False(enclosesWithoutTranspose,
-            "the untransposed sizing pass started enclosing child groups; revisit this gap record");
+        // The gap this test recorded is closed: OrderGroups derives children before their parent, so
+        // the parent is fitted to the child's *final* box rather than the one it had beforehand.
+        // Both orientations must now enclose, and a failure here means the ordering regressed.
+        Assert.True(enclosesWithoutTranspose,
+            $"untransposed containment fails: {withoutDetail}");
 
         Assert.True(enclosesWithTranspose,
-            "the transposing direction was expected to leave containment intact after re-sizing");
-
-        Assert.False(string.IsNullOrWhiteSpace(withoutDetail),
-            "expected a diagnostic describing the containment failure in the untransposed case");
+            $"transposed containment fails: {withDetail}");
     }
 
     [Fact]
