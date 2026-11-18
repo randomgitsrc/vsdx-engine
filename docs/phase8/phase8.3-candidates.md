@@ -811,3 +811,84 @@ $ check-layout
 2. 装饰元素在布局后重新居中于**内容包围盒**之上（而非沿用作者 X）
 
 **未修复**。这两条都会改变既有产物，需独立验证。
+
+---
+
+## C15 【P0】`LayoutDirection` 的语义与命名相反
+
+**发现于：** C14 修复过程中的对照实验（2026-11-18，HEAD `5cfcc85`）
+
+### 实测
+
+同一张数据流图，只改 `direction`：
+
+```console
+$ --spec '{"layout":"layered","direction":"leftToRight"}'
+  页面 11.00 x 23.30   比 2.12   <- 竖向
+
+$ --spec '{"layout":"layered","direction":"topToBottom"}'
+  页面 23.30 x 11.00   比 0.47   <- 横向
+```
+
+**`leftToRight` 产出竖向，`topToBottom` 产出横向——两者都与名字相反。**
+
+### 根因
+
+`LayeredLayoutEngine` 天然把 band 从下往上堆叠，产出**竖向**布局。
+T0 的实现是：`TopToBottom` 时**转置**整页，于是竖向变横向。
+
+```csharp
+if (options.Direction == LayoutDirection.TopToBottom && strategy != LayoutStrategy.Manual)
+    DiagramLayout.Transpose(diagram);
+```
+
+所以：
+- `LeftToRight`（不转置）= 引擎的默认竖向
+- `TopToBottom`（转置）= 横向
+
+**枚举只有两个名字，没有任何注释说明"该方向指什么"。**
+
+### 为什么 T0 时没发现
+
+T0 的验收标准是"两种方向的产出不同"和"xspread/yspread 互换"——
+**这两条都成立**，但从未检查"leftToRight 是否真的从左到右"。
+
+验收断言测的是"变化"，不是"方向正确"。
+
+### 影响
+
+调用方写 `direction: "leftToRight"` 想要横向流程图，得到的却是竖列。
+这是**协议字段给出与名字相反的语义**，比不生效更糟——不生效容易被发现，
+反着生效会被当成"设计如此"。
+
+### 候选修法
+
+选项 A：**转置逻辑反过来** —— `LeftToRight` 时转置（使横向），`TopToBottom` 不转置。
+选项 B：**改枚举名** —— 但破坏协议兼容。
+选项 C：**保持行为，改文档** —— 最省事但最不诚实。
+
+**建议 A**：它让名字与行为一致，且不改变协议字段。
+
+### 已尝试（方案 A）并回退
+
+反转转置条件后：
+
+```
+build  0 warning
+tests  35 项失败 / 561 通过
+```
+
+**35 项失败全部是方向相关测试**（`DirectionTests`、`DirectionMultiPageTests`、
+`DirectionNestedGroupTests`）。它们验证的是旧实现细节——「`TopToBottom` 会转置」——
+而不是「`TopToBottom` 产出竖向」这个应有语义。
+
+### 为什么不擅自改
+
+这是**破坏性语义变更**：所有显式设置 `direction` 的既有 spec 产出会翻转。
+
+按任务书 §4.9，改变既有协议行为需评估；而 35 个测试需要**按新语义重写**，
+不是小改。这超出「修一个缺陷」的范围，属于**产品行为决策**。
+
+**已回退，产品代码无改动。** 待决策后再做。
+
+这一条优先级高于 C14：C14 是"布局不理想"，C15 是"语义与名字相反"。
