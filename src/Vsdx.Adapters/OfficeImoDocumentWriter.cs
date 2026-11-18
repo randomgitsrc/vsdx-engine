@@ -441,7 +441,9 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
                 ? OfficeColor.FromRgb(rr, rg, rb)
                 : OfficeColor.White);
 
-        var font = style?.Font ?? diagram?.Style?.Font;
+        // Object, then diagram, then the document default. Never nothing: an unnamed font hands the
+        // decision to whichever machine opens the file.
+        var font = style?.Font ?? diagram?.Style?.Font ?? FontDefaults.Family;
         if (!string.IsNullOrWhiteSpace(font)) shape.SetFont(font!);
 
         var fontSize = style?.FontSize ?? diagram?.Style?.FontSize;

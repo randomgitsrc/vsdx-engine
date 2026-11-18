@@ -129,6 +129,7 @@ public static class DesignSpecApplier
             // remaining tiers keep their proportions by scaling from NodeTitle, so raising it makes
             // the whole diagram read bigger without flattening the hierarchy into one size.
             var defaults = new TypeScale();
+            var reportedClamps = new HashSet<double>();
             double requested = baseSize ?? defaults.NodeTitle;
             double scale = baseSize is null ? 1.0 : requested / defaults.NodeTitle;
 
@@ -138,7 +139,9 @@ public static class DesignSpecApplier
                 double wanted = basePt * scale;
                 double clamped = Math.Max(wanted, spec.Typography.MinReadableSize);
 
-                if (clamped > wanted && Math.Abs(clamped - wanted) > 0.01)
+                // Once per tier, not once per object: the clamp is a property of the scale, and
+                // repeating it for every node carrying that tier buries the message in duplicates.
+                if (clamped > wanted && Math.Abs(clamped - wanted) > 0.01 && reportedClamps.Add(basePt))
                 {
                     unmet.Add(new UnmetConstraint
                     {
