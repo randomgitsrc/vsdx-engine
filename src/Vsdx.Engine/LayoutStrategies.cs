@@ -220,14 +220,28 @@ public static class DiagramLayoutEngine
     };
 
     /// <summary>Parses a strategy name from CLI or JSON input.</summary>
-    public static LayoutStrategy Parse(string? value) => value?.Trim().ToLowerInvariant() switch
+    /// <summary>
+    /// Parses a strategy name, reporting whether it was recognised.
+    ///
+    /// The old signature returned Layered for anything it did not know, so a caller could not tell
+    /// a deliberate request from a typo — and the diagram ran a different strategy than the one
+    /// asked for, silently. Falling back is fine; falling back without saying so is not.
+    /// </summary>
+    public static bool TryParse(string? value, out LayoutStrategy strategy)
     {
-        "layered" or "layer" or "hierarchical" => LayoutStrategy.Layered,
-        "grid" => LayoutStrategy.Grid,
-        "flow" or "pipeline" => LayoutStrategy.Flow,
-        "tree" or "orgchart" => LayoutStrategy.Tree,
-        "swimlane" or "lane" or "lanes" => LayoutStrategy.Swimlane,
-        "manual" or "none" => LayoutStrategy.Manual,
-        _ => LayoutStrategy.Layered
-    };
+        switch (value?.Trim().ToLowerInvariant())
+        {
+            case "layered" or "layer" or "hierarchical": strategy = LayoutStrategy.Layered; return true;
+            case "grid": strategy = LayoutStrategy.Grid; return true;
+            case "flow" or "pipeline": strategy = LayoutStrategy.Flow; return true;
+            case "tree" or "orgchart": strategy = LayoutStrategy.Tree; return true;
+            case "swimlane" or "lane" or "lanes": strategy = LayoutStrategy.Swimlane; return true;
+            case "manual" or "none": strategy = LayoutStrategy.Manual; return true;
+            default: strategy = LayoutStrategy.Layered; return false;
+        }
+    }
+
+    /// <summary>Parses a strategy name, falling back to Layered. Use <see cref="TryParse"/> when
+    /// the caller needs to know the value was not understood.</summary>
+    public static LayoutStrategy Parse(string? value) => TryParse(value, out var strategy) ? strategy : strategy;
 }

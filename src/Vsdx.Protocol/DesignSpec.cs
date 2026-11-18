@@ -200,12 +200,38 @@ public static class DesignSpecApplier
         applied.Add("sizing");
 
         // --- Layout --------------------------------------------------------
-        var strategy = spec.Layout.Equals("auto", StringComparison.OrdinalIgnoreCase)
-            ? DiagramLayoutEngine.SuggestStrategy(diagram)
-            : DiagramLayoutEngine.Parse(spec.Layout);
+        bool isAuto = spec.Layout.Equals("auto", StringComparison.OrdinalIgnoreCase);
+        LayoutStrategy strategy;
+        if (isAuto)
+        {
+            strategy = DiagramLayoutEngine.SuggestStrategy(diagram);
+        }
+        else if (!DiagramLayoutEngine.TryParse(spec.Layout, out strategy))
+        {
+            // Running Layered after being asked for something unrecognised is a reasonable
+            // fallback; doing it silently is not, because the caller cannot tell a typo from a
+            // deliberate request.
+            unmet.Add(new UnmetConstraint
+            {
+                Code = "layout.unknown",
+                Target = "layout",
+                Reason = $"未知布局 '{spec.Layout}'，已回退为 {strategy}"
+            });
+        }
 
         bool manualRequested = spec.Layout.Equals("manual", StringComparison.OrdinalIgnoreCase);
+
         bool wantsTopToBottom = spec.Direction.Equals("topToBottom", StringComparison.OrdinalIgnoreCase);
+        bool wantsLeftToRight = spec.Direction.Equals("leftToRight", StringComparison.OrdinalIgnoreCase);
+        if (!wantsTopToBottom && !wantsLeftToRight)
+        {
+            unmet.Add(new UnmetConstraint
+            {
+                Code = "direction.unknown",
+                Target = "direction",
+                Reason = $"未知方向 '{spec.Direction}'，已回退为 leftToRight"
+            });
+        }
 
         // Manual promises that the author's coordinates survive untouched, so a top-to-bottom
         // request cannot be honoured there. Saying so is the only honest option: silently
@@ -239,8 +265,21 @@ public static class DesignSpecApplier
             {
                 foreach (var (containerId, requested) in spec.ContainerLayouts)
                 {
-                    var result = LocalRelayout.Apply(
-                        diagram, containerId, DiagramLayoutEngine.Parse(requested));
+                    // Parse before applying: claiming "relaid as kaboom" was the worst of the four
+                    // silent fallbacks, because it asserted a strategy that does not exist.
+                    bool known = DiagramLayoutEngine.TryParse(requested, out var containerStrategy);
+                    if (!known)
+                    {
+                        unmet.Add(new UnmetConstraint
+                        {
+                            Code = "container_layout.unknown",
+                            Target = containerId,
+                            Reason = $"未知容器布局 '{requested}'，已跳过该容器"
+                        });
+                        continue;
+                    }
+
+                    var result = LocalRelayout.Apply(diagram, containerId, containerStrategy);
 
                     if (result.Ok) applied.Add($"container {containerId} relaid as {requested}");
                     else
