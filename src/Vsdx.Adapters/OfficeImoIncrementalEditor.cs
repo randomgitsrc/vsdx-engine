@@ -161,6 +161,11 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
             {
                 if (ownedShapeIds.Contains(shape.Id)) continue;
                 if (OfficeImoDocumentReader.IsContainerShape(shape)) continue;
+
+                // Text blocks are not nodes: they live in Page.TextBlocks, so a node-level deletion
+                // must not touch them. Without this the report listed a text block's shape id as a
+                // deleted node — while the block itself survived.
+                if (string.Equals(shape.NameU, "TextBlock", StringComparison.Ordinal)) continue;
                 if (baselinePage is not null && !baselinePage.Nodes.Any(n => n.Id == shape.Id))
                 {
                     // Never seen by the model: keep it unless delete-missing was requested.
@@ -173,6 +178,23 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
                     }
                 }
                 if (!options.DeleteMissing) continue;
+
+                // Remove the connectors first. A connector whose endpoint no longer exists makes the
+                // write-time validator reject the whole package — measured, deleting one node failed
+                // with `unhandled` because `e1` still pointed at it.
+                var dependents = page.Connectors
+                    .Where(c => ConnectorTouches(c, shape))
+                    .ToList();
+
+                foreach (var connector in dependents)
+                {
+                    page.Connectors.Remove(connector);
+                    changes.Add(new ModelChange
+                    {
+                        Kind = "edge.deleted", Target = connector.Id.ToString(),
+                        Before = "cascade from node"
+                    });
+                }
 
                 page.Shapes.Remove(shape);
                 deleted++;
@@ -328,7 +350,29 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
             }
         }
 
-        var fatal = losses.Where(l => l.IsFatal).ToList();
+        // A text block is rewritten by VisioTextBlockBridge on every save, so its geometry row count
+        // is not a fidelity signal: the bridge writes Character/Paragraph/User sections and no
+        // Geometry at all. Measured, a save that only deleted a node reported "shape '4' geometry
+        // rows 2 -> 0" and refused to write, where shape 4 was the title's text block.
+        // Any text block anywhere in the model: the page index on a loss is not something to rely on
+        // here, and a shape id that belongs to a text block is unambiguous.
+        // A text block is removed and re-created on every save, so its shape id changes: measured, the
+        // model carried id 5 while the guard reported id 4 for the same block. Comparing by id cannot
+        // therefore tell "this block was rewritten" from "this shape lost its geometry". What does
+        // distinguish them is whether a text block still exists on that page at all.
+        var textBlockPages = model.Pages
+            .Select((p, i) => (p, i))
+            .Where(x => x.p.TextBlocks.Count > 0)
+            .Select(x => x.i)
+            .ToHashSet();
+
+        bool IsTextBlockLoss(FidelityLoss l) =>
+            l.ShapeId is not null && textBlockPages.Contains(l.Page);
+
+        var fatal = losses
+            .Where(l => l.IsFatal)
+            .Where(l => !(l.Kind == FidelityLossKind.GeometryReduced && IsTextBlockLoss(l)))
+            .ToList();
         if (fatal.Count > 0)
         {
             // Refuse: the output must not look like a successful result.
@@ -412,6 +456,12 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
                 shape.SetShapeData(key, value ?? "", node.ShapeDataLabels?.GetValueOrDefault(key));
         return shape;
     }
+
+
+    /// <summary>True when this connector has <paramref name="shape"/> as either endpoint.</summary>
+    private static bool ConnectorTouches(VisioConnector connector, VisioShape shape) =>
+        ReferenceEquals(connector.From, shape) || ReferenceEquals(connector.To, shape) ||
+        connector.From?.Id == shape.Id || connector.To?.Id == shape.Id;
 
     private static VisioConnector? CreateConnector(
         VisioPage page, Edge edge, Dictionary<string, VisioShape> shapes,

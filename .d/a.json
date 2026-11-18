@@ -1,0 +1,587 @@
+{
+  "id": "a",
+  "name": "cbo",
+  "pageSize": {
+    "width": 8.55,
+    "height": 9.675,
+    "unit": "inches"
+  },
+  "orientation": "portrait",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Page-1",
+      "nameU": "Page-1",
+      "visioId": 0,
+      "size": {
+        "width": 8.55,
+        "height": 9.675,
+        "unit": "inches"
+      },
+      "groups": [
+        {
+          "id": "data",
+          "name": "数据层 Data",
+          "nameU": "Container",
+          "members": [
+            "pg",
+            "redis",
+            "es"
+          ],
+          "visioShapeId": "data",
+          "bounds": {
+            "x": 3.35,
+            "y": 2.395,
+            "w": 5.6,
+            "h": 1.23
+          },
+          "style": {
+            "fill": "#FDF2E9",
+            "fillPattern": "1",
+            "stroke": "#F4B183",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#833C0B",
+            "font": "Microsoft YaHei",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        },
+        {
+          "id": "svc",
+          "name": "业务服务 Business",
+          "nameU": "Container",
+          "members": [
+            "order",
+            "pay",
+            "stock"
+          ],
+          "visioShapeId": "svc",
+          "bounds": {
+            "x": 3.35,
+            "y": 4.47,
+            "w": 5.6,
+            "h": 1.23
+          },
+          "style": {
+            "fill": "#EDF7ED",
+            "fillPattern": "1",
+            "stroke": "#A9D08E",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#375623",
+            "font": "Microsoft YaHei",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        },
+        {
+          "id": "edge",
+          "name": "接入层 Edge",
+          "nameU": "Container",
+          "members": [
+            "web",
+            "app",
+            "gw"
+          ],
+          "visioShapeId": "edge",
+          "bounds": {
+            "x": 4.10625,
+            "y": 7.195,
+            "w": 7.1125,
+            "h": 2.53
+          },
+          "style": {
+            "fill": "#EAF3FB",
+            "fillPattern": "1",
+            "stroke": "#9DC3E6",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#1F4E79",
+            "font": "Microsoft YaHei",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "name": "Web 商城",
+          "type": "client",
+          "text": "Web 商城",
+          "shape": "Circle",
+          "visioShapeId": "web",
+          "bounds": {
+            "x": 1.775,
+            "y": 7.075,
+            "w": 1.85,
+            "h": 1.85
+          },
+          "groupId": "edge",
+          "style": {
+            "fill": "#2E75B6",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "app",
+          "name": "移动 App",
+          "type": "client",
+          "text": "移动 App",
+          "shape": "Circle",
+          "visioShapeId": "app",
+          "bounds": {
+            "x": 4.175,
+            "y": 7.075,
+            "w": 1.85,
+            "h": 1.85
+          },
+          "groupId": "edge",
+          "style": {
+            "fill": "#2E75B6",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "gw",
+          "name": "API 网关",
+          "type": "gateway",
+          "text": "API 网关",
+          "shape": "Hexagon",
+          "visioShapeId": "gw",
+          "bounds": {
+            "x": 6.5,
+            "y": 7.075,
+            "w": 1.725,
+            "h": 0.725
+          },
+          "groupId": "edge",
+          "style": {
+            "fill": "#F2B705",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#111111",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "order",
+          "name": "订单服务",
+          "type": "service",
+          "text": "订单服务",
+          "shape": "Rectangle",
+          "visioShapeId": "order",
+          "bounds": {
+            "x": 1.5,
+            "y": 4.35,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "groupId": "svc",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#111111",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "pay",
+          "name": "支付服务",
+          "type": "service",
+          "text": "支付服务",
+          "shape": "Rectangle",
+          "visioShapeId": "pay",
+          "bounds": {
+            "x": 3.35,
+            "y": 4.35,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "groupId": "svc",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#111111",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "stock",
+          "name": "库存服务",
+          "type": "service",
+          "text": "库存服务",
+          "shape": "Rectangle",
+          "visioShapeId": "stock",
+          "bounds": {
+            "x": 5.2,
+            "y": 4.35,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "groupId": "svc",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#111111",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "pg",
+          "name": "PostgreSQL",
+          "type": "database",
+          "text": "PostgreSQL",
+          "shape": "Process",
+          "visioShapeId": "pg",
+          "bounds": {
+            "x": 1.5,
+            "y": 2.275,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "groupId": "data",
+          "style": {
+            "fill": "#C55A11",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#111111",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "redis",
+          "name": "Redis",
+          "type": "database",
+          "text": "Redis",
+          "shape": "Process",
+          "visioShapeId": "redis",
+          "bounds": {
+            "x": 3.35,
+            "y": 2.275,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "groupId": "data",
+          "style": {
+            "fill": "#C55A11",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#111111",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "es",
+          "name": "Elasticsearch",
+          "type": "database",
+          "text": "Elasticsearch",
+          "shape": "Process",
+          "visioShapeId": "es",
+          "bounds": {
+            "x": 5.2,
+            "y": 2.275,
+            "w": 1.3,
+            "h": 0.55
+          },
+          "groupId": "data",
+          "style": {
+            "fill": "#C55A11",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#111111",
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "from": "web",
+          "to": "gw",
+          "kind": "curved",
+          "label": "HTTPS",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "waypoints": [
+            {
+              "x": 2.96,
+              "y": 5.8
+            },
+            {
+              "x": 5.3775,
+              "y": 5.8
+            }
+          ],
+          "visioShapeId": "e1"
+        },
+        {
+          "id": "e2",
+          "from": "app",
+          "to": "gw",
+          "kind": "straight",
+          "label": "gRPC",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e2"
+        },
+        {
+          "id": "e3",
+          "from": "gw",
+          "to": "order",
+          "kind": "curved",
+          "label": "REST",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "waypoints": [
+            {
+              "x": 5.3774999999999995,
+              "y": 5.6499999999999995
+            },
+            {
+              "x": 2.4099999999999984,
+              "y": 5.649999999999999
+            }
+          ],
+          "visioShapeId": "e3"
+        },
+        {
+          "id": "e4",
+          "from": "gw",
+          "to": "pay",
+          "kind": "rightangle",
+          "label": "REST",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "waypoints": [
+            {
+              "x": 6.4999999999999964,
+              "y": 3.749999999999998
+            },
+            {
+              "x": 3.349999999999997,
+              "y": 3.7500000000000004
+            }
+          ],
+          "visioShapeId": "e4"
+        },
+        {
+          "id": "e5",
+          "from": "order",
+          "to": "pg",
+          "kind": "straight",
+          "label": "SQL",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e5"
+        },
+        {
+          "id": "e6",
+          "from": "order",
+          "to": "redis",
+          "kind": "straight",
+          "label": "cache",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e6"
+        },
+        {
+          "id": "e7",
+          "from": "pay",
+          "to": "es",
+          "kind": "straight",
+          "label": "index",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e7"
+        },
+        {
+          "id": "e8",
+          "from": "stock",
+          "to": "es",
+          "kind": "straight",
+          "label": "sync",
+          "lineColor": "#000000",
+          "lineWeight": 0.0138889,
+          "linePattern": 1,
+          "visioShapeId": "e8"
+        }
+      ],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "web",
+        "app",
+        "gw",
+        "order",
+        "pay",
+        "stock",
+        "pg",
+        "redis",
+        "es",
+        "21",
+        "22",
+        "data",
+        "svc",
+        "edge",
+        "e1",
+        "e2",
+        "e3",
+        "e4",
+        "e5",
+        "e6",
+        "e7",
+        "e8"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "title",
+          "name": "跨境电商订单系统",
+          "text": "跨境电商订单系统",
+          "role": "title",
+          "visioShapeId": "21",
+          "bounds": {
+            "x": 5,
+            "y": 8.825,
+            "w": 6,
+            "h": 0.6
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 20.000016,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "top"
+          },
+          "imported": true
+        },
+        {
+          "id": "note",
+          "name": "注：支付与库存独立演进",
+          "text": "注：支付与库存独立演进",
+          "role": "note",
+          "visioShapeId": "22",
+          "bounds": {
+            "x": 3,
+            "y": 0.7,
+            "w": 4,
+            "h": 0.3
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 7.999992,
+            "bold": false,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-18T12:24:05.1517962+00:00",
+    "modified": "2026-11-18T12:24:05.2254663+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.d/a.vsdx",
+    "sourceHash": "8dc8644d643dca40e03a18b56e44e7cfddeb7a48f98873fe50c27988fd5fcf21",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 1.0.0",
+    "history": [
+      {
+        "at": "2026-11-18T12:24:05.226895+00:00",
+        "action": "create",
+        "target": "a.vsdx",
+        "detail": "pages=1, nodes=9, edges=8",
+        "tool": "Agent VSDX Engine 1.0.0"
+      }
+    ]
+  }
+}
