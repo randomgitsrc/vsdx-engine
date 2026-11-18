@@ -36,6 +36,18 @@ public static class Program
         {
             return Fail("file.not-found", ex.Message);
         }
+        catch (JsonException ex)
+        {
+            // A malformed input is the caller's mistake and must be distinguishable from an engine
+            // fault. Both used to surface as `unhandled`, so a script could not tell whether to fix
+            // its JSON or report a bug.
+            return Fail("input.malformed-json", ex.Message);
+        }
+        catch (InvalidOperationException ex) when (ex.InnerException is JsonException inner)
+        {
+            // System.Text.Json sometimes arrives wrapped by the deserialiser.
+            return Fail("input.malformed-json", inner.Message);
+        }
         catch (Exception ex)
         {
             return Fail("unhandled", $"{ex.GetType().Name}: {ex.Message}");

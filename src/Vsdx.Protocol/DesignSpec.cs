@@ -133,6 +133,29 @@ public static class DesignSpecApplier
         var applied = new List<string>();
         var unmet = new List<UnmetConstraint>();
 
+        // The IR has been version-checked since the beginning; the spec was not, so `specVersion: 9.9`
+        // was accepted and echoed back as though understood. Unknown *fields* may be ignored, but an
+        // unknown major version means the document describes something this build does not know, and
+        // silently applying what it happens to recognise is the worst of both.
+        if (!ProtocolVersion.IsCompatible(spec.SpecVersion, "1"))
+        {
+            unmet.Add(new UnmetConstraint
+            {
+                Code = "spec.version",
+                Target = "specVersion",
+                Reason = $"不支持的 DesignSpec 版本 '{spec.SpecVersion}'，当前支持 1.x"
+            });
+
+            // Nothing was applied, so the report describes the drawing as it stands.
+            return new DesignApplication
+            {
+                Applied = applied,
+                Unmet = unmet,
+                Strategy = DiagramLayoutEngine.SuggestStrategy(diagram),
+                Report = LayoutAnalyzer.Analyze(diagram)
+            };
+        }
+
         // --- Typography ----------------------------------------------------
         // `minReadableSize` alone is a valid request: the caller may keep the default scale and only
         // raise the floor. Requiring baseSize or a font family made that a silent no-op — measured,
