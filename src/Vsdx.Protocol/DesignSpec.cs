@@ -20,7 +20,15 @@ public sealed class DesignSpec
     public string Layout { get; set; } = "auto";
 
     /// <summary>Primary reading direction: leftToRight | topToBottom.</summary>
-    public string Direction { get; set; } = "leftToRight";
+    /// <summary>
+    /// Reading direction. Null means "pick one that suits the structure".
+    ///
+    /// It used to default to the string "leftToRight", which made an unstated direction
+    /// indistinguishable from a stated one — so once LeftToRight began to transpose (C15), every
+    /// diagram that omitted the field silently rotated. Layered structures lost 6-18 points that
+    /// way; a container-less flow gained 3.
+    /// </summary>
+    public string? Direction { get; set; }
 
     /// <summary>Spacing intent. Values are hints; the engine keeps its own minimums.</summary>
     public SpacingSpec Spacing { get; set; } = new();
@@ -269,9 +277,12 @@ public static class DesignSpecApplier
 
         bool manualRequested = spec.Layout.Equals("manual", StringComparison.OrdinalIgnoreCase);
 
-        bool wantsTopToBottom = spec.Direction.Equals("topToBottom", StringComparison.OrdinalIgnoreCase);
-        bool wantsLeftToRight = spec.Direction.Equals("leftToRight", StringComparison.OrdinalIgnoreCase);
-        if (!wantsTopToBottom && !wantsLeftToRight)
+        bool directionStated = !string.IsNullOrWhiteSpace(spec.Direction);
+        bool wantsTopToBottom =
+            string.Equals(spec.Direction, "topToBottom", StringComparison.OrdinalIgnoreCase);
+        bool wantsLeftToRight =
+            string.Equals(spec.Direction, "leftToRight", StringComparison.OrdinalIgnoreCase);
+        if (directionStated && !wantsTopToBottom && !wantsLeftToRight)
         {
             unmet.Add(new UnmetConstraint
             {
@@ -284,7 +295,7 @@ public static class DesignSpecApplier
         // Manual promises that the author's coordinates survive untouched, so a top-to-bottom
         // request cannot be honoured there. Saying so is the only honest option: silently
         // ignoring it would leave the caller believing the page was transposed.
-        if (manualRequested)
+        if (manualRequested && directionStated)
         {
             unmet.Add(new UnmetConstraint
             {
@@ -300,13 +311,22 @@ public static class DesignSpecApplier
             {
                 NodeGapX = spec.Spacing.NodeGapX ?? 0.55,
                 BandGapY = spec.Spacing.BandGapY ?? 0.85,
+                // Unstated: layered structures read top to bottom, because bands are a vertical
+                // idea and turning them sideways spreads each one across the page. A container-less
+                // flow has no bands to stack, so it reads left to right.
                 Direction = wantsTopToBottom
                     ? LayoutDirection.TopToBottom
-                    : LayoutDirection.LeftToRight
+                    : wantsLeftToRight
+                        ? LayoutDirection.LeftToRight
+                        : diagram.Pages.Any(p => p.Groups.Count > 0)
+                            ? LayoutDirection.TopToBottom
+                            : LayoutDirection.LeftToRight
             };
 
             DiagramLayoutEngine.Apply(diagram, options, strategy);
-            applied.Add($"layout={strategy}");
+            applied.Add(directionStated
+                ? $"layout={strategy}, direction={(wantsTopToBottom ? "topToBottom" : "leftToRight")}"
+                : $"layout={strategy}, direction=auto");
 
             // Per-container overrides are reported, not silently dropped.
             if (spec.ContainerLayouts is { Count: > 0 })

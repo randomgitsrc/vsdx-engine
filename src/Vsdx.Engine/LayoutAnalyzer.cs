@@ -627,7 +627,19 @@ public static class LayoutAnalyzer
         foreach (var node in sorted)
         {
             var current = rows.LastOrDefault();
-            if (current is not null &&
+
+            // A node joins the open row only if it is vertically close **and** similar in height.
+            //
+            // Height matters as much as distance: a 1.85" circle and a 0.55" box standing 0.28"
+            // apart are not a misaligned row, they are a tall node next to a short one in the
+            // neighbouring column — the data-flow diagram reported exactly that pair as
+            // `row.misaligned`. Two shapes on one row are drawn to a common centre line, so they
+            // are comparable in size.
+            bool heightComparable = current is not null &&
+                Math.Min(current.Min(n => n.Bounds.H), node.Bounds.H) >
+                Math.Max(current.Max(n => n.Bounds.H), node.Bounds.H) * 0.5;
+
+            if (current is not null && heightComparable &&
                 Math.Abs(current.Average(n => n.Bounds.Y) - node.Bounds.Y) <= rowTolerance)
             {
                 current.Add(node);
@@ -737,8 +749,21 @@ public static class LayoutAnalyzer
             double gapX = Math.Abs(a.Bounds.X - b.Bounds.X) - (a.Bounds.W + b.Bounds.W) / 2;
             double gapY = Math.Abs(a.Bounds.Y - b.Bounds.Y) - (a.Bounds.H + b.Bounds.H) / 2;
 
-            // Only report pairs that are neighbours on one axis.
-            if (Math.Abs(a.Bounds.Y - b.Bounds.Y) < (a.Bounds.H + b.Bounds.H) / 2 && gapX >= 0 && gapX < options.MinNodeGap)
+            // Only compare nodes that genuinely share a row.
+            //
+            // The old test was `|dy| < (h_a + h_b) / 2`, which for a tall node beside a short one is
+            // a wide threshold: measured on the data-flow diagram, a 1.85" circle and a 0.55" box
+            // standing 0.28" apart vertically were treated as row neighbours, so a correct layout
+            // collected three "spacing.too-tight" warnings.
+            //
+            // Row membership means their centre lines line up, within half the shorter node's
+            // height — a tall shape must not pull distant nodes into its own row.
+            double rowTolerance = Math.Min(a.Bounds.H, b.Bounds.H) / 2;
+
+            // A tolerance on the lower bound: two boxes placed exactly edge to edge compute a gap of
+            // -1e-16, and requiring `gapX >= 0` silently skipped the tightest case of all.
+            if (Math.Abs(a.Bounds.Y - b.Bounds.Y) <= rowTolerance &&
+                gapX >= -0.001 && gapX < options.MinNodeGap)
             {
                 report.Add(new LayoutIssue
                 {

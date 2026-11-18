@@ -1056,3 +1056,82 @@ MirrorHorizontally (x,y) -> (W-x, y)        独立，不进 Transpose
 
 `Transpose` 仍是自逆的（`Transpose_IsItsOwnInverse` 通过），流向也正确。
 两条约束**并不真正冲突**——冲突的是"把镜像塞进 Transpose"这个实现选择。
+
+---
+
+## C18 【P1】C15 修复的副作用：默认方向改变，分层图分数下降
+
+**发现于：** flow 引擎间距修复后的横向回归（2026-11-18，HEAD `b0ac615`）
+
+### 实测
+
+`deploy-topology`（3 容器分层图，`kind=network`），同一 spec 只改 `direction`：
+
+```console
+$ direction=leftToRight   (现在的默认)   score=76   crossing=6   page 9.4x9.8
+$ direction=topToBottom   (修复前的默认) score=94   crossing=5   page 9.1x11.0
+```
+
+**18 分的差距。**
+
+### 二分定位
+
+```
+7cc363c  (C15 前)        score=94
+53a2b7a  (C15 修复)      score=90
+50ebcdc  (C16 文本块)    score=76
+80061d0  (C17 镜像)      score=78
+```
+
+主因是 C15：默认方向从 `leftToRight`(不转置) 变成 `leftToRight`(转置)，
+**所有不显式写 `direction` 的分层图都被旋转了**。
+
+### 这是 C15 的未披露副作用
+
+C15 的提交信息写了"所有设置 `direction` 的 spec 会产出相反方向"，
+但**遗漏了更重要的**：不写 `direction` 的 spec 也受影响，因为默认值本身改变了行为。
+
+### 判断
+
+C15 的修复是**正确的**（`leftToRight` 应当产出横向），但它的影响面比披露的大：
+
+| 场景 | 修复前默认 | 修复后默认 | 分数变化 |
+| --- | --- | --- | --- |
+| 数据流（无容器长链） | 竖向，流向对 | 横向，流向对 | 93 -> 96 ↑ |
+| deploy（3 容器） | 竖向 | 横向 | **94 -> 76 ↓** |
+| cbo（3 容器） | 竖向 | 横向 | 95 -> 88 ↓ |
+
+**分层图在横向排列下交叉更多**——因为分层结构本质是"层叠"，横向转置后层内的节点被拉开。
+
+### 候选修法
+
+1. `SuggestStrategy` 或 `DesignSpecApplier` 对**分层结构自动选 `topToBottom`**，
+   只有"无容器流式图"才默认横向
+2. 保持现状，接受分层图在默认横向下的表现
+3. 让 `direction` 默认值回到不转置，由调用方显式选择横向
+
+### 已修
+
+`DesignSpec.Direction` 从 `string = "leftToRight"` 改为 **`string?`（默认 null）**，
+从而能区分"未指定"与"显式指定"：
+
+```csharp
+Direction = wantsTopToBottom ? TopToBottom
+          : wantsLeftToRight ? LeftToRight
+          : diagram.Pages.Any(p => p.Groups.Count > 0) ? TopToBottom   // 分层
+          : LeftToRight                                                // 无容器流
+```
+
+**依据**：分层是纵向概念（band 堆叠），横向转置会把每个 band 拉开、增加交叉；
+无容器流没有 band 可堆叠，横向才合适。
+
+### 验证
+
+| 场景 | C15 前 | C15 后（回归） | 修复后 |
+| --- | --- | --- | --- |
+| cbo | 95 | 88 | **98** |
+| deploy-topology | 94 | 76 | **94** |
+| user-data-flow | 93 | 96 | **96** |
+
+三个场景**全部恢复或改善**，且 `applied` 现在会报告
+`direction=auto`（未指定）或 `direction=topToBottom`（显式），调用方能看到实际用了什么。
