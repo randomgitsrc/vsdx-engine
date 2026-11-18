@@ -145,10 +145,28 @@ public sealed class VsdxEngine
     public UpdateResult Update(string sourceVsdxPath, Diagram diagram, string outputPath, UpdateOptions? options = null)
     {
         DiagramJson.Normalize(diagram);
+
         if (options?.AutoLayout ?? true)
         {
+            // A caller who set a container's box explicitly wants that box, not a recomputation
+            // from its members. `DiagramLayout.Apply` derives every container from its members, so
+            // a resized container was silently restored to its old size before the editor ever saw
+            // it — measured, requesting {1,1,7,3} produced a byte-identical file with `changes:[]`
+            // and `unmet:[]`. Marking those containers AutoSize=false makes the derivation skip them,
+            // which is the same flag the writer already honours.
+            var pinned = diagram.Pages
+                .SelectMany(p => p.Groups)
+                .Where(g => g.Bounds is not null && g.AutoSize is null)
+                .ToList();
+
+            foreach (var group in pinned) group.AutoSize = false;
+
             DiagramLayout.Apply(diagram);
             OrthogonalRouter.Route(diagram);
+
+            // Restore "unset" so downstream code still sees the author's intent rather than a flag
+            // this method invented.
+            foreach (var group in pinned) group.AutoSize = null;
         }
         var result = _editor.Update(sourceVsdxPath, diagram, outputPath, options);
 

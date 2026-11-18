@@ -648,6 +648,33 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
             {
                 compat.Warn("update.container", $"Group '{group.Id}' membership could not be applied: {ex.Message}", group.Id);
             }
+
+            // Geometry is applied last: `AddToContainer` repositions the container around its
+            // members, so writing the box before it would be overwritten — measured, a requested
+            // width of 4 came back as 5.9.
+            if (container is not null && group.Bounds is { } wanted)
+            {
+                double curX = container.PinX.ToInches(), curY = container.PinY.ToInches();
+                double curW = container.Width.ToInches(), curH = container.Height.ToInches();
+
+                if (Math.Abs(curX - wanted.X) > 1e-6 || Math.Abs(curY - wanted.Y) > 1e-6 ||
+                    Math.Abs(curW - wanted.W) > 1e-6 || Math.Abs(curH - wanted.H) > 1e-6)
+                {
+                    container.PinX = MasterCatalog.Inches(wanted.X);
+                    container.PinY = MasterCatalog.Inches(wanted.Y);
+                    container.Width = MasterCatalog.Inches(wanted.W);
+                    container.Height = MasterCatalog.Inches(wanted.H);
+
+                    changes.Add(new ModelChange
+                    {
+                        Kind = "group.resized",
+                        Target = group.Id,
+                        Before = $"{curW:F2}x{curH:F2}",
+                        After = $"{wanted.W:F2}x{wanted.H:F2}"
+                    });
+                }
+            }
+
         }
     }
 
