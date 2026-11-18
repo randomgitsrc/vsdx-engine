@@ -327,9 +327,14 @@ public static class DesignSpecApplier
             };
 
             DiagramLayoutEngine.Apply(diagram, options, strategy);
+            // Report the direction actually used, not just that one was inferred. "direction=auto"
+            // leaves a reader unable to tell whether their diagram came out portrait or landscape
+            // without opening the file.
+            string chosen = options.Direction == LayoutDirection.TopToBottom ? "topToBottom" : "leftToRight";
+
             applied.Add(directionStated
-                ? $"layout={strategy}, direction={(wantsTopToBottom ? "topToBottom" : "leftToRight")}"
-                : $"layout={strategy}, direction=auto");
+                ? $"layout={strategy}, direction={chosen}"
+                : $"layout={strategy}, direction={chosen} (auto)");
 
             // Per-container overrides are reported, not silently dropped.
             if (spec.ContainerLayouts is { Count: > 0 })

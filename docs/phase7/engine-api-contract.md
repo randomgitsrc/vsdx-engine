@@ -58,9 +58,40 @@ figure-agent                          vsdx-engine
 | 字段 | 默认 | 说明 |
 | --- | --- | --- |
 | `layout` | `auto` | `auto` 按 IR 的 `kind` 选择 |
-| `canvas.mode` | `auto` | `auto` 时页面贴合内容 |
+| `direction` | 按结构推断 | `leftToRight` \| `topToBottom`；不写时含容器图取竖向、无容器流取横向 |
+| `canvas.mode` | `auto` | `auto` 贴合内容 · `fixed` 采纳 width/height · `paper` 吸附标准纸张 |
+| `canvas.width` / `height` | — | 仅 `mode=fixed` 生效；`mode=auto` 时被忽略并报告 `canvas.mode` |
+| `canvas.shrinkToFit` | `true` | 纸张大于内容时是否收缩 |
+| `theme.palette` | — | `enterprise` \| `muted` \| `technical` \| `midnight` |
+| `theme.background` | — | 页面背景色，写入 `pages.xml` 的 PageBackground |
+| `typography.baseSize` | — | NodeTitle 目标字号；六档按比例缩放，低于 8pt 会被提升并报告 |
 | `hardConstraints` | 空 | 未满足会被列进 `unmetConstraints` 且 `isHard=true` |
 | `containerLayouts` | 空 | 逐容器覆盖布局策略 |
+
+### 2.2.1 纸张选择
+
+`canvas.mode=paper` 选**最小的、能容纳内容的标准纸张**，按需旋转：
+
+| 纸张 | 纵向（英寸） |
+| --- | --- |
+| A5 | 5.83 × 8.27 |
+| A4 | 8.27 × 11.69 |
+| A3 | 11.69 × 16.54 |
+| A2 | 16.54 × 23.39 |
+| Tabloid | 11.00 × 17.00 |
+
+实测三个真实场景（`paper` 模式）：
+
+| 场景 | `auto` 产出 | `paper` 产出 |
+| --- | --- | --- |
+| 跨境电商架构 | 8.55 × 9.68 | A3 11.69 × 16.54 |
+| 部署拓扑 | 11.00 × 11.85 | A3 11.69 × 16.54 |
+| 用户数据流 | 15.57 × 10.45 | A3 16.54 × 11.69 |
+
+都放不下时退到最大纸张并报告 `canvas.scaled`。
+
+**A4 容不下这三张图**——它们的内容本就需要 A3 的面积。`paper` 让产出是标准尺寸，
+而不是把内容压进 A4。
 
 **Engine 保证：** 任何声明的约束，要么满足，要么**出现在结果的 `unmetConstraints` 里**。
 不存在"声明了但被忽略"的情况。

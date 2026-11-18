@@ -1,0 +1,75 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "succeeded",
+  "message": "执行完成，硬约束全部满足",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "sizing",
+    "layout=Flow, direction=leftToRight (auto)",
+    "container.bands",
+    "canvas.auto"
+  ],
+  "unmetConstraints": [],
+  "warnings": [
+    {
+      "code": "write.text-block",
+      "message": "写入了 2 个独立文本块",
+      "target": "用户行为数据流"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 0,
+    "score": 100,
+    "issueCodes": [],
+    "pageUtilisation": {
+      "用户行为数据流": 0.8171834079580975
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "web": "web",
+    "app": "app",
+    "sdk": "sdk",
+    "collect": "collect",
+    "kafka": "kafka",
+    "etl": "etl",
+    "enrich": "enrich",
+    "dw": "dw",
+    "dws": "dws",
+    "bi": "bi",
+    "ml": "ml",
+    "train": "train",
+    "f1": "f1",
+    "f2": "f2",
+    "f3": "f3",
+    "f4": "f4",
+    "f5": "f5",
+    "f6": "f6",
+    "f7": "f7",
+    "f8": "f8",
+    "f9": "f9",
+    "f10": "f10",
+    "f11": "f11",
+    "f12": "f12",
+    "title": "title",
+    "note": "note"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.v/o.vsdx"
+  ],
+  "durationMs": 512,
+  "completedUtc": "2026-11-18T08:58:30.8084474+00:00"
+}
