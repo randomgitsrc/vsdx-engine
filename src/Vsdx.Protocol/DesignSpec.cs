@@ -840,13 +840,20 @@ public static class DesignSpecApplier
 
         if (satisfied) return Array.Empty<UnmetConstraint>();
 
+        // Carry the caller's note through. It was accepted, stored on the spec, and never read — a
+        // caller who wrote "交付前必须补标题" got a verdict with their reasoning stripped, which reads as
+        // though the constraint arrived without it.
+        var reason = string.IsNullOrWhiteSpace(constraint.Note)
+            ? detail
+            : $"{detail}（备注：{constraint.Note}）";
+
         return new[]
         {
             new UnmetConstraint
             {
                 Code = constraint.Code,
                 Target = constraint.Target,
-                Reason = detail,
+                Reason = reason,
                 IsHard = isHard
             }
         };
