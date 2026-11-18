@@ -2,6 +2,44 @@
 
 本文件记录对外可见的能力变化。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [Unreleased]
+
+`v0.9.0` 之后的工作。**没有新增图类型，全部是让已有能力如实工作。**
+
+### 新增
+
+- `nodeUtilisation`：只统计节点的页面利用率。`pageUtilisation` 含文本块，
+  一个远离节点的注释就能把它抬到整页——`checkout-sequence` 报 84%，而节点只占 23%。
+  两个数字并存，`pageUtilisation` 的既有语义不变。
+
+### 修复（对外可见的行为）
+
+| 症状 | 影响 |
+| --- | --- |
+| 容器标题被首行成员压住 | 推导高度与放置位置用的是同一个公式，**必然相接**。四个耦合点同时修正 |
+| 内容未在纸张上居中 | 纸张方向选择改为按余量竞争 |
+| band 间距随内容变化 | 容器包络被重复计入 |
+| `canvas.mode=paper` 不检查溢出 | 形状可以落在纸外而状态仍为 `partial` |
+| `canvas.scaled` 声称"已缩放"但没缩放 | 73" 内容放在 17" 纸上，措辞改了 |
+| `requiresVisualReview` 恒为 `true` | 改为跟随实际违规 |
+| `lossless` 把 info 当损失 | 只看 error/warning |
+| `metadata.source` 丢弃、`metadata.created` 被生成时刻覆盖 | 两者现在如实往返 |
+| 文本块 `role` 由 id 前缀决定 | `{"id":"tb","role":"note"}` 曾返回 `caption` |
+| `constraint.note` 被丢弃 | 现在附加到未满足约束的 reason |
+| 布局问题的严重程度被压平为 warning | `error`/`warning`/`info` 三级如实传递 |
+| 校验器不检查 Master 引用 | 悬空引用曾返回 `valid: true` |
+
+### 修复（内部，但影响结果）
+
+- `edge.diagonal-across-band` 曾因分析前先路由而**永不触发**——已可达
+- `repair` 的重算开关从 `ValidateAfterSave` 独立出来（`--no-recalc`）
+
+### 变更
+
+- `update` 不再因 `validateAfterSave` 而请求 Visio 重算；改用独立选项
+
+---
+
 ## [0.9.0] — 2026-11-18
 
 已发布为 **prerelease**：<https://github.com/randomgitsrc/vsdx-engine/releases/tag/v0.9.0>
@@ -58,7 +96,7 @@
 - **A4 容不下**参考场景的内容量，需 A3
 - 详细清单见 `docs/capability-boundaries.md`
 
-### 统计
+### 统计（`v0.9.0` 时点的快照）
 
 | 项 | 值 |
 | --- | --- |
@@ -66,3 +104,6 @@
 | 基准 | 18 个计分用例 + 8 个故障注入用例 |
 | 真实场景 | 4 种结构 |
 | 外部依赖 | 7 个包（含测试） |
+
+> 这些数字对应 tag `v0.9.0`，不再代表当前树。当前值用 `dotnet test` 与
+> `ls examples/realworld/*.ir.json | wc -l` 查。
