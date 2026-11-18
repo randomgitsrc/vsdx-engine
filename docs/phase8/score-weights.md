@@ -53,13 +53,13 @@ error 级（`node.overlap`、`group.overlap` 等 7 项）不参与加权——�
 | 故障注入基准（`benchmarks/faults/`） | +4 |
 | 本轮手工构造 | +4（`text.overflow-vertical`、`edge.fan-in`、`edge.fan-out`、`page.underused`） |
 
-**仍未在任何测试中被触发的：**
+**2026-11-19 补齐：24 项现已全部被观测到触发过。**
 
-| 检测码 | 为何难以触发 |
-| --- | --- |
-| `group.gutter` | 条件为 `0 ≤ gutter < 0.06`——容器几乎相贴但不重叠，临界状态 |
-| `edge.diagonal-across-band` | 需要斜线跨容器，引擎通常走正交路由 |
-| `container.heading-collision` | 有 3 个测试引用，但都是**修复后**通过的用例，可能从未真正触发 |
+最后两项用单元级测试构造（`RareCheckTests`），绕过布局引擎直接给模型赋值：
 
-`group.gutter` 与 `edge.diagonal-across-band` 的**纳入/排除逻辑本身未经检验**——
-如果比较符号写反，没有任何测试会发现。这属于已知的验证缺口，不是已知缺陷。
+| 检测码 | 触发条件 | 验证结果 |
+| --- | --- | --- |
+| `group.gutter` | 两个水平色带垂直间距 `0.03"`（小于阈值 `0.06"`） | ✅ 正确报告，且间距 `1.0"` 时不报 |
+| `edge.diagonal-across-band` | 跨容器斜线穿过第三个容器 | ✅ 正确报告，带 waypoints 时不报 |
+
+两项的**纳入与排除**两个方向都测了，比较符号写反会被发现。
