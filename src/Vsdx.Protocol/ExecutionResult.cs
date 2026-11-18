@@ -32,6 +32,13 @@ public sealed class ExecutionResult
     public string? Message { get; set; }
 
     /// <summary>Which pipeline stages ran, in order.</summary>
+    /// <summary>
+    /// Stages that finished, in order. Empty when validation fails; partial when a later stage throws.
+    ///
+    /// Unlike <see cref="QualityOutcome.RequiresVisualReview"/> (which was once constant) and
+    /// <see cref="ObjectMapping"/> (which is the identity), this field carries real information: the
+    /// same IR run three ways reports three different lists. Verified in `StageReportingTests`.
+    /// </summary>
     public List<string> StagesCompleted { get; set; } = new();
 
     /// <summary>Design intents that were applied.</summary>
