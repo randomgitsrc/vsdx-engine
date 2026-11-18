@@ -343,6 +343,22 @@ public static class DesignSpecApplier
         else
         {
             applied.Add("layout=manual");
+
+            // Manual promises the author's coordinates survive, so per-container layout cannot be
+            // honoured here. The request used to be dropped inside the branch above without a
+            // word, which reads as "applied" to anyone checking only `unmet`.
+            if (spec.ContainerLayouts is { Count: > 0 })
+            {
+                foreach (var containerId in spec.ContainerLayouts.Keys)
+                {
+                    unmet.Add(new UnmetConstraint
+                    {
+                        Code = "container_layout.manual",
+                        Target = containerId,
+                        Reason = $"layout=manual 保留作者坐标，容器 '{containerId}' 的布局请求未应用"
+                    });
+                }
+            }
         }
 
         DiagramLayout.Apply(diagram);
