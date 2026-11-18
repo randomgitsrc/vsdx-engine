@@ -590,9 +590,24 @@ public static class DesignSpecApplier
             }
             else
             {
-                DiagramSizer.Recenter(page);
-                DiagramSizer.FitPage(page, shrink: true);
-                applied.Add("canvas.auto");
+                // Manual promises the author's coordinates survive. Recentring shifts the page
+                // contents without knowing who placed them: measured, nodes authored at (2,9), (6,9)
+                // and (10,4) came back at (1.2,5.8), (5.2,5.8) and (9.2,0.8) — a uniform shift —
+                // while `applied` only said `canvas.auto`.
+                //
+                // The page may still grow so the content stays on the sheet; what it may not do is
+                // move the content.
+                if (manualRequested)
+                {
+                    DiagramSizer.FitPage(page, shrink: false);
+                    applied.Add("canvas.auto (manual: coordinates kept)");
+                }
+                else
+                {
+                    DiagramSizer.Recenter(page);
+                    DiagramSizer.FitPage(page, shrink: true);
+                    applied.Add("canvas.auto");
+                }
 
                 // A fixed size cannot be honoured together with auto — report the conflict.
                 if (spec.Canvas.Width is not null || spec.Canvas.Height is not null)

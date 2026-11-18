@@ -1527,7 +1527,26 @@ applied.Add("canvas.auto");
 
 ### 候选修法
 
-manual 模式下跳过 `Recenter`（只做 `FitPage` 的页面扩展，不平移内容），
-或报告 `canvas.recentered` 让调用方知道坐标被改。
+### 已修
 
-**未修**。
+manual 模式下跳过 `Recenter`，只用 `FitPage(shrink: false)` 扩展页面：
+
+```csharp
+if (manualRequested)
+{
+    DiagramSizer.FitPage(page, shrink: false);
+    applied.Add("canvas.auto (manual: coordinates kept)");
+}
+else { Recenter(...); FitPage(shrink: true); }
+```
+
+**验证**：
+
+```console
+期望 a(2,9) b(6,9) c(10,4)
+修复前 a(1.2,5.8) b(5.2,5.8) c(9.2,0.8)     整页偏移 (-0.8,-3.2)
+修复后 a(2.0,9.0) b(6.0,9.0) c(10.0,4.0)    精确保持
+applied: canvas.auto (manual: coordinates kept)
+```
+
+`applied` 现在明确说明坐标被保留，而不是笼统的 `canvas.auto`。
