@@ -116,7 +116,14 @@ public static class DiagramLayoutEngine
 
         return diagram.Type?.ToLowerInvariant() switch
         {
-            "workflow" or "flow" => hasDecisions ? LayoutStrategy.Flow : LayoutStrategy.Layered,
+            // A workflow without containers reads along its edges whatever its nodes look like.
+            // Requiring a decision diamond meant a pure data flow fell through to Layered, where a
+            // chain of eight nodes became eight layers: measured at 23.3" x 7.5", a 3.1:1 strip,
+            // against 8.5" x 15.6" from the flow engine — which also scored higher, so the strip
+            // was not buying legibility.
+            "workflow" or "flow" => hasDecisions || page.Groups.Count == 0
+                ? LayoutStrategy.Flow
+                : LayoutStrategy.Layered,
             "org" or "organisation" or "organization" or "orgchart" => LayoutStrategy.Tree,
             "network" => LayoutStrategy.Layered,
             "microservices" => LayoutStrategy.Layered,
@@ -178,7 +185,21 @@ public static class DiagramLayoutEngine
         // Layered stacks bands bottom-up — a vertical result. So LeftToRight is the one that needs
         // the transpose; the two names were swapped, and `leftToRight` produced an 11" x 23.3"
         // strip while `topToBottom` produced 23.3" x 11".
-        if (options.Direction == LayoutDirection.LeftToRight && strategy != LayoutStrategy.Manual)
+        // Which direction needs the transpose depends on what the engine already produces.
+        //
+        //   Layered, Grid, Tree   stack upward  -> vertical native, so LeftToRight transposes
+        //   Flow                  walks its sequence left to right -> horizontal native, so
+        //                         TopToBottom transposes
+        //
+        // A single rule for both turned a left-to-right flow into a column: measured, every node of
+        // a five-step chain came back with the same x.
+        bool nativeVertical = strategy is not (LayoutStrategy.Manual or LayoutStrategy.Flow);
+
+        bool needsTranspose =
+            (nativeVertical && options.Direction == LayoutDirection.LeftToRight) ||
+            (!nativeVertical && options.Direction == LayoutDirection.TopToBottom);
+
+        if (needsTranspose && strategy != LayoutStrategy.Manual)
         {
             DiagramLayout.Transpose(diagram);
 
@@ -186,7 +207,8 @@ public static class DiagramLayoutEngine
             // measured, web landed at x=21.82 and bi at x=2.27 for an IR that reads web -> ... -> bi.
             // Reflecting restores left-to-right. This lives here rather than inside Transpose
             // because a reflection composed with the swap is no longer its own inverse.
-            DiagramLayout.MirrorHorizontally(diagram);
+            if (nativeVertical) DiagramLayout.MirrorHorizontally(diagram);
+            else DiagramLayout.MirrorVertically(diagram);
 
             // Transposing swaps the page's own dimensions, so the decorations clamped inside the
             // loop above were clamped against the old sheet. Re-clamp them against the new one, or

@@ -843,7 +843,18 @@ LeftToRight: 26.9 x 11.0   10 列 x 2 行
 `SuggestStrategy` 对"无容器 + 长链"不应选 Layered。但 flow 引擎当前间距过紧（79 分），
 换上会更差——需先修 flow 的间距。
 
-**维持未修复，性质由"缺陷"改为"策略适用边界"。**
+### 已修（策略层）
+
+Flow 引擎经 C18/C19 修复后可用（间距 98 分、方向正确），
+`SuggestStrategy` 改为：**workflow 无容器时选 Flow**（不再要求决策节点）。
+
+| 指标 | 修复前 | 修复后 |
+| --- | --- | --- |
+| 布局 | Layered | **Flow** |
+| 页面 | 23.3 x 7.5（3.11） | **15.6 x 8.5（1.83）** |
+| 分数 | 96 | **100** |
+
+无取舍：比例更合理，分数也更高。
 
 ---
 
@@ -1135,3 +1146,76 @@ Direction = wantsTopToBottom ? TopToBottom
 
 三个场景**全部恢复或改善**，且 `applied` 现在会报告
 `direction=auto`（未指定）或 `direction=topToBottom`（显式），调用方能看到实际用了什么。
+
+---
+
+## C19 【P1】Flow 引擎竖向流动方向相反
+
+**发现于：** C14 修复（flat workflow 改用 Flow）后的复测（2026-11-18，HEAD `fef0e6b`）
+
+### 现象
+
+数据流图改走 Flow 引擎后，页面比例从 3.11 变为 0.55（改善），但**流向从下往上**：
+
+```console
+IR 流向: web -> sdk -> kafka -> etl -> enrich
+实测 Y:  1.48 -> 6.00 -> 10.12 -> 11.97 -> 13.82
+```
+
+VSDX 的 Y 轴向上，**y 越大越靠上**，所以起点 `web` 在最底部、终点在顶部。
+
+渲染图确认：Web 埋点在页面底部，维度补全在顶部。
+
+### 与 C17 同源
+
+C17 修的是"转置后流向反"（镜像解决）。这里是**未转置时 flow 引擎自身把链从下往上排**。
+
+`FlowAndTreeLayoutEngine` 的 `y` 从 `options.PageMargin` 起递增，
+而 Layered 引擎刻意做了 `baseY = 2.0` 后递增、再靠 band 序号反转。
+
+### 影响
+
+Flow 引擎产出的图**阅读方向是反的**，而 `score` 不检查方向（98 分）。
+
+这是"分数不反映观感"的又一例：**98 分，图是倒着读的**。
+
+### 候选修法
+
+Flow 引擎排完链后，把整页 Y 做一次翻转（`y -> contentTop + contentBottom - y`），
+或从高 y 向低 y 排列。
+
+**未修复**。优先度高于继续调策略——产出的图方向错了，比例再对也没用。
+
+---
+
+## C20 【P2】Flow 引擎的 banded 路径把所有 band 放在同一行
+
+**发现于：** C19 修复后的引擎一致性检查（2026-11-18）
+
+### 实测
+
+同一 IR（3 容器，order 2/1/0），`topToBottom`：
+
+```console
+Layered:  intake y=7.42, review y=5.00, fulfil y=2.57   <- 正确堆叠
+Flow:     intake y=9.27, review y=9.27, fulfil y=9.27   <- 三个 band 同 y
+```
+
+**Flow 的 `LayoutBanded` 没有让每个 band 各占一行。**
+
+### 影响
+
+band 同 y 意味着容器重叠。`auto` 策略下 workflow 有容器时走 Layered（C19 后的规则），
+所以这个路径主要通过显式 `layout: flow` 触发。
+
+### 与 C18/C19 的关系
+
+- C19 修了 Flow 主路径（无容器序列）的竖向方向
+- 这条是 Flow 的 **banded 路径**（有容器）未堆叠
+
+两者都在 `FlowAndTreeLayoutEngine` 内，但不同方法。
+
+**未修复**。优先级 P2：默认策略不会走到，需显式指定。
+
+**已记录到测试**：`BothEnginesAgreeOnBandOrder` 现在断言两个引擎**一致**，
+若这条修好会自动通过。

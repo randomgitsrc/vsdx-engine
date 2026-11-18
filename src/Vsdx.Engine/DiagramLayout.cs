@@ -312,4 +312,45 @@ public static class DiagramLayout
             }
         }
     }
+
+    /// <summary>
+    /// Reflects every page about its horizontal centre, so top and bottom trade places.
+    ///
+    /// The mirror image of <see cref="MirrorHorizontally"/>: Flow already runs left to right, so
+    /// transposing it to satisfy TopToBottom maps its start onto the bottom of the sheet. Flipping Y
+    /// puts the start at the top, which is what "top to bottom" means.
+    /// </summary>
+    public static void MirrorVertically(Diagram diagram)
+    {
+        foreach (var page in diagram.Pages)
+        {
+            double height = page.Size?.Height ?? 0;
+            if (height <= 0) continue;
+
+            double Flip(double y) => height - y;
+
+            foreach (var node in page.Nodes) node.Bounds.Y = Flip(node.Bounds.Y);
+
+            foreach (var group in page.Groups)
+            {
+                if (group.Bounds is not null) group.Bounds.Y = Flip(group.Bounds.Y);
+            }
+
+            foreach (var text in page.TextBlocks) text.Bounds.Y = Flip(text.Bounds.Y);
+            foreach (var path in page.Paths) path.Bounds.Y = Flip(path.Bounds.Y);
+
+            foreach (var edge in page.Edges)
+            {
+                if (edge.FromPoint is not null) edge.FromPoint.Y = Flip(edge.FromPoint.Y);
+                if (edge.ToPoint is not null) edge.ToPoint.Y = Flip(edge.ToPoint.Y);
+
+                if (edge.Waypoints is null) continue;
+                foreach (var point in edge.Waypoints)
+                {
+                    if (point is null) continue;
+                    point.Y = Flip(point.Y);
+                }
+            }
+        }
+    }
 }

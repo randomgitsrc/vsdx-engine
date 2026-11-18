@@ -250,19 +250,23 @@ public sealed class LayoutTests
         var org = new Diagram { Type = "org", Pages = { ThreeNodePage() } };
         Assert.Equal(LayoutStrategy.Tree, DiagramLayoutEngine.SuggestStrategy(org));
 
-        // A workflow without any decision node is a plain pipeline: bands read better than a
-        // single long chain, so "workflow" alone must not force Flow.
+        // A workflow without containers is a plain pipeline and reads along its edges. Bands read
+        // better only when there are containers to band — which the Layered assertions above cover.
         var flow = new Diagram { Type = "workflow", Pages = { ThreeNodePage() } };
-        Assert.Equal(LayoutStrategy.Layered, DiagramLayoutEngine.SuggestStrategy(flow));
+        Assert.Equal(LayoutStrategy.Flow, DiagramLayoutEngine.SuggestStrategy(flow));
     }
 
     [Fact]
-    public void Auto_WorkflowWithoutDecisionsUsesLayered()
+    public void Auto_WorkflowWithoutDecisionsUsesFlow()
     {
+        // A workflow without containers reads along its edges, with or without a decision diamond.
+        // Requiring one sent a pure data flow to Layered, where its eight-node chain became eight
+        // layers: measured at 23.3" x 7.5", a 3.1:1 strip, against 8.5" x 15.6" from Flow — which
+        // also scored higher. Layering remains right as soon as containers are present.
         var page = ThreeNodePage();   // no Diamond nodes
         var flow = new Diagram { Type = "workflow", Pages = { page } };
 
-        Assert.Equal(LayoutStrategy.Layered, DiagramLayoutEngine.SuggestStrategy(flow));
+        Assert.Equal(LayoutStrategy.Flow, DiagramLayoutEngine.SuggestStrategy(flow));
 
         page.Nodes.Add(new Node
         {

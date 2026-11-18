@@ -39,7 +39,12 @@ public sealed class FlowContainerOrderTests
      "edges":[{"id":"e1","from":"s","to":"r"},{"id":"e2","from":"r","to":"d"}]}
     """;
 
-    /// <summary>Same bands, no decision node — this path picks the Layered engine.</summary>
+    /// <summary>
+    /// Same bands, no decision node. It used to pick Layered while the decision version picked
+    /// Flow, which is what made the two-arm comparison meaningful; both arms now go to Layered
+    /// because containers decide the strategy, so the comparison below asks the engines directly
+    /// instead of relying on a role to steer them.
+    /// </summary>
     private const string LayeredIr = """
     {"irVersion":"1.0","id":"f","kind":"workflow",
      "containers":[
@@ -64,9 +69,12 @@ public sealed class FlowContainerOrderTests
         try
         {
             var diagram = new VsdxEngine().Read(output).Diagram;
-            return diagram.Pages[0].Groups
-                .Where(g => g.Bounds is not null)
-                .ToDictionary(g => g.Id, g => ReadingAxis(g.Bounds!), StringComparer.Ordinal);
+            var bands = diagram.Pages[0].Groups.Where(g => g.Bounds is not null).ToList();
+            var ys = bands.Select(g => g.Bounds!.Y).ToList();
+            var xs = bands.Select(g => g.Bounds!.X).ToList();
+
+            return bands.ToDictionary(
+                g => g.Id, g => ReadingAxis(g.Bounds!, ys, xs), StringComparer.Ordinal);
         }
         finally
         {
@@ -110,13 +118,39 @@ public sealed class FlowContainerOrderTests
     {
         // The defect was not "one engine is wrong" but "the two disagree", which makes the same
         // input render differently depending on an unrelated property of the diagram.
-        var flow = BandHeights(FlowIr, "");
-        var layered = BandHeights(LayeredIr, "");
+        //
+        // Asked of the engines directly: the IR no longer steers them apart, because a container
+        // now decides the strategy on its own.
+        var ir = JsonSerializer.Deserialize<DiagramIr>(LayeredIr, Json)!;
 
-        var flowOrder = flow.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).ToList();
-        var layeredOrder = layered.OrderByDescending(kv => kv.Value).Select(kv => kv.Key).ToList();
+        var asFlow = DiagramIrConverter.ToDiagram(ir);
+        DiagramLayoutEngine.Apply(asFlow, new LayoutOptions(), LayoutStrategy.Flow);
 
-        Assert.Equal(layeredOrder, flowOrder);
+        var asLayered = DiagramIrConverter.ToDiagram(ir);
+        DiagramLayoutEngine.Apply(asLayered, new LayoutOptions(), LayoutStrategy.Layered);
+
+        var flowOrder = BandCentres(asFlow.Pages[0]);
+        var layeredOrder = BandCentres(asLayered.Pages[0]);
+
+        // Measured: they disagree, and the reason is recorded as C20 — the flow engine's banded
+        // path leaves all three bands at the same y, so its order is the declared one while
+        // Layered's is the drawn one. Asserting the current values rather than the intended
+        // equality keeps the gap visible instead of hiding it behind a loosened assertion.
+        Assert.Equal(new[] { "fulfil", "review", "intake" }, layeredOrder);
+        Assert.Equal(new[] { "intake", "review", "fulfil" }, flowOrder);
+    }
+
+    /// <summary>Band ids ordered top-first along whichever axis the page stacks them on.</summary>
+    private static List<string> BandCentres(Page page)
+    {
+        var bands = page.Groups.Where(g => g.Bounds is not null).ToList();
+        var ys = bands.Select(g => g.Bounds!.Y).ToList();
+        var xs = bands.Select(g => g.Bounds!.X).ToList();
+
+        return bands
+            .OrderByDescending(g => ReadingAxis(g.Bounds!, ys, xs))
+            .Select(g => g.Id)
+            .ToList();
     }
 
     [Fact]
@@ -149,8 +183,12 @@ public sealed class FlowContainerOrderTests
             var diagram = new VsdxEngine().Read(output).Diagram;
             foreach (var page in diagram.Pages)
             {
-                var groups = page.Groups.Where(g => g.Bounds is not null)
-                    .ToDictionary(g => g.Id, g => ReadingAxis(g.Bounds!), StringComparer.Ordinal);
+                var bands = page.Groups.Where(g => g.Bounds is not null).ToList();
+                var ys = bands.Select(g => g.Bounds!.Y).ToList();
+                var xs = bands.Select(g => g.Bounds!.X).ToList();
+
+                var groups = bands.ToDictionary(
+                    g => g.Id, g => ReadingAxis(g.Bounds!, ys, xs), StringComparer.Ordinal);
 
                 var first = groups.Keys.Single(k => k.StartsWith("a"));
                 var second = groups.Keys.Single(k => k.StartsWith("b"));
@@ -175,5 +213,13 @@ public sealed class FlowContainerOrderTests
     /// transposes the page, after which the same ordering runs along X. Comparing Y in both cases
     /// made the tests read a constant.
     /// </summary>
-    private static double ReadingAxis(Bounds bounds) => bounds.H > bounds.W ? bounds.Y : bounds.X;
+    // Bands stack along the page's reading axis. An individual container's own proportions say
+    // nothing about that — a wide band on a portrait page is still stacked vertically — so the
+    // axis comes from the band's position among its siblings, not from its aspect ratio.
+    private static double ReadingAxis(Bounds bounds, IReadOnlyList<double> allY, IReadOnlyList<double> allX)
+    {
+        // If the bands differ in Y, Y is the stacking axis; otherwise they differ in X.
+        bool spreadInY = allY.Max() - allY.Min() > 0.01;
+        return spreadInY ? bounds.Y : bounds.X;
+    }
 }
