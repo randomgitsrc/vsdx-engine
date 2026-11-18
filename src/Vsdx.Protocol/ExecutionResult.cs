@@ -129,6 +129,15 @@ public sealed class ExecutionWarning
     public string Code { get; set; } = "";
     public string Message { get; set; } = "";
     public string? Target { get; set; }
+
+    /// <summary>
+    /// `error` or `warning`, mirroring the analyser's own level.
+    ///
+    /// Without it a caller cannot reconcile `warnings` with `hardConstraintsPassed`: an error-level
+    /// problem — a node pushed off the page — arrived in this array indistinguishable from a loose margin,
+    /// while `errors` stayed empty and the gate said the run had failed.
+    /// </summary>
+    public string Severity { get; set; } = "warning";
 }
 
 public sealed class ExecutionError
@@ -195,7 +204,8 @@ public static class ExecutionResultBuilder
         {
             Code = i.Code,
             Message = i.Message,
-            Target = i.Target
+            Target = i.Target,
+            Severity = i.Severity
         }).ToList();
     }
 

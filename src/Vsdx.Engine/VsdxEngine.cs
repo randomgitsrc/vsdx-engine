@@ -105,12 +105,19 @@ public sealed class VsdxEngine
         if (options?.ValidateAfterSave ?? true)
         {
             var written = _reader.Read(outputPath);
-            foreach (var issue in LayoutAnalyzer.Analyze(written.Diagram).Errors)
+            // Report every layout issue at its own level. This walked `Errors` only and passed each one
+            // to `Warn`, so an error-level problem — a node pushed off the page — arrived as a warning and
+            // the caller saw "one warning" next to `hardConstraintsPassed: false` with no way to connect
+            // them. Warnings and infos were dropped entirely.
+            foreach (var issue in LayoutAnalyzer.Analyze(written.Diagram).Issues)
             {
-                result.Compatibility.Warn(
-                    "layout." + issue.Code,
-                    string.IsNullOrEmpty(issue.Message) ? issue.Code : issue.Message,
-                    issue.Targets?.FirstOrDefault());
+                var code = "layout." + issue.Code;
+                var message = string.IsNullOrEmpty(issue.Message) ? issue.Code : issue.Message;
+                var target = issue.Targets?.FirstOrDefault();
+
+                if (issue.Severity == "error") result.Compatibility.Error(code, message, target);
+                else if (issue.Severity == "warning") result.Compatibility.Warn(code, message, target);
+                else result.Compatibility.Info(code, message, target);
             }
         }
 
