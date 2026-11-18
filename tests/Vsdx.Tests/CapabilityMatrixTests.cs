@@ -38,6 +38,16 @@ public sealed class CapabilityMatrixTests
         var text = File.ReadAllText(MatrixPath());
         var body = text[..text.IndexOf("## 10.", StringComparison.Ordinal)];
 
+        // §9a lists verification levels (L1-L4), which describe how far verification went rather than
+        // what the product can do. Mixing them into capability counts made "81 verified" read as
+        // "81 capabilities verified" when three of them were verification stages — and putting L1-L3
+        // ✅ next to L4 ⛔ invited reading it as "only L4 left", which is the opposite of the point.
+        int levelsAt = body.IndexOf("### 9a.", StringComparison.Ordinal);
+        int depsAt = body.IndexOf("### 9b.", StringComparison.Ordinal);
+
+        if (levelsAt > 0 && depsAt > levelsAt)
+            body = body[..levelsAt] + body[depsAt..];
+
         var counts = Markers.ToDictionary(m => m, _ => 0, StringComparer.Ordinal);
 
         foreach (var line in body.Split('\n'))
@@ -96,6 +106,16 @@ public sealed class CapabilityMatrixTests
     }
 
     [Fact]
+    public void VerificationLevelsAreCountedSeparately()
+    {
+        // The exclusion above must stay in place; if it is removed the totals drift again.
+        var matrix = File.ReadAllText(MatrixPath());
+
+        Assert.Contains("### 9a. 验证层级", matrix);
+        Assert.Contains("不计入本表", matrix);
+    }
+
+    [Fact]
     public void TheStatedTotalMatchesTheSum()
     {
         var actual = CountRows();
@@ -113,6 +133,16 @@ public sealed class CapabilityMatrixTests
         // The specific drift this test was written for.
         var text = File.ReadAllText(MatrixPath());
         var body = text[..text.IndexOf("## 10.", StringComparison.Ordinal)];
+
+        // §9a lists verification levels (L1-L4), which describe how far verification went rather than
+        // what the product can do. Mixing them into capability counts made "81 verified" read as
+        // "81 capabilities verified" when three of them were verification stages — and putting L1-L3
+        // ✅ next to L4 ⛔ invited reading it as "only L4 left", which is the opposite of the point.
+        int levelsAt = body.IndexOf("### 9a.", StringComparison.Ordinal);
+        int depsAt = body.IndexOf("### 9b.", StringComparison.Ordinal);
+
+        if (levelsAt > 0 && depsAt > levelsAt)
+            body = body[..levelsAt] + body[depsAt..];
 
         var row = body.Split('\n').FirstOrDefault(l => l.Contains("自由路径", StringComparison.Ordinal) &&
                                                         l.StartsWith("| ", StringComparison.Ordinal));
