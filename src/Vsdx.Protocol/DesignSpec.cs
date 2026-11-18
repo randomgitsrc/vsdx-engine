@@ -119,67 +119,6 @@ public static class DesignSpecApplier
         var applied = new List<string>();
         var unmet = new List<UnmetConstraint>();
 
-        // --- Layout --------------------------------------------------------
-        var strategy = spec.Layout.Equals("auto", StringComparison.OrdinalIgnoreCase)
-            ? DiagramLayoutEngine.SuggestStrategy(diagram)
-            : DiagramLayoutEngine.Parse(spec.Layout);
-
-        bool manualRequested = spec.Layout.Equals("manual", StringComparison.OrdinalIgnoreCase);
-        bool wantsTopToBottom = spec.Direction.Equals("topToBottom", StringComparison.OrdinalIgnoreCase);
-
-        // Manual promises that the author's coordinates survive untouched, so a top-to-bottom
-        // request cannot be honoured there. Saying so is the only honest option: silently
-        // ignoring it would leave the caller believing the page was transposed.
-        if (manualRequested && wantsTopToBottom)
-        {
-            unmet.Add(new UnmetConstraint
-            {
-                Code = "direction.manual-ignored",
-                Target = "layout",
-                Reason = "manual 保留作者坐标，direction=topToBottom 未应用"
-            });
-        }
-
-        if (!string.IsNullOrWhiteSpace(spec.Layout) && !manualRequested)
-        {
-            var options = new LayoutOptions
-            {
-                NodeGapX = spec.Spacing.NodeGapX ?? 0.55,
-                BandGapY = spec.Spacing.BandGapY ?? 0.85,
-                Direction = wantsTopToBottom
-                    ? LayoutDirection.TopToBottom
-                    : LayoutDirection.LeftToRight
-            };
-
-            DiagramLayoutEngine.Apply(diagram, options, strategy);
-            applied.Add($"layout={strategy}");
-
-            // Per-container overrides are reported, not silently dropped.
-            if (spec.ContainerLayouts is { Count: > 0 })
-            {
-                foreach (var (containerId, requested) in spec.ContainerLayouts)
-                {
-                    var result = LocalRelayout.Apply(
-                        diagram, containerId, DiagramLayoutEngine.Parse(requested));
-
-                    if (result.Ok) applied.Add($"container {containerId} relaid as {requested}");
-                    else
-                        unmet.Add(new UnmetConstraint
-                        {
-                            Code = "container_layout",
-                            Target = containerId,
-                            Reason = result.Note ?? "无法应用容器级布局"
-                        });
-                }
-            }
-        }
-        else
-        {
-            applied.Add("layout=manual");
-        }
-
-        DiagramLayout.Apply(diagram);
-
         // --- Typography ----------------------------------------------------
         if (spec.Typography.BaseSize is double baseSize || spec.Typography.FontFamily is not null)
         {
@@ -252,6 +191,74 @@ public static class DesignSpecApplier
                 });
             }
         }
+
+        // Sizing has to run here: after fonts are final, before placement. Without this stage the
+        // spec path kept every node at the converter's placeholder box, so a 24pt request and an
+        // 11pt request produced identical geometry — passing a spec was worse than passing none,
+        // because the no-spec branch does size.
+        DiagramSizer.Apply(diagram);
+        applied.Add("sizing");
+
+        // --- Layout --------------------------------------------------------
+        var strategy = spec.Layout.Equals("auto", StringComparison.OrdinalIgnoreCase)
+            ? DiagramLayoutEngine.SuggestStrategy(diagram)
+            : DiagramLayoutEngine.Parse(spec.Layout);
+
+        bool manualRequested = spec.Layout.Equals("manual", StringComparison.OrdinalIgnoreCase);
+        bool wantsTopToBottom = spec.Direction.Equals("topToBottom", StringComparison.OrdinalIgnoreCase);
+
+        // Manual promises that the author's coordinates survive untouched, so a top-to-bottom
+        // request cannot be honoured there. Saying so is the only honest option: silently
+        // ignoring it would leave the caller believing the page was transposed.
+        if (manualRequested && wantsTopToBottom)
+        {
+            unmet.Add(new UnmetConstraint
+            {
+                Code = "direction.manual-ignored",
+                Target = "layout",
+                Reason = "manual 保留作者坐标，direction=topToBottom 未应用"
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(spec.Layout) && !manualRequested)
+        {
+            var options = new LayoutOptions
+            {
+                NodeGapX = spec.Spacing.NodeGapX ?? 0.55,
+                BandGapY = spec.Spacing.BandGapY ?? 0.85,
+                Direction = wantsTopToBottom
+                    ? LayoutDirection.TopToBottom
+                    : LayoutDirection.LeftToRight
+            };
+
+            DiagramLayoutEngine.Apply(diagram, options, strategy);
+            applied.Add($"layout={strategy}");
+
+            // Per-container overrides are reported, not silently dropped.
+            if (spec.ContainerLayouts is { Count: > 0 })
+            {
+                foreach (var (containerId, requested) in spec.ContainerLayouts)
+                {
+                    var result = LocalRelayout.Apply(
+                        diagram, containerId, DiagramLayoutEngine.Parse(requested));
+
+                    if (result.Ok) applied.Add($"container {containerId} relaid as {requested}");
+                    else
+                        unmet.Add(new UnmetConstraint
+                        {
+                            Code = "container_layout",
+                            Target = containerId,
+                            Reason = result.Note ?? "无法应用容器级布局"
+                        });
+                }
+            }
+        }
+        else
+        {
+            applied.Add("layout=manual");
+        }
+
+        DiagramLayout.Apply(diagram);
 
         // --- Container styling ---------------------------------------------
         // Containers previously inherited the writer's default fill, so every band rendered in
