@@ -60,7 +60,18 @@ dotnet tool install --global --add-source ./artifacts AgentVsdx.Engine.Tool
 vsdx-tool version --json
 ```
 
+若上一条报 `command not found`，把工具目录加入 PATH。它**不一定**是 `~/.dotnet/tools`——
+设了 `DOTNET_CLI_HOME` 时会跟着变：
+
+```bash
+dotnet tool list --global                 # 确认已安装
+echo "$DOTNET_CLI_HOME/.dotnet/tools"     # 为空时才是 ~/.dotnet/tools
+export PATH="${DOTNET_CLI_HOME:-$HOME}/.dotnet/tools:$PATH"
+```
+
 卸载：`dotnet tool uninstall --global AgentVsdx.Engine.Tool`
+
+实测（0.9.0）：pack → install → `vsdx-tool version` → uninstall 全部通过。
 
 ### 方式 C：在自有项目中引用
 
