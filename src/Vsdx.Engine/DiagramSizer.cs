@@ -91,6 +91,29 @@ public static class DiagramSizer
                     }
                 }
 
+                // A shape whose drawable area is smaller than its bounds needs a proportionally
+                // larger box. Measured on a circle: "Web 商城" at 14pt needed 0.82" and the box was
+                // 0.70" — the text fitted the bounding rectangle and still clipped, because only
+                // ~70% of a circle's diameter is usable.
+                double factor = ShapeGeometry.InscribedFactor(node.Shape);
+                if (factor < 1.0)
+                {
+                    // A square-bounded shape needs one side that satisfies both dimensions.
+                    // Padding width and height separately and then taking the larger produced a
+                    // circle nearly twice the size it needed: the height was already the smaller
+                    // dimension, and squaring up adopted the inflated width.
+                    if (ShapeGeometry.IsSquareShape(node.Shape))
+                    {
+                        double side = Math.Max(targetW, targetH) / factor;
+                        targetW = targetH = side;
+                    }
+                    else
+                    {
+                        targetW /= factor;
+                        targetH /= factor;
+                    }
+                }
+
                 bool changed = Math.Abs(targetW - node.Bounds.W) > 0.01
                             || Math.Abs(targetH - node.Bounds.H) > 0.01;
 
@@ -101,10 +124,17 @@ public static class DiagramSizer
                     report.NodesResized++;
                 }
 
-                if (!string.IsNullOrEmpty(node.Text) &&
-                    !measured.FitsWithin(node.Bounds.W, node.Bounds.H, 0.03))
+                // Measured against the usable area, not the bounding box — checking the box is what
+                // let clipped circles pass as fine.
+                if (!string.IsNullOrEmpty(node.Text))
                 {
-                    report.Issues.Add($"节点 '{node.Id}' 文字仍超出框体");
+                    double usableW = node.Bounds.W * ShapeGeometry.InscribedFactor(node.Shape);
+                    double usableH = node.Bounds.H * ShapeGeometry.InscribedFactor(node.Shape);
+
+                    if (!measured.FitsWithin(usableW, usableH, 0.03))
+                    {
+                        report.Issues.Add($"节点 '{node.Id}' 文字仍超出可用区域");
+                    }
                 }
             }
 
