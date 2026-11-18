@@ -2,6 +2,10 @@
 
 > 本文档记录 **OfficeIMO.Visio 3.6.1 的实际能力验证结果**。所有结论均来自本仓库中真实运行的代码，不采信 README 的功能描述。
 >
+> **性质：稳定的技术依据，不是阶段快照。** 它回答"这个后端能不能用、需在哪里补偿"，
+> 答案不随后续功能增加而改变。四项限制（L1–L4）的补偿实现分别在
+> `Vsdx.Validator`、`Vsdx.Renderer/FontResolver`、`AutoResize=false` 与 `Vsdx.Adapters` 封装中。
+>
 > 验证环境：Ubuntu 24.04 / WSL2，.NET SDK 8.0.428，OfficeIMO.Visio 3.6.1（commit `923a2f612e7f24f6893d97b0798c377165603e18`）。
 
 ---
