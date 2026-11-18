@@ -56,6 +56,17 @@ public sealed class ProjectConventionsTests
     }
 
     [Fact]
+    public void ItWarnsThatAFailureMayBeStale()
+    {
+        // Two rounds were lost to chasing a failure that had already been fixed, or to believing a
+        // stale binary. Re-running the one test after a full rebuild settles it in seconds.
+        var agents = Agents();
+
+        Assert.Contains("全量重建", agents);
+        Assert.Contains("单独重跑", agents);
+    }
+
+    [Fact]
     public void ItDeclaresThatL4HasNotRun()
     {
         var agents = Agents();
