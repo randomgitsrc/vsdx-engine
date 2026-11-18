@@ -61,5 +61,6 @@ desktop.ini
 # each round: forgetting to add r5 is exactly how 297 files got committed once.
 .review-scratch*/
 .p9/
+.lab/
 .scratch/
 *.review.json
