@@ -26,7 +26,17 @@ public static class LayoutAnalyzer
     private static void AnalyzePage(Page page, LayoutAnalyzerOptions options, LayoutReport report)
     {
         var nodes = page.Nodes;
-        if (nodes.Count == 0) return;
+
+        // A page of only text is legal — a title sheet, a note page — so the decoration checks must
+        // still run. Returning here skipped every one of them: measured on a two-block fixture the
+        // analyser reported nothing because there were no nodes to start from.
+        if (nodes.Count == 0)
+        {
+            CheckTextAgainstText(page, options, report);
+            CheckTextAgainstNodes(page, options, report);
+            CheckTextAgainstContainers(page, options, report);
+            return;
+        }
 
         // ---- 1. Node overlap ------------------------------------------------
         for (int i = 0; i < nodes.Count; i++)
@@ -399,6 +409,7 @@ public static class LayoutAnalyzer
         CheckGroupRelations(page, options, report);
         CheckTextAgainstContainers(page, options, report);
         CheckTextAgainstNodes(page, options, report);
+        CheckTextAgainstText(page, options, report);
 
         // ---- 7c. Row alignment and size uniformity ---------------------------
         CheckRowsAndSizes(nodes, options, page, report);
@@ -508,6 +519,43 @@ public static class LayoutAnalyzer
     /// A block wholly inside a node is left alone: an oversized node with a caption in it is a
     /// deliberate overlay, not a collision.
     /// </summary>
+    /// <summary>
+    /// Flags two text blocks lying on each other.
+    ///
+    /// Decorations are clamped independently, so when several are pushed past the same page edge they
+    /// all land on that edge and their relative spacing collapses. Measured on the arch example:
+    /// title at y=9.25 (h 0.60) over subtitle at y=9.35 (h 0.40) — 0.40" of overlap — plus legend and
+    /// note overlapping 0.12". Nothing reported it, because text was only compared with nodes and
+    /// containers.
+    /// </summary>
+    private static void CheckTextAgainstText(Page page, LayoutAnalyzerOptions options, LayoutReport report)
+    {
+        var blocks = page.TextBlocks.Where(t => !string.IsNullOrWhiteSpace(t.Text)).ToList();
+        if (blocks.Count < 2) return;
+
+        for (int i = 0; i < blocks.Count; i++)
+        for (int j = i + 1; j < blocks.Count; j++)
+        {
+            var a = blocks[i];
+            var b = blocks[j];
+
+            double ix = OverlapExtentX(a.Bounds, b.Bounds);
+            double iy = OverlapExtentY(a.Bounds, b.Bounds);
+            if (ix <= 0 || iy <= 0) continue;
+
+            report.Add(new LayoutIssue
+            {
+                Code = "text.overlaps-text",
+                Severity = "warning",
+                Page = page.Name,
+                Targets = new[] { a.Id, b.Id },
+                Message = $"文本块 '{a.Id}' 与 '{b.Id}' 重叠（{ix:F2}\" × {iy:F2}\"）",
+                RootCause = "装饰元素各自独立夹紧到页面边界，相对间距被压缩",
+                RecommendedFix = "拉开两块文本的间距，或调整它们在 IR 中的坐标"
+            });
+        }
+    }
+
     private static void CheckTextAgainstNodes(Page page, LayoutAnalyzerOptions options, LayoutReport report)
     {
         if (page.TextBlocks.Count == 0 || page.Nodes.Count == 0) return;
