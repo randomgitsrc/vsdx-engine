@@ -3,7 +3,15 @@ namespace Vsdx.Model;
 /// <summary>Result of an operation that may report compatibility loss.</summary>
 public sealed class CompatibilityReport
 {
-    public bool Lossless => Issues.Count == 0;
+    /// <summary>
+    /// True when nothing was lost — that is, no errors and no warnings.
+    ///
+    /// This used to be `Issues.Count == 0`, which counted informational notes. A clean round trip
+    /// therefore reported `lossless: false` while carrying only observations ("wrote 2 text blocks",
+    /// "restored shape order"): the flag said the file lost fidelity when it had lost nothing, and the
+    /// useful notes read as evidence of damage.
+    /// </summary>
+    public bool Lossless => Issues.All(i => i.Severity == "info");
     public List<CompatibilityIssue> Issues { get; } = new();
 
     public void Add(string severity, string code, string message, string? target = null) =>
