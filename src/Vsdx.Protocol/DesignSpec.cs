@@ -209,6 +209,50 @@ public static class DesignSpecApplier
             applied.Add("typography");
         }
 
+        // --- Palette -------------------------------------------------------
+        // Applied first, so later defaults fill only what it leaves unset. A palette is the
+        // broadest layer: object style beats it, role colour beats it, and the band tints below
+        // only supply values it does not define.
+        Palettes.Definition? palette = null;
+        if (!string.IsNullOrWhiteSpace(spec.Theme?.Palette))
+        {
+            if (Palettes.TryGet(spec.Theme.Palette, out var found))
+            {
+                palette = found;
+                applied.Add($"theme.palette={found.Name}");
+
+                foreach (var page in diagram.Pages)
+                {
+                    foreach (var node in page.Nodes)
+                    {
+                        // An explicit fill is the author's decision; the palette is only a default.
+                        if (node.Style?.Fill is not null) continue;
+
+                        var colour = node.Type is not null && found.Roles.TryGetValue(node.Type, out var role)
+                            ? role
+                            : found.Default;
+
+                        node.Style ??= new ShapeStyle();
+                        node.Style.Fill = colour;
+                        if (node.Style.TextColor is null)
+                            node.Style.TextColor = ColorUtil.ReadableTextColor(colour);
+                    }
+                }
+            }
+            else
+            {
+                // Silently accepting an unknown name would leave the caller believing the style
+                // was applied, which is the failure mode this whole pass exists to remove.
+                unmet.Add(new UnmetConstraint
+                {
+                    Code = "theme.palette-unknown",
+                    Target = "theme.palette",
+                    Reason = $"未知调色板 '{spec.Theme.Palette}'，可用：" +
+                             string.Join(" / ", Palettes.Names.OrderBy(n => n, StringComparer.Ordinal))
+                });
+            }
+        }
+
         // --- Container styling ---------------------------------------------
         // Containers previously inherited the writer's default fill, so every band rendered in
         // the same pale blue and the diagram read as one undifferentiated block. Bands get a
