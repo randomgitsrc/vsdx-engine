@@ -603,6 +603,26 @@ public static class DesignSpecApplier
                                  + "，未缩小内容；超出的部分在页面之外"
                     });
                 }
+
+                // Whether or not a standard sheet was chosen, check what actually landed on it.
+                // `paper` mode sized the page and verified nothing: measured on a 20-node chain, 12 of
+                // 20 shapes sat outside the sheet and the result was still `partial` with no
+                // `canvas.exceeded` — a file whose shapes are off the page is not a deliverable.
+                int outsideCount = CountOutsidePage(page);
+
+                if (outsideCount > 0)
+                {
+                    unmet.Add(new UnmetConstraint
+                    {
+                        Code = "canvas.exceeded",
+                        Target = page.Name,
+                        // Hard: a file whose shapes sit outside the page cannot be delivered as-is.
+                        // Reporting it as a soft note let the status stay `partial`.
+                        IsHard = true,
+                        Reason = $"{outsideCount} 个对象位于页面之外"
+                                 + $"（页面 {page.Size.Width:0.##}x{page.Size.Height:0.##} 英寸）"
+                    });
+                }
             }
         }
 
@@ -838,6 +858,30 @@ public static class DesignSpecApplier
     /// Mirrors the mapping the renderer uses; a caption should not be sized like a diagram title
     /// just because both happen to be text blocks.
     /// </summary>
+    /// <summary>Counts objects whose bounds fall outside the page.</summary>
+    private static int CountOutsidePage(Model.Page page)
+    {
+        if (page.Size is not { Width: > 0, Height: > 0 } size) return 0;
+
+        const double Eps = 1e-6;
+
+        static bool Outside(Model.Bounds? b, double w, double h)
+        {
+            if (b is null) return false;
+
+            return b.X - b.W / 2 < -Eps || b.X + b.W / 2 > w + Eps ||
+                   b.Y - b.H / 2 < -Eps || b.Y + b.H / 2 > h + Eps;
+        }
+
+        int count = 0;
+
+        foreach (var node in page.Nodes) if (Outside(node.Bounds, size.Width, size.Height)) count++;
+        foreach (var group in page.Groups) if (Outside(group.Bounds, size.Width, size.Height)) count++;
+        foreach (var text in page.TextBlocks) if (Outside(text.Bounds, size.Width, size.Height)) count++;
+
+        return count;
+    }
+
     private static double TierForRole(string? role, TypeScale scale) => role?.ToLowerInvariant() switch
     {
         "title" => scale.DiagramTitle,
