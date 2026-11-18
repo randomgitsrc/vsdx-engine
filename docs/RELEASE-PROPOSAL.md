@@ -10,7 +10,7 @@
 | 版本号 | `1.0.0`（`Directory.Build.props`） |
 | 打包 | ✅ `dotnet pack` 成功产出 `Vsdx.Engine.1.0.0.nupkg` |
 | Git tag | ⬜ **无任何 tag** |
-| CHANGELOG | ⬜ 无 |
+| CHANGELOG | ✅ `CHANGELOG.md`（`[Unreleased]`，与版本号的关系已注明） |
 | 质量 | 755 测试通过，18/18 基准通过 |
 
 ## 二、发布前必须解决的一项
@@ -37,7 +37,7 @@
 - [x] 打包可成功
 - [x] 测试与基准通过
 - [x] 限制文档已如实标注（`docs/limitations.md` §1、§10）
-- [ ] CHANGELOG / 发布说明
+- [x] CHANGELOG（`CHANGELOG.md`）
 - [ ] 独立审查（本轮已完成一次，覆盖 P0/P1/P2 共 15 项）
 - [ ] 版本号确认（1.0.0 或 0.9.0）
 - [ ] Git tag 与 GitHub Release
@@ -46,6 +46,7 @@
 
 1. **版本号**：1.0.0 还是 0.9.0？
 2. **是否先做 L4**？
-3. 若选 B 或 C，我可以立即写 CHANGELOG 并准备 tag，等你执行 `git tag`。
+3. CHANGELOG 已就绪。选定版本号后，我可以立即准备 tag 与 Release 说明——
+   **执行 `git tag` 与创建 Release 仍需你来做或明确授权。**
 
 **在你批准之前，我不会打 tag，也不会创建 Release。**
