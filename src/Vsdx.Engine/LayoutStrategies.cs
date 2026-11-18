@@ -239,27 +239,10 @@ public static class DiagramLayoutEngine
     /// them invisible in the deliverable, which is worse. Nudging them inside is the honest
     /// middle: position is honoured where possible, corrected only when it would be lost.
     /// </summary>
-    private static void ClampDecorationsToPage(Page page)
-    {
-        if (page.Size is not { Width: > 0 } size) return;
-
-        const double margin = DiagramSizer.PageMargin;
-
-        static double Clamp(double value, double half, double limit) =>
-            Math.Max(half + margin, Math.Min(value, limit - half - margin));
-
-        foreach (var text in page.TextBlocks)
-        {
-            text.Bounds.X = Math.Round(Clamp(text.Bounds.X, text.Bounds.W / 2, size.Width) * 40) / 40;
-            text.Bounds.Y = Math.Round(Clamp(text.Bounds.Y, text.Bounds.H / 2, size.Height) * 40) / 40;
-        }
-
-        foreach (var path in page.Paths)
-        {
-            path.Bounds.X = Math.Round(Clamp(path.Bounds.X, path.Bounds.W / 2, size.Width) * 40) / 40;
-            path.Bounds.Y = Math.Round(Clamp(path.Bounds.Y, path.Bounds.H / 2, size.Height) * 40) / 40;
-        }
-    }
+    private static void ClampDecorationsToPage(Page page) =>
+        // Delegated: clamping each decoration on its own collapsed the spacing between blocks that
+        // overflowed the same edge. DecorationLayout moves them as a group instead.
+        DecorationLayout.ClampToPage(new Diagram { Pages = { page } });
 
     /// <summary>Resolves a strategy name to an engine.</summary>
     public static ILayoutEngine Create(LayoutStrategy strategy) => strategy switch

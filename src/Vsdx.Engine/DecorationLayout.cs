@@ -148,4 +148,67 @@ public static class DecorationLayout
 
         return page.Edges.Where(e => ids.Contains(e.Id)).ToList();
     }
+
+    /// <summary>
+    /// Keeps decorations on the sheet without collapsing their spacing.
+    ///
+    /// Each block used to be clamped on its own, so everything overflowing the same edge landed on
+    /// the same boundary value: measured on the arch example, a title and subtitle authored 0.6"
+    /// apart came out 0.1" apart with a 0.40" overlap. The author's relative spacing is intent, so
+    /// blocks that overflow the same edge move together, and only by enough to bring the outermost
+    /// one inside.
+    /// </summary>
+    public static void ClampToPage(Diagram diagram)
+    {
+        foreach (var page in diagram.Pages)
+        {
+            if (page.Size is not { Width: > 0, Height: > 0 } size) continue;
+
+            ClampGroup(page.TextBlocks.Select(t => t.Bounds).ToList(), size);
+            ClampGroup(page.Paths.Select(p => p.Bounds).ToList(), size);
+        }
+    }
+
+    private static void ClampGroup(List<Bounds> boxes, PageSize size)
+    {
+        if (boxes.Count == 0) return;
+
+        const double Margin = DiagramSizer.PageMargin;
+
+        // Horizontal: shift the whole set by the smallest amount that brings every box inside.
+        double left = boxes.Min(b => b.X - b.W / 2);
+        double right = boxes.Max(b => b.X + b.W / 2);
+
+        if (left < Margin)
+        {
+            double dx = Margin - left;
+            foreach (var b in boxes) b.X += dx;
+        }
+        else if (right > size.Width - Margin)
+        {
+            double dx = right - (size.Width - Margin);
+            foreach (var b in boxes) b.X -= dx;
+        }
+
+        double bottom = boxes.Min(b => b.Y - b.H / 2);
+        double top = boxes.Max(b => b.Y + b.H / 2);
+
+        if (top > size.Height - Margin)
+        {
+            double dy = top - (size.Height - Margin);
+            foreach (var b in boxes) b.Y -= dy;
+        }
+        else if (bottom < Margin)
+        {
+            double dy = Margin - bottom;
+            foreach (var b in boxes) b.Y += dy;
+        }
+
+        // Round once, at the end, so the shift stays uniform.
+        foreach (var b in boxes)
+        {
+            b.X = Math.Round(b.X * 40) / 40;
+            b.Y = Math.Round(b.Y * 40) / 40;
+        }
+    }
 }
