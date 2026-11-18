@@ -97,12 +97,36 @@ public static class LocalRelayout
                 }
             }
 
+            // Isolation says the other shapes were left alone; it says nothing about whether the
+            // container's new layout landed on top of them. Checked separately, because reporting
+            // isolation as success is how "container back relaid as grid" accompanied two overlapping
+            // pairs on overview.ir.json — web over api by 1.71", mobile over worker by 1.15".
+            var collisions = new List<string>();
+            var memberIds = members.Select(n => n.Id).ToHashSet(StringComparer.Ordinal);
+
+            foreach (var member in members)
+            {
+                foreach (var other in page.Nodes)
+                {
+                    if (memberIds.Contains(other.Id)) continue;
+                    if (!Overlaps(member.Bounds, other.Bounds)) continue;
+
+                    collisions.Add(
+                        $"'{member.Id}' overlaps '{other.Id}' " +
+                        $"[{member.Bounds.W:F2}x{member.Bounds.H:F2} at " +
+                        $"({member.Bounds.X:F2},{member.Bounds.Y:F2})]");
+                }
+            }
+
             return new LocalRelayoutResult
             {
                 GroupId = groupId,
                 Moved = moved,
-                Note = $"重排了容器 '{groupId}' 内的 {members.Count} 个节点",
-                IsolationBroken = false
+                Note = collisions.Count == 0
+                    ? $"重排了容器 '{groupId}' 内的 {members.Count} 个节点"
+                    : $"重排了容器 '{groupId}' 内的 {members.Count} 个节点，但与容器外 {collisions.Count} 个节点重叠",
+                IsolationBroken = false,
+                Collisions = collisions
             };
         }
 
@@ -188,6 +212,14 @@ public static class LocalRelayout
     }
 
     private static double Round(double v) => Math.Round(v * 40) / 40.0;
+
+    private static bool Overlaps(Bounds a, Bounds b)
+    {
+        double ox = Math.Min(a.X + a.W / 2, b.X + b.W / 2) - Math.Max(a.X - a.W / 2, b.X - b.W / 2);
+        double oy = Math.Min(a.Y + a.H / 2, b.Y + b.H / 2) - Math.Max(a.Y - a.H / 2, b.Y - b.H / 2);
+
+        return ox > 0.05 && oy > 0.05;
+    }
 }
 
 public sealed class LocalRelayoutResult
@@ -199,5 +231,13 @@ public sealed class LocalRelayoutResult
     /// <summary>True when a node outside the container moved, violating the isolation guarantee.</summary>
     public bool IsolationBroken { get; init; }
 
-    public bool Ok => !IsolationBroken && Moved.Count > 0;
+    /// <summary>
+    /// Members of the relayed container that now overlap a node outside it.
+    ///
+    /// Distinct from <see cref="IsolationBroken"/>: isolation says the other shapes were not moved,
+    /// this says the result does not land on them. Both must hold for the relayout to be usable.
+    /// </summary>
+    public IReadOnlyList<string> Collisions { get; init; } = Array.Empty<string>();
+
+    public bool Ok => !IsolationBroken && Collisions.Count == 0 && Moved.Count > 0;
 }
