@@ -164,24 +164,49 @@ public static class ExecutionResultBuilder
         }).ToList();
     }
 
-    /// <summary>Builds the IR-id → model-id mapping from the IR and the produced diagram.</summary>
+    /// <summary>
+    /// Maps every protocol object id to the shape that carries it.
+    ///
+    /// Covers all object kinds and all pages. The earlier version walked only nodes and
+    /// containers on the first page, so edges and text blocks were unmapped even in a one-page
+    /// diagram, and a paged IR — whose shorthand lists are empty — produced an empty map despite
+    /// the document being written. Anything driving incremental edits needs the full set: without
+    /// an entry for an edge or a label there is no route from its IR id to the shape holding it.
+    ///
+    /// Ids are expected to be unique across the whole IR, so a dictionary keyed by id is correct;
+    /// a duplicate would silently collapse two objects onto one entry, which the validator rejects
+    /// before this runs.
+    /// </summary>
     public static Dictionary<string, string> BuildMapping(DiagramIr ir, Diagram diagram)
     {
         var mapping = new Dictionary<string, string>(StringComparer.Ordinal);
-        var page = diagram.Pages.FirstOrDefault();
-        if (page is null) return mapping;
 
-        foreach (var node in ir.Nodes)
+        // Paged input carries its objects per page; the flat lists are the single-page shorthand.
+        // Take both, so neither form is silently dropped.
+        var sources = new List<IrPage>();
+        if (ir.Pages.Count > 0) sources.AddRange(ir.Pages);
+
+        if (ir.Nodes.Count > 0 || ir.Containers.Count > 0 || ir.Edges.Count > 0
+            || ir.TextBlocks.Count > 0 || ir.Paths.Count > 0)
         {
-            // The engine preserves node ids, so the mapping is the identity in the normal case.
-            var match = page.Nodes.FirstOrDefault(n => n.Id == node.Id);
-            mapping[node.Id] = match?.Id ?? node.Id;
+            sources.Add(new IrPage
+            {
+                Id = ir.Id,
+                Nodes = ir.Nodes,
+                Edges = ir.Edges,
+                Containers = ir.Containers,
+                TextBlocks = ir.TextBlocks,
+                Paths = ir.Paths
+            });
         }
 
-        foreach (var container in ir.Containers)
+        foreach (var source in sources)
         {
-            var match = page.Groups.FirstOrDefault(g => g.Id == container.Id);
-            mapping[container.Id] = match?.Id ?? container.Id;
+            foreach (var node in source.Nodes) mapping[node.Id] = node.Id;
+            foreach (var container in source.Containers) mapping[container.Id] = container.Id;
+            foreach (var edge in source.Edges) mapping[edge.Id] = edge.Id;
+            foreach (var text in source.TextBlocks) mapping[text.Id] = text.Id;
+            foreach (var path in source.Paths) mapping[path.Id] = path.Id;
         }
 
         return mapping;
