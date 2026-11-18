@@ -280,7 +280,8 @@ public static class DiagramIrConverter
                     Id = container.Id,
                     Name = container.Label ?? container.Id,
                     Kind = container.Kind is "lane" ? "container" : (container.Kind ?? "container"),
-                    ParentId = container.ParentId
+                    ParentId = container.ParentId,
+                    Order = container.Order
                 });
             }
 

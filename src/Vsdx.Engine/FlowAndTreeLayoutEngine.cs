@@ -88,9 +88,27 @@ public sealed class FlowLayoutEngine : ILayoutEngine
         var notes = new List<string>();
         var byId = page.Nodes.ToDictionary(n => n.Id, StringComparer.Ordinal);
 
+        // Descending, because rows are stacked upward from the page margin below. Taking bands in
+        // ascending Y put the bottom band first and drew the process bottom-up: a workflow
+        // declared intake -> review -> fulfil rendered with fulfilment at the top. LayeredLayoutEngine
+        // already ordered this way; the two engines disagreeing meant the same containers came out
+        // either way round depending on whether the diagram happened to contain a decision node.
+        // Declared order wins; geometry is only a fallback. Container bounds are null before the
+        // sizing pass runs, so ordering purely by Bounds.Y gives every band the same key and
+        // silently degrades to insertion order — which is how a workflow declared
+        // intake -> review -> fulfil came out reversed.
+        //
+        // Ascending, because rows are stacked upward from the page margin below: the first row
+        // ends up lowest, so the band that should read first is laid out last.
+        //
+        // Declared order wins; geometry is only a fallback. Container bounds are null before the
+        // sizing pass, so keying on Bounds.Y gives every band the same value and silently
+        // degrades to insertion order — which is how a workflow declared intake -> review ->
+        // fulfil rendered with fulfilment at the top.
         var containers = page.Groups
             .Where(g => g.Members.Count > 0)
-            .OrderBy(g => g.Bounds?.Y ?? 0)
+            .OrderBy(g => g.Order ?? int.MinValue)
+            .ThenByDescending(g => g.Bounds?.Y ?? 0)
             .ToList();
 
         var grouped = containers.SelectMany(g => g.Members).ToHashSet(StringComparer.Ordinal);

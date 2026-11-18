@@ -176,6 +176,16 @@ public sealed class Group
     public ShapeStyle? Style { get; set; }
     /// <summary>container | group</summary>
     public string? Kind { get; set; }
+
+    /// <summary>
+    /// Declared stacking order; larger means higher on the page. Null when the author did not say,
+    /// in which case engines fall back to geometry.
+    ///
+    /// Carries IrContainer.Order through to layout. Without this the field was parsed and dropped,
+    /// so a workflow declared intake -> review -> fulfil could render upside down.
+    /// </summary>
+    public int? Order { get; set; }
+
     public bool? AutoSize { get; set; }
     /// <summary>Layer names this group belongs to.</summary>
     public List<string>? Layers { get; set; }
