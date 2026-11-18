@@ -153,6 +153,22 @@ public sealed class FlowLayoutEngine : ILayoutEngine
             }
 
             maxWidth = Math.Max(maxWidth, rowWidth);
+
+            // Advance by what the band will actually occupy once its container is derived.
+            //
+            // A band holding five nodes in a line is wider than one holding three, and the container
+            // is sized from that extent: derived heights came out 8.63 / 6.78 / 5.67 on the deploy
+            // diagram. Advancing by the row's node height instead leaves the bands too close, and
+            // after a transpose that deficit becomes horizontal overlap — measured on the transposed
+            // page, containers needed 2.12" from centre to centre and had 1.97", a 0.14" overlap.
+            var bandGroup = GroupFor(page, row);
+            if (bandGroup is not null)
+            {
+                DiagramLayout.Apply(new Diagram { Pages = { page } });
+                if (bandGroup.Bounds is { } derived)
+                    rowHeight = Math.Max(rowHeight, derived.H);
+            }
+
             double envelope = DiagramLayout.ContainerHeading + DiagramLayout.ContainerPaddingBottom;
             y -= rowHeight + envelope + options.BandGapY;
         }
@@ -270,6 +286,21 @@ public sealed class FlowLayoutEngine : ILayoutEngine
     }
 
     private static double Round(double v) => Math.Round(v * 40) / 40.0;
+
+    /// <summary>The container whose membership exactly matches this row, or null for a loose row.</summary>
+    private static Group? GroupFor(Page page, List<Node> row)
+    {
+        var ids = row.Select(n => n.Id).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var group in page.Groups)
+        {
+            if (group.Members.Count == ids.Count && group.Members.All(ids.Contains))
+                return group;
+        }
+
+        return null;
+    }
+
 }
 
 /// <summary>

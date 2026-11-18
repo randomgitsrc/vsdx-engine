@@ -1330,5 +1330,27 @@ dmz  [3.52, 9.19]  h=5.67
 
 **即：band 间距用节点高度算，容器却按成员包围盒增长，两者不匹配。**
 
-**未修**。修法是让 `LayoutBanded` 在推进 y 之后，按**推导出的容器高度**回头校正间距，
-或让容器尺寸不参与推导（显式给 band 高度）。
+### 已修（第四轮）
+
+`LayoutBanded` 推进 y 时，改用**推导出的容器高度**而不是节点行高：
+
+```csharp
+var bandGroup = GroupFor(page, row);
+if (bandGroup is not null) {
+    DiagramLayout.Apply(...);                  // 先推导这一带的容器
+    rowHeight = Math.Max(rowHeight, bandGroup.Bounds.H);
+}
+y -= rowHeight + envelope + BandGapY;
+```
+
+**验收**：
+
+```console
+deploy-topology + layout:flow   0 -> 88 分
+workflow/medium（基准）         100 -> 100 分
+```
+
+几何验证：转置后容器中心距从 1.97" 增至满足 2.12" 的需求，重叠消失。
+
+**四轮假设的唯一幸存者**：前三个（AutoSize / 成员关系 / 不转置）都被实测否证，
+这次是从重叠算术（`2.12 - 1.97 = 0.15 ≈ 实测 0.14`）反推出来的。
