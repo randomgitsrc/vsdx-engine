@@ -61,7 +61,10 @@ public sealed class SpacingSpec
 
 public sealed class CanvasSpec
 {
-    /// <summary>"auto" or "fixed".</summary>
+    /// <summary>
+    /// "auto" fits the page to the content, "fixed" honours width/height, "paper" snaps to the
+    /// smallest standard sheet that holds the content.
+    /// </summary>
     public string Mode { get; set; } = "auto";
 
     public double? Width { get; set; }
@@ -491,6 +494,34 @@ public static class DesignSpecApplier
         }
 
         // --- Canvas --------------------------------------------------------
+        // `paper` picks the smallest standard sheet that holds the content, in whichever orientation
+        // fits better. Auto produced custom sizes — 8.55x9.68, 11.00x11.85, 15.57x10.45 on the three
+        // real scenarios — none of which a print dialog knows what to do with.
+        if (spec.Canvas.Mode.Equals("paper", StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var page in diagram.Pages)
+            {
+                var sheet = DiagramSizer.ChoosePaper(page, out bool scaledDown);
+
+                page.Size ??= new PageSize();
+                page.Size.Width = sheet.Width;
+                page.Size.Height = sheet.Height;
+                page.Size.Unit = "inches";
+
+                applied.Add($"canvas.paper={sheet.Name}");
+
+                if (scaledDown)
+                {
+                    unmet.Add(new UnmetConstraint
+                    {
+                        Code = "canvas.scaled",
+                        Target = page.Name,
+                        Reason = $"内容按 {sheet.Name}（{sheet.Width:0.##}x{sheet.Height:0.##} 英寸）缩放以适配"
+                    });
+                }
+            }
+        }
+
         foreach (var page in diagram.Pages)
         {
             if (spec.Canvas.Mode.Equals("fixed", StringComparison.OrdinalIgnoreCase) &&
@@ -545,6 +576,12 @@ public static class DesignSpecApplier
                                  $"{page.Size.Width:0.##}x{page.Size.Height:0.##} 英寸"
                     });
                 }
+            }
+            else if (spec.Canvas.Mode.Equals("paper", StringComparison.OrdinalIgnoreCase))
+            {
+                // Already sized to the chosen sheet above. Running the auto path here would re-fit
+                // the page to the content and throw that sheet away — measured, a paper=A3 request
+                // came out 12.80x3.00 with both `canvas.paper=A3` and `canvas.auto` in the notes.
             }
             else
             {

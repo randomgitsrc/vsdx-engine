@@ -259,6 +259,68 @@ public static class DiagramSizer
         return (dx, dy);
     }
 
+
+    /// <summary>A named sheet size in inches.</summary>
+    public readonly record struct PaperSheet(string Name, double Width, double Height);
+
+    /// <summary>
+    /// Standard sheets, smallest first, portrait orientation. Landscape is considered by swapping the
+    /// dimensions, so each entry covers both orientations.
+    /// </summary>
+    private static readonly PaperSheet[] StandardSheets =
+    {
+        new("A5", 5.83, 8.27),
+        new("A4", 8.27, 11.69),
+        new("A3", 11.69, 16.54),
+        new("A2", 16.54, 23.39),
+        new("Tabloid", 11.0, 17.0)
+    };
+
+    /// <summary>
+    /// The smallest standard sheet that holds this page's content, in the orientation that fits.
+    ///
+    /// Falls back to the largest sheet, scaled, rather than inventing a size: a reader who receives a
+    /// non-standard page cannot print it without guessing at scale. <paramref name="scaledDown"/> is
+    /// true when no standard sheet was large enough and the drawing had to be reduced.
+    /// </summary>
+    public static PaperSheet ChoosePaper(Page page, out bool scaledDown)
+    {
+        var (contentW, contentH) = ContentSize(page);
+        double neededW = contentW + PageMargin * 2;
+        double neededH = contentH + PageMargin * 2;
+
+        scaledDown = false;
+
+        foreach (var sheet in StandardSheets)
+        {
+            bool portrait = sheet.Width >= neededW && sheet.Height >= neededH;
+            bool landscape = sheet.Height >= neededW && sheet.Width >= neededH;
+
+            if (portrait) return sheet;
+            if (landscape) return sheet with { Width = sheet.Height, Height = sheet.Width };
+        }
+
+        // Nothing standard is large enough: use the biggest sheet, landscape if that helps.
+        var largest = StandardSheets[^1];
+        scaledDown = true;
+
+        return largest.Height >= neededW && largest.Width >= neededH
+            ? largest with { Width = largest.Height, Height = largest.Width }
+            : largest;
+    }
+
+    /// <summary>The page's content extents, ignoring the sheet it currently sits on.</summary>
+    private static (double Width, double Height) ContentSize(Page page)
+    {
+        var boxes = ContentBounds(page);
+        if (boxes.Count == 0) return (0, 0);
+
+        double width = boxes.Max(b => b.X + b.W / 2) - boxes.Min(b => b.X - b.W / 2);
+        double height = boxes.Max(b => b.Y + b.H / 2) - boxes.Min(b => b.Y - b.H / 2);
+
+        return (width, height);
+    }
+
     /// <summary>
     /// Every visible bounding box on the page: nodes, containers, standalone text and paths.
     /// Extent calculations must use this rather than <c>page.Nodes</c>, otherwise fitting or
