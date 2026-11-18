@@ -147,9 +147,15 @@ public static class ExecutionResultBuilder
             Score = report.Score,
             IssueCodes = report.Issues.Select(i => i.Code).Distinct().OrderBy(c => c, StringComparer.Ordinal).ToList(),
             PageUtilisation = report.PageUtilisation.ToDictionary(kv => kv.Key, kv => kv.Value),
-            // The engine cannot judge aesthetics; it says so rather than pretending its score
-            // is a visual verdict.
-            RequiresVisualReview = true
+
+            // Set only when there is something a human might see that the analyser structurally
+            // cannot: every violation is a place where geometry is wrong, and the render adds things
+            // geometry does not describe — connection labels are drawn at call time and belong to no
+            // bounding box. A diagram with no violations has no such gap.
+            //
+            // It used to be `true` unconditionally, including for a one-node diagram scoring 0. A flag
+            // that is always on tells a caller nothing, which is worse than not having one.
+            RequiresVisualReview = report.Errors.Any() || report.Warnings.Any()
         };
     }
 

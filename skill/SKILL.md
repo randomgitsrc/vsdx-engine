@@ -315,6 +315,10 @@ Two things worth checking on every run:
 
 - `appliedDesignNotes` now names the direction it chose (`direction=topToBottom (auto)`), so you can
   tell portrait from landscape without opening the file.
+- `quality.requiresVisualReview` is `true` when the analyser flagged anything. It does not mean the
+  drawing is bad — it means there is something a person should look at, because some defects are
+  invisible to geometry checks. Connection labels, for instance, are drawn at render time and belong to
+  no bounding box, so a label sitting over a title is not in any bounding box the analyser can test.
 - `quality.hardConstraintsPassed` is the gate. Seven issue codes are errors — the two you are most
   likely to hit are `text.overflow-horizontal` and `text.overflow-vertical`, both meaning text is
   being clipped rather than merely placed awkwardly.
