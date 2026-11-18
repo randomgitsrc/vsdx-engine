@@ -42,6 +42,18 @@ public sealed class ExecutionResult
     public List<string> StagesCompleted { get; set; } = new();
 
     /// <summary>Design intents that were applied.</summary>
+    /// <summary>
+    /// Steps that actually ran, phrased so each can be checked against the written file.
+    ///
+    /// Verified one by one against the produced package (`AppliedNotesTruthfulnessTests`), not against
+    /// the code that writes them: the palette note names colours present on the nodes, the background
+    /// note matches `PageBackground`, the paper note names the size the page is, `sizing` means long
+    /// labels produced wider boxes, and `container.bands` means containers carry fill and a bold
+    /// heading. `decoration.clearance` and `label.spread` appear only when something moved.
+    ///
+    /// This matters because the opposite failure — claiming work that did not happen — reads like
+    /// diligence while being just as untrustworthy as silence.
+    /// </summary>
     public List<string> AppliedDesignNotes { get; set; } = new();
 
     /// <summary>Constraints that could not be satisfied. Never empty-by-omission.</summary>
