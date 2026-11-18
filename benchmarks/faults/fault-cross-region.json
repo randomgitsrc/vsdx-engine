@@ -1,0 +1,22 @@
+{
+  "id": "fault-cross-region",
+  "type": "architecture",
+  "pages": [
+    {
+      "id": "p",
+      "size": { "width": 16, "height": 12 },
+      "groups": [
+        { "id": "g-left", "name": "起点区", "bounds": { "x": 3, "y": 8, "w": 3, "h": 2 } },
+        { "id": "g-mid", "name": "中间区", "bounds": { "x": 8, "y": 5.5, "w": 3, "h": 2 } },
+        { "id": "g-right", "name": "终点区", "bounds": { "x": 13, "y": 3, "w": 3, "h": 2 } }
+      ],
+      "nodes": [
+        { "id": "l", "text": "起点", "groupId": "g-left", "bounds": { "x": 3, "y": 8, "w": 1.2, "h": 0.5 } },
+        { "id": "r", "text": "终点", "groupId": "g-right", "bounds": { "x": 13, "y": 3, "w": 1.2, "h": 0.5 } }
+      ],
+      "edges": [
+        { "id": "x1", "from": "l", "to": "r", "kind": "straight" }
+      ]
+    }
+  ]
+}

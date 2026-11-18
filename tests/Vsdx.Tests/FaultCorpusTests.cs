@@ -60,7 +60,8 @@ public sealed class FaultCorpusTests
         ["fault-out-of-page"] = "node.out-of-page",
         ["fault-crossing"] = "edge.crossing",
         ["fault-misaligned"] = "row.misaligned",
-        ["fault-size-mix"] = "row.size-jitter"
+        ["fault-size-mix"] = "row.size-jitter",
+        ["fault-cross-region"] = "edge.diagonal-across-band"
     };
 
     [Fact]

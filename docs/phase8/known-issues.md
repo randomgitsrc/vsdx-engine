@@ -126,26 +126,19 @@ y += height + envelope + BandGapY;                 // 标题留给下一条泳�
 **若要继续**：真实场景与单元夹具的差异是关键线索——2 条泳道的夹具通过了，
 3 条泳道、不同 `order` 的真实场景没有。需要先查清这个差异，而不是再改一次放置逻辑。
 
-## 6. `edge.diagonal-across-band` 在 `Analyze` 路径下不可达
+## 6. `edge.diagonal-across-band` 曾不可达（已修）
 
-**实测**：`LayoutAnalyzer.Analyze` 在分析前先调用 `OrthogonalRouter.Route(diagram)`，
-后者**无条件**执行：
+**现象**：`LayoutAnalyzer.Analyze` 先调 `OrthogonalRouter.Route`，后者对被路由的边
+无条件写 `edge.Kind = "rightAngle"` 并填充 waypoints。而检查的前置条件是
+「无 waypoints 且 `Kind` 非 rightAngle」——路由后所有边都不满足，**检查永不触发**
+（84 次场景遍历确认零次）。
 
-```csharp
-edge.Waypoints = attempt.Waypoints;
-edge.Kind = "rightAngle";      // 无条件改写
-```
+**修复**：`Analyze` 在路由**之前**记录哪些边是作者画的自由直线，把这个集合传给
+`AnalyzePage`；检查据此判断，而不是读路由后的模型状态。签名不变（内部捕获）。
 
-而该检查的前置条件是「**没有 waypoints**」且「`Kind` 不是 rightAngle」。
-路由之后所有边都不满足，因此检查**永远不会触发**——84 次场景遍历中确实一次都没有。
+**关键细节**：路由**不会**改写只穿过容器、不穿过节点的直线——`OrthogonalRouter` 只在
+`PathHitsShapes` 为真时才绕行。所以这类边在分析后仍是 `straight`，正是检查该管的情形。
 
-**唯一能触发它的方式**是直接调用 `AnalyzePage` 并跳过路由，
-或手工构造一个绕过 `Analyze` 的模型（`RareCheckTests` 就是这样做的）。
+**同时修复**：`benchmarks/faults/fault-cross-region.json` 原本四个节点全无容器，
+不可能触发。已重建为三个容器 + 一条斜穿直线的真实用例，并登记进期望码表。
 
-**同时发现**：`benchmarks/faults/fault-cross-region.json` 声称验证这一项，但它的四个节点
-**没有任何容器**，而该检查要求直线穿过「第三个容器」。这个用例从加入起就是死的，无测试引用。
-
-**处置**：删除该用例；`FaultCorpusTests` 现在要求「每个故障文件都必须被测试引用」，防止再出现。
-
-**未修的部分**：检查与路由的先后顺序。要让它在正常路径下生效，需要在路由前捕获作者几何
-（`Kind` 与端点），而不是在路由后读取。改动涉及 `Analyze` 的签名与 5 个调用点，本轮未完成。

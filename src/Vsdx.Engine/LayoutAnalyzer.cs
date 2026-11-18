@@ -14,16 +14,29 @@ public static class LayoutAnalyzer
         options ??= new LayoutAnalyzerOptions();
         var report = new LayoutReport();
 
+        // Which edges the author drew as a free straight run. `Route` below rewrites every edge to
+        // `Kind = "rightAngle"` and fills waypoints; `edge.diagonal-across-band` skips exactly those two
+        // properties, so reading the model after routing makes the check unreachable — verified across
+        // 84 layout combinations, none of which produced it.
+        var authoredStraight = diagram.Pages
+            .SelectMany(p => p.Edges)
+            .Where(e => e.Waypoints is not { Count: > 0 }
+                     && e.Kind is not ("rightAngle" or "right-angle" or "orthogonal"))
+            .Select(e => e.Id)
+            .ToHashSet(StringComparer.Ordinal);
+
         // Route orthogonal edges first so the checker measures the paths that will be drawn.
         OrthogonalRouter.Route(diagram);
 
         foreach (var page in diagram.Pages)
-            AnalyzePage(page, options, report);
+            AnalyzePage(page, options, report, authoredStraight);
 
         return report;
     }
 
-    private static void AnalyzePage(Page page, LayoutAnalyzerOptions options, LayoutReport report)
+    private static void AnalyzePage(
+        Page page, LayoutAnalyzerOptions options, LayoutReport report,
+        IReadOnlySet<string>? authoredStraight = null)
     {
         var nodes = page.Nodes;
 
@@ -392,7 +405,14 @@ public static class LayoutAnalyzer
         foreach (var edge in page.Edges)
         {
             if (edge.From is null || edge.To is null) continue;
-            if (edge.Waypoints is { Count: > 0 }) continue;   // an explicit route was chosen
+
+            // Judged on what the author drew. After routing, every edge carries waypoints and
+            // `Kind = "rightAngle"`, so the two guards below would skip all of them.
+            bool authoredFreeRun = authoredStraight is null
+                ? edge.Waypoints is not { Count: > 0 } && edge.Kind is not ("rightAngle" or "right-angle" or "orthogonal")
+                : authoredStraight.Contains(edge.Id);
+
+            if (!authoredFreeRun) continue;
             if (!nodeById.TryGetValue(edge.From, out var ef)) continue;
             if (!nodeById.TryGetValue(edge.To, out var et)) continue;
             if (string.Equals(ef.GroupId, et.GroupId, StringComparison.Ordinal)) continue;
