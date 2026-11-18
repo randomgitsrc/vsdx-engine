@@ -29,6 +29,7 @@
 | [`phase8/scale-benchmark.md`](phase8/scale-benchmark.md) | 规模实测曲线（200–5000 节点） |
 | [`phase8/score-weights.md`](phase8/score-weights.md) | 评分权重表，以及「为何是这个权重」的缺口 |
 | [`phase8/known-issues.md`](phase8/known-issues.md) | **当前仍未解决的问题**，每项写明为何未修 |
+| [`phase8/status-2026-11.md`](phase8/status-2026-11.md) | **项目现在处在什么位置**：验证到哪一步、能画什么、未解什么 |
 | [`phase8/phase8.3-checkpoint.md`](phase8/phase8.3-checkpoint.md) | 阶段检查点：做了什么、未解什么 |
 
 ## 阶段记录
