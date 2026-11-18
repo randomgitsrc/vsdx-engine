@@ -1,0 +1,5 @@
+{"irVersion":"1.0","id":"s","title":"Spacing","kind":"architecture",
+ "containers":[{"id":"c1","label":"Layer 1"},{"id":"c2","label":"Layer 2"}],
+ "nodes":[{"id":"a","label":"A","containerId":"c1"},{"id":"b","label":"B","containerId":"c1"},
+         {"id":"c","label":"C","containerId":"c2"},{"id":"d","label":"D","containerId":"c2"}],
+ "edges":[{"id":"e1","from":"a","to":"c"},{"id":"e2","from":"b","to":"d"}]}

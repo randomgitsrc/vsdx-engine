@@ -1,0 +1,3 @@
+{"irVersion":"1.0","id":"no-title-here","kind":"workflow",
+ "nodes":[{"id":"a","label":"A"},{"id":"b","label":"B"},{"id":"c","label":"C"}],
+ "edges":[{"id":"e1","from":"a","to":"b"},{"id":"e2","from":"b","to":"c"}]}

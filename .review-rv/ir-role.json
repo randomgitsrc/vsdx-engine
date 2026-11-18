@@ -1,0 +1,3 @@
+{"irVersion":"1.0","id":"p","title":"Palette","kind":"architecture",
+ "nodes":[{"id":"a","label":"A","role":"service"},{"id":"b","label":"B","role":"database"},{"id":"c","label":"C","role":"client"}],
+ "edges":[{"id":"e1","from":"a","to":"b"}]}

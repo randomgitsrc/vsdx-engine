@@ -204,19 +204,22 @@
 
 | 状态 | 数量 | 占比 |
 | --- | --- | --- |
-| ✅ Implemented & Verified | 57 | 54% |
+| ✅ Implemented & Verified | 59 | 56% |
 | ⚠️ Implemented but Incomplete | 18 | 17% |
-| 🔬 Format Feasible, No Engine Support | 3 | 3% |
+| 🔬 Format Feasible, No Engine Support | 2 | 2% |
 | 📄 Protocol Only | 1 | 1% |
 | 🧪 Experimental | 3 | 3% |
-| ❌ Missing | 17 | 16% |
+| ❌ Missing | 16 | 15% |
 | 🚫 Unsupported by Dependency | 6 | 6% |
 | ⛔ Not in Engine Scope | 1 | 1% |
 | **合计** | **106** | **100%** |
 
 > 计数口径：逐行统计 §1–§9 表格状态列的第一个标记，每条矩阵行计一次，脚本可复核。
 >
-> `🔬 LAB`（3 项：自由路径、图片、SVG）的引入是本次修订的关键：
+> **2026-11-18 复核**：自由路径已从 `🔬` 变为 `✅`，故 `🔬` 由 3 项降为 2 项（图片、SVG），
+> `✅` 由 57 增至 59（自由路径 + 独立文本）。计数由脚本逐行核对。
+>
+> `🔬 LAB`（现 2 项：图片、SVG）的引入是矩阵的关键区分：
 > 它们既不是 `🚫`（格式支持），也不是 `⚠️ II`（产品有实现），
 > 而是"**格式允许、产品零支持**"。把它们混进任何一类都会误导工作量估算。
 
