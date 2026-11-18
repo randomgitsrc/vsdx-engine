@@ -86,4 +86,66 @@ public static class DecorationLayout
         text.Bounds.Y = Math.Round(needed * 40) / 40;
         return true;
     }
+
+    /// <summary>
+    /// Positions where a label can be placed when it needs to move: offset from the midpoint, far
+    /// enough apart to separate two labels of ordinary width.
+    /// </summary>
+    private static readonly double[] LabelSlots = { 0.25, 0.75, 0.15, 0.85 };
+
+    /// <summary>
+    /// Separates edge labels that landed on each other, by moving the ones the author did not place.
+    ///
+    /// A label without an explicit position is a default, not a decision, so it is the one that
+    /// gives way. Two labels the author positioned deliberately stay put even if they overlap: the
+    /// analyser still reports them, but silently overriding a stated choice would be worse.
+    ///
+    /// Each candidate position is checked against the whole page before being kept, so the method
+    /// either reduces the overlaps or leaves the diagram alone.
+    /// </summary>
+    public static int SpreadLabels(Diagram diagram)
+    {
+        int moved = 0;
+
+        foreach (var page in diagram.Pages)
+        {
+            // Repeat while progress is being made: moving one label can clear two collisions, and a
+            // single pass over a stale list would miss the second.
+            for (int pass = 0; pass < 4; pass++)
+            {
+                if (Overlapping(diagram, page) is not { Count: > 0 } collisions) break;
+
+                bool progressed = false;
+                foreach (var edge in collisions)
+                {
+                    if (edge.LabelPosition is not null) continue;
+
+                    foreach (var slot in LabelSlots)
+                    {
+                        edge.LabelPosition = slot;
+                        if (Overlapping(diagram, page).Count < collisions.Count) { progressed = true; break; }
+                        edge.LabelPosition = null;
+                    }
+
+                    if (progressed) { moved++; break; }
+                }
+
+                if (!progressed) break;
+            }
+        }
+
+        return moved;
+    }
+
+    /// <summary>Edges of this page whose label currently collides with another's.</summary>
+    private static List<Edge> Overlapping(Diagram diagram, Page page)
+    {
+        var report = LayoutAnalyzer.Analyze(diagram);
+        var ids = report.Issues
+            .Where(i => i.Code == "label.overlaps-label")
+            .SelectMany(i => i.Targets ?? Array.Empty<string>())
+            .ToHashSet(StringComparer.Ordinal);
+
+        return page.Edges.Where(e => ids.Contains(e.Id)).ToList();
+    }
 }

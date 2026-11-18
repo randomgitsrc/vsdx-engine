@@ -370,6 +370,12 @@ public static class DesignSpecApplier
         if (DecorationLayout.AvoidContainers(diagram) > 0)
             applied.Add("decoration.clearance");
 
+        // Labels that land on each other are separated here rather than left for the caller to fix
+        // by hand. Only labels without an explicit position move; the result is re-checked, so this
+        // either helps or does nothing.
+        if (DecorationLayout.SpreadLabels(diagram) > 0)
+            applied.Add("label.spread");
+
         // --- Container styling ---------------------------------------------
         // Containers previously inherited the writer's default fill, so every band rendered in
         // the same pale blue and the diagram read as one undifferentiated block. Bands get a
