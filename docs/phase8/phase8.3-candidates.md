@@ -472,3 +472,52 @@ C6 是"文本块与容器重叠检测缺失"，C8 是"标签与标签重叠检�
 （标签该往哪边错？错多少？）。
 
 **未修复**，需独立任务。
+
+---
+
+## C9 【P1】检测器忽略 `LabelPosition`，与实际标签位置不一致
+
+**发现于：** C8 修复尝试（2026-11-18）
+
+### 实测
+
+给重叠的边设置不同的 `labelPosition`（0.3 / 0.7）：
+
+```console
+$ execute --ir ir2.json   (含 labelPosition)
+$ check-layout
+  label.overlaps-label (2)     <- 仍然报告重叠
+```
+
+但 Writer **确实**使用了它（`:391`）：
+
+```csharp
+var position = Math.Clamp(edge.LabelPosition ?? 0.5, 0.05, 0.95);
+connector.LabelPlacement = new VisioConnectorLabelPlacement(position, 0, 0.10)
+```
+
+而检测器（`LayoutAnalyzer.cs:153` 与 `:188`）**固定使用**：
+
+```csharp
+var labelCenter = PointAlong(path, 0.5);
+```
+
+### 后果
+
+1. **用户无法通过 `labelPosition` 消除检测器报告的重叠**——他改了，检测器看不见
+2. 检测结论**不反映实际产物**：实际标签在 0.3 处，检测器按 0.5 处判断
+3. 这是"检测与实现参数不一致"，比标签重叠本身更根本
+
+### 为什么难发现
+
+`labelPosition` 有默认值 0.5，所以**大多数图的检测是正确的**。
+只有显式设置过的图才会出现偏差——而那种图正是用户试图修复重叠的图。
+
+### 候选修法
+
+检测器读取 `edge.LabelPosition ?? 0.5`，与 Writer 使用同一个值。
+
+**这一条必须先修**：否则 C8 的布局侧修复（错开标签）无法验证——
+检测器会继续按中点判断，无法确认错开是否有效。
+
+**未修复**。

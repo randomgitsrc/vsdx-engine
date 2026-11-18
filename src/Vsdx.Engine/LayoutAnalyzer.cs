@@ -150,7 +150,10 @@ public static class LayoutAnalyzer
             var path = RoutePoints(from, to, edge);
             if (path.Count < 2) continue;
 
-            var labelCenter = PointAlong(path, 0.5);
+            // The writer places the label at edge.LabelPosition, clamped the same way. Judging it at
+            // a fixed midpoint means the verdict does not describe the file — and moving a label to
+            // fix an overlap would have no effect on the check.
+            var labelCenter = PointAlong(path, LabelFraction(edge));
             var halfW = Math.Max(0.35, edge.Label.Length * 0.075);
             var labelBox = new Bounds(labelCenter.X, labelCenter.Y, halfW, 0.16);
 
@@ -185,7 +188,7 @@ public static class LayoutAnalyzer
             var path = RoutePoints(from, to, edge);
             if (path.Count < 2) continue;
 
-            var center = PointAlong(path, 0.5);
+            var center = PointAlong(path, LabelFraction(edge));
             double halfW = Math.Max(0.35, edge.Label.Length * 0.075);
             labelled.Add((edge, new Bounds(center.X, center.Y, halfW, 0.16)));
         }
@@ -1041,6 +1044,13 @@ public static class LayoutAnalyzer
         const double eps = 1e-9;
         return t > eps && t < 1 - eps && u > eps && u < 1 - eps;
     }
+    /// <summary>
+    /// Where along the route the writer will put this edge's label, clamped to the same range it
+    /// clamps to. Kept in one place so the two checks cannot drift from the writer again.
+    /// </summary>
+    private static double LabelFraction(Edge edge) =>
+        Math.Clamp(edge.LabelPosition ?? 0.5, 0.05, 0.95);
+
 }
 
 public sealed class LayoutAnalyzerOptions
@@ -1229,6 +1239,8 @@ public static class TextMetrics
         }
         return widthPt / 72.0 * widthFactor;
     }
+
 }
 
+/// <summary>Measured extents for a node label.</summary>
 public readonly record struct TextEstimate(double LongestLineInches, double RequiredHeightInches, int LineCount);
