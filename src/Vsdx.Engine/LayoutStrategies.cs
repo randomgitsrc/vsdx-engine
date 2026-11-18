@@ -160,6 +160,11 @@ public static class DiagramLayoutEngine
             ClampDecorationsToPage(page);
         }
 
+        // Decorations are clamped to the sheet and then pushed clear of band borders: a container
+        // derived from its members can grow into a title placed earlier, and the page clamp alone
+        // does not notice.
+        DecorationLayout.AvoidContainers(diagram);
+
         // Direction is applied once for the whole document, after every page has been laid out.
         //
         // Transposing inside the loop above would transpose all pages on every iteration: the

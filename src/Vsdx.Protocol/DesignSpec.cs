@@ -363,6 +363,13 @@ public static class DesignSpecApplier
 
         DiagramLayout.Apply(diagram);
 
+        // Container bounds are final only after the pass above — it derives them from members. A
+        // band can therefore grow past a title that was clear when the layout engines ran, so the
+        // avoidance has to run once more here. The earlier call inside the layout pipeline handles
+        // the no-spec path, where this pass is not reached.
+        if (DecorationLayout.AvoidContainers(diagram) > 0)
+            applied.Add("decoration.clearance");
+
         // --- Container styling ---------------------------------------------
         // Containers previously inherited the writer's default fill, so every band rendered in
         // the same pale blue and the diagram read as one undifferentiated block. Bands get a

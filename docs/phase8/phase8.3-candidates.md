@@ -375,3 +375,41 @@ $ grep -c "TextBlocks" src/Vsdx.Engine/LayoutAnalyzer.cs
 用户刻意让标题压在色带上时误判。
 
 **未修复**，需独立任务。
+
+---
+
+## C7 【P1】Writer 默认重算容器，覆盖模型里已定稿的 bounds
+
+**发现于：** C6 修复后复核（2026-11-18）
+
+### 实测
+
+```
+模型里  AutoSize=null  容器顶=8.46
+写盘后                  容器顶=8.76   (+0.30)
+```
+
+### 根因
+
+`OfficeImoDocumentWriter.cs:124`：
+
+```csharp
+page.AddToContainer(container.Id, memberIds, resizeToFit: group.AutoSize ?? true);
+```
+
+`AutoSize` 为 null 时**默认 true**，库按成员重算容器包围盒。
+而同一文件的另一处（`:211`）走显式 bounds 路径时用 `AutoSize = group.AutoSize ?? false`——
+**两处默认值相反**。
+
+### 后果
+
+1. 模型层算好的容器几何在写盘时被改写，`DiagramLayout.Apply` 的结果不再是最终结果
+2. 依赖容器坐标的任何后续计算（如 C6 的装饰避让）都会基于错误前提
+3. 两个默认值相反，说明这两条路径中至少一条不是有意的
+
+### 候选修法
+
+统一 `AutoSize ?? false`，或让 `DesignSpecApplier` 显式设置 `AutoSize=false`。
+**需要先确认 `AddToContainer` 的 resize 是否必要**——它可能是为了容纳成员的边框。
+
+**未修复**。它与 C6 是同一问题的两面：C6 让重叠可见，C7 说明为什么避让算不准。
