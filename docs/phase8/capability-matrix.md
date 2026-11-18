@@ -137,7 +137,8 @@
 | --- | --- | --- | --- |
 | 创建 | ✅ IV | 全部基准 | — |
 | 读取 | ✅ IV | `ReadTests`、`ExternalVsdxTests` | — |
-| 增量编辑 | ✅ IV | `EditTests`、`RoundTrip_*` | 保留未改对象 |
+| 增量编辑 | ✅ IV | `EditTests`、`RoundTrip_*` | 见 §6b 逐项 |
+| 对象身份 | ✅ IV | `RoundTrip_IdsAreStable` | 见 §6a |
 | 稳定 ID | ✅ IV | `RoundTrip_IdsAreStable` | — |
 | 容器结构 | ✅ IV | 实测 3 个 marker | — |
 | Shape Data | ✅ IV | 实测 prop 1→1 | — |
@@ -150,6 +151,47 @@
 | 多代往返 | ✅ IV | `ThreeGenerationsRemainStable` | — |
 
 ---
+
+### 6a. 对象身份
+
+章程要求"维护对象身份、映射和关系"。载体与边界：
+
+| 能力 | 状态 | 证据 | 说明 |
+| --- | --- | --- | --- |
+| 稳定 ID | ✅ IV | `User.VsdxModelId`；`RoundTrip_IdsAreStable` | 写入 Reader 可读的自定义单元格 |
+| 节点 ID 往返 | ✅ IV | 实测 9 节点 ID 全保留 | — |
+| 容器 ID 往返 | ✅ IV | `ContainerBoundsPersistenceTests` | 靠标题匹配，脆弱 |
+| 连线 ID 往返 | ✅ IV | `ConnectorTests` | — |
+| **文本块 ID 稳定** | ⚠️ **II** | 实测：每次写回移除重建，ID 会变 | 按 `visioShapeId` 的引用会失效 |
+| 外部文件对象识别 | ⚠️ II | 无 `VsdxModelId` 时按形状名/位置匹配 | 外部创建的对象可能错配 |
+
+**文本块 ID 不稳定**是已知限制：`VisioTextBlockBridge` 每次写回重新创建形状。
+保真守卫因此不能用 ID 判断文本块，改为按"该页是否仍有文本块"判断。
+
+### 6b. 增量修改
+
+九种操作，逐项状态：
+
+| 操作 | 状态 | 证据 | 说明 |
+| --- | --- | --- | --- |
+| 节点新增 | ✅ IV | `node.added` | — |
+| 节点修改 | ✅ IV | `node.modified` | 位置/尺寸/文字/样式 |
+| 节点删除 | ✅ IV | `node.deleted` | **级联删除其连线** |
+| 连线新增 | ✅ IV | `edge.added` | — |
+| 连线修改 | ✅ IV | `edge.modified` | 含标签、箭头、颜色 |
+| 连线删除 | ✅ IV | `edge.deleted` | 含级联产生 |
+| 容器重命名 | ✅ IV | `group.renamed` | 原地改，不重建 |
+| 容器几何 | ✅ IV | `group.resized` | 在成员附加**之后**应用 |
+| 页面尺寸 | ✅ IV | `page.resized` | — |
+| 未改对象保留 | ✅ IV | 实测 cells 逐一相同 | 无操作往返 25 次无漂移 |
+| 级联删除连线 | ✅ IV | `DeleteMissingTests` | 曾有悬空引用，导致整包被拒 |
+| 保真守卫 | ✅ IV | `FidelityGuard` | 几何减少会拒绝输出；文本块重写除外 |
+
+**两条实现约束**，改这块前必须知道：
+
+1. **容器几何必须在 `AddToContainer` 之后应用**——该调用会把容器重排到成员周围，先写会被覆盖。
+2. **`Update` 会先跑 `DiagramLayout.Apply`**，它按成员重新推导所有容器。
+   显式设置的 `Bounds` 会被它覆盖，因此带 `Bounds` 的容器在推导期间临时标 `AutoSize=false`。
 
 ## 7. 质量检测
 
@@ -204,17 +246,20 @@
 
 | 状态 | 数量 | 占比 |
 | --- | --- | --- |
-| ✅ Implemented & Verified | 60 | 57% |
-| ⚠️ Implemented but Incomplete | 18 | 17% |
+| ✅ Implemented & Verified | 77 | 62% |
+| ⚠️ Implemented but Incomplete | 20 | 16% |
 | 🔬 Format Feasible, No Engine Support | 2 | 2% |
 | 📄 Protocol Only | 0 | 0% |
-| 🧪 Experimental | 3 | 3% |
-| ❌ Missing | 16 | 15% |
-| 🚫 Unsupported by Dependency | 6 | 6% |
+| 🧪 Experimental | 3 | 2% |
+| ❌ Missing | 16 | 13% |
+| 🚫 Unsupported by Dependency | 6 | 5% |
 | ⛔ Not in Engine Scope | 1 | 1% |
-| **合计** | **106** | **100%** |
+| **合计** | **125** | **100%** |
 
 > 计数口径：逐行统计 §1–§9 表格状态列的第一个标记，每条矩阵行计一次，脚本可复核。
+>
+> **2026-11-18 增补**：章程 §5.1 要求矩阵覆盖「对象身份、增量修改」等维度，原表各只有一行。
+> 已补 §6a（对象身份，9 行）与 §6b（增量修改，12 行），合计由 106 增至 125。
 >
 > **2026-11-18 复核**：`theme.palette` 由 `📄 PO`（"仅声明，无读取方"）改为 `✅ IV`——
 > 实测早已实现，文档把自己的能力说少了。`📄` 因此归零，`✅` 增至 60。
