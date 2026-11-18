@@ -22,9 +22,9 @@
 | Edge（连接线） | ✅ IV | `DiagramModel.cs:130`、`ConnectorTests` | 含 waypoints / 端口 |
 | Group / Container | ✅ IV | `DiagramLayout.Apply`、`GroupTests` | 含 `msvStructureType` |
 | 嵌套容器 | ⚠️ II | `VisioNestingBridge`、`G1_*` 测试 | 靠 XML patch；join key 是容器标题（脆） |
-| Layer（图层） | ⚠️ II | `OfficeImoDocumentReader.cs:289` 读取 | **读取后可写回未验证** |
-| 自由路径 / 自定义几何 | 🔬 **LAB** | 实验 1 手写 XML 可行 | **Engine 零支持**：无 `FreePath` 类型、无写入器、读者误标 Rectangle |
-| 独立文本（标题/注释/图例） | ❌ MI | `grep Title/Legend/Annotation` 仅 TypeScale | 无对象 |
+| Layer（图层） | ⚠️ II | 读者可读；实测写出产物**无 `<Layers>` 节** | **只读不写**，往返会丢图层 |
+| 自由路径 / 自定义几何 | ✅ **IV** | `FreePath` 模型 + `VisioFreePathBridge`；实测写入 1 个 `NameU="FreePath"` | 曾有 `🔬 LAB` 记录，已实现 |
+| 独立文本（标题/注释/图例） | ✅ **IV** | `TextBlock` 模型；实测写入 4 个 `NameU="TextBlock"` | 含字号层级、对齐、转置保持横排 |
 | 图片 | 🔬 **LAB** | 实验 2 手写 ForeignData 可行 | **Engine 零支持**：无媒体写入、无模型字段；渲染器仅占位 |
 | SVG 嵌入 | 🔬 **LAB** | 实验 3 手写可行，需补 Content-Type | **Engine 零支持** |
 | 复合符号 | ❌ MI | — | 建议走 Stencil（库已支持，未接入）而非自建 |
@@ -43,15 +43,16 @@
 但初稿的第一次修正是**过度乐观**的：把这三项改成 `⚠️ II`（Implemented Incomplete），
 读起来像"已经实现，只差收尾"。
 
-**事实是：格式允许，产品零支持。** 现在统一标为 `🔬 LAB`：
+**判定口径：** 格式层可行 ≠ 产品层支持。
 
 | 项 | 格式层 | Engine 产品层 |
 | --- | --- | --- |
-| 自由路径 | ✅ 可行（实验 1） | ❌ 无类型、无写入器、读者误标为 Rectangle |
-| 图片 | ✅ 可行（实验 2） | ❌ 无媒体写入、无模型字段 |
-| SVG | ✅ 可行（实验 3） | ❌ 同上，且需补 Content-Type |
+| 自由路径 | ✅ 可行 | ✅ **已实现**（`FreePath` + `VisioFreePathBridge`） |
+| 图片 | ✅ 可行 | ❌ 无媒体写入、无模型字段 |
+| SVG | ✅ 可行 | ❌ 同上，且需补 Content-Type |
 
-**这个区分直接决定 Phase 8.1 的工作量：** 不是"接线"，是从零实现。
+**自由路径已从 `🔬 LAB` 变为 `✅ IV`**，其余两项仍是零支持。
+判定口径保留：格式可行不等于产品能力，仍需分别标注。
 
 ---
 
