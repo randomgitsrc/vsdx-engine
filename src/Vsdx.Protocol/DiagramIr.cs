@@ -279,7 +279,11 @@ public static class DiagramIrConverter
                 {
                     Id = container.Id,
                     Name = container.Label ?? container.Id,
-                    Kind = container.Kind is "lane" ? "container" : (container.Kind ?? "container"),
+                    // Lanes must survive the conversion. Both the swimlane engine and the
+                    // auto-strategy test for `Kind == "lane"`, so rewriting it to "container"
+                    // silently fell back to layered placement — while the result still reported
+                    // `layout=Swimlane`.
+                    Kind = container.Kind ?? "container",
                     ParentId = container.ParentId,
                     Order = container.Order
                 });
