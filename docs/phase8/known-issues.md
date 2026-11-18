@@ -29,7 +29,17 @@
 
 **为何未修**：改定义会改变全项目所有分数。
 
-**建议方案**：`LayoutReport` 同时给出 `nodeUtilisation`，不改变现有数字，让调用方自行选择。
+**已提供 `nodeUtilisation`**（2026-11-19）：协议层与 `LayoutReport` 都新增了这个字段，
+只统计节点，不改动 `pageUtilisation`。
+
+```console
+$ execute --ir checkout-sequence.ir.json
+  pageUtilisation: 0.773
+  nodeUtilisation: 0.234     <- 绘制本身只占 23%
+```
+
+**`page.underused` 仍读 `pageUtilisation`**，因此漏报依然存在——但那现在是一个**可选**的修正：
+调用方可以自行用 `nodeUtilisation` 判断，或等待是否把 `underused` 也切到新指标（属产品决策）。
 
 **固定测试**：`UnderusedMissTests`（含一条断言"不触发"的测试，修复后会失败，迫使记录更新）。
 

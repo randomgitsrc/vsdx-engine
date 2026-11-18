@@ -118,6 +118,15 @@ public sealed class QualityOutcome
     public Dictionary<string, double> PageUtilisation { get; set; } = new();
 
     /// <summary>
+    /// How much of the page the nodes occupy, ignoring decorations.
+    ///
+    /// `pageUtilisation` counts text blocks too, so a note near the top edge can lift it to the whole page
+    /// height — `checkout-sequence` reads 84% against 23% for the drawing itself, and `page.underused`
+    /// therefore misses it. This figure answers the narrower question without changing the existing one.
+    /// </summary>
+    public Dictionary<string, double> NodeUtilisation { get; set; } = new();
+
+    /// <summary>
     /// True when this result required human/visual judgement that the engine cannot make.
     /// The engine states this rather than implying its score is a visual verdict.
     /// </summary>
@@ -185,6 +194,7 @@ public static class ExecutionResultBuilder
             Score = report.Score,
             IssueCodes = report.Issues.Select(i => i.Code).Distinct().OrderBy(c => c, StringComparer.Ordinal).ToList(),
             PageUtilisation = report.PageUtilisation.ToDictionary(kv => kv.Key, kv => kv.Value),
+            NodeUtilisation = report.NodeUtilisation.ToDictionary(kv => kv.Key, kv => kv.Value),
 
             // Set only when there is something a human might see that the analyser structurally
             // cannot: every violation is a place where geometry is wrong, and the render adds things

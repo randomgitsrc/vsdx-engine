@@ -34,6 +34,20 @@ public static class LayoutAnalyzer
         return report;
     }
 
+
+    /// <summary>Area of the bounding box around all nodes, ignoring decorations.</summary>
+    private static double NodeArea(IReadOnlyList<Node> nodes)
+    {
+        if (nodes.Count == 0) return 0;
+
+        double minX = nodes.Min(n => n.Bounds.X - n.Bounds.W / 2);
+        double maxX = nodes.Max(n => n.Bounds.X + n.Bounds.W / 2);
+        double minY = nodes.Min(n => n.Bounds.Y - n.Bounds.H / 2);
+        double maxY = nodes.Max(n => n.Bounds.Y + n.Bounds.H / 2);
+
+        return Math.Max(0, maxX - minX) * Math.Max(0, maxY - minY);
+    }
+
     private static void AnalyzePage(
         Page page, LayoutAnalyzerOptions options, LayoutReport report,
         IReadOnlySet<string>? authoredStraight = null)
@@ -500,6 +514,12 @@ public static class LayoutAnalyzer
 
             report.PageUtilisation[page.Name] = ratio;
             report.Bounds[page.Name] = new Bounds((minX + maxX) / 2, (minY + maxY) / 2, maxX - minX, maxY - minY);
+
+            // The drawing on its own. Zero when there are no nodes — a text-only sheet occupies nothing
+            // in this sense, and saying 1 would claim it fills the page.
+            report.NodeUtilisation[page.Name] = nodes.Count == 0
+                ? 0
+                : NodeArea(nodes) / pageArea;
 
             if (ratio < options.MinPageUtilisation)
             {
@@ -1278,6 +1298,19 @@ public sealed class LayoutReport
 {
     public List<LayoutIssue> Issues { get; } = new();
     public Dictionary<string, double> PageUtilisation { get; } = new();
+
+    /// <summary>
+    /// How much of the page the *nodes* occupy, ignoring text blocks and paths.
+    ///
+    /// `PageUtilisation` counts every visible object, so a note near the top edge lifts it to the whole
+    /// page height while the drawing sits along the bottom — `checkout-sequence` reads 84% against 23%.
+    /// That figure is what `page.underused` tests, which is why it misses two of six reference diagrams
+    /// (`known-issues.md` §2).
+    ///
+    /// Added as a second measurement rather than a redefinition: changing `PageUtilisation` would move
+    /// every score in the project. A caller asking "does the drawing fill the page" now has an answer.
+    /// </summary>
+    public Dictionary<string, double> NodeUtilisation { get; } = new();
     public Dictionary<string, Bounds> Bounds { get; } = new();
 
     /// <summary>Measured edge detour ratios, keyed by edge id.</summary>
