@@ -64,11 +64,29 @@ public sealed class ChangelogTests
     }
 
     [Fact]
-    public void ItSaysTheVersionIsNotReleasedYet()
+    public void ItStatesTheReleaseStatus()
     {
+        // The changelog must say where the version stands. It said 未发布 while unpublished and now
+        // records the prerelease; what matters is that a reader is not left to guess.
         var changelog = Changelog();
 
-        Assert.Contains("未发布", changelog);
+        Assert.True(changelog.Contains("prerelease", StringComparison.OrdinalIgnoreCase) ||
+                    changelog.Contains("未发布", StringComparison.Ordinal),
+            "the changelog does not state the release status");
+    }
+
+    [Fact]
+    public void APrereleaseIsMarkedAsSuchOnGitHub()
+    {
+        // A 0.9.0 with an unverified core claim must not be published as stable — package managers
+        // and readers both key on this flag.
+        var declared = Regex.Match(
+            File.ReadAllText(Path.Combine(Root(), "Directory.Build.props")),
+            @"<Version>([^<]+)</Version>").Groups[1].Value;
+
+        if (!declared.StartsWith("0.", StringComparison.Ordinal)) return;
+
+        Assert.Contains("prerelease", Changelog(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

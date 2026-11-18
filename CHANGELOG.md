@@ -2,7 +2,9 @@
 
 本文件记录对外可见的能力变化。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-## [0.9.0] — 未发布
+## [0.9.0] — 2026-11-18
+
+已发布为 **prerelease**：<https://github.com/randomgitsrc/vsdx-engine/releases/tag/v0.9.0>
 
 **版本号定为 `0.9.0` 而非 `1.0.0`。** 理由：项目定义的核心承诺是「原生、可编辑的 VSDX」，
 而 L4（Visio 原生打开）从未执行。`1.0.0` 意味着承诺已验证；`0.9.0` 表示能力已建立但验证不完整。
