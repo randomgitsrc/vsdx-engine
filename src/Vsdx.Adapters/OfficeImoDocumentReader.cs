@@ -215,8 +215,17 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
 
         // Recover the semantic role from the stamped name when present, so a re-read block keeps
         // its typography intent instead of being treated as a generic caption.
-        // The writer stores the model id in Name, so the id carries the role hint. Recognise a
-        // role by id prefix first, then fall back to a generic caption.
+        // Prefer the stored role. Inferring from the id prefix made the id authoritative: an IR saying
+        // `{"id":"tb","role":"note"}` came back as "caption", and `{"id":"title-x","role":"note"}` came
+        // back as "title" — the same content, different typography, no report.
+        var stored = UserCellOf(shape, "VsdxRole");
+        if (!string.IsNullOrWhiteSpace(stored))
+        {
+            block.Role = stored;
+            return block;
+        }
+
+        // Fall back to the id prefix for packages written before the role was stored.
         var hint = (shape.Name ?? "").ToLowerInvariant();
         block.Role = hint switch
         {

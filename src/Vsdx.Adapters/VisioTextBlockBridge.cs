@@ -221,6 +221,32 @@ public static class VisioTextBlockBridge
                     new XAttribute("N", "Prompt"),
                     new XAttribute("V", "Agent VSDX Engine stable text block id")))));
 
+        // Store the role where it can be read back. It used to be inferred from the `Name` prefix, which
+        // made the block's id a functional parameter: `{"id":"tb","role":"note"}` returned as "caption",
+        // and renaming the id to `title-x` silently changed the role to "title" with the IR untouched.
+        // Must live in a `User` section as a named row — the reader resolves user cells from there.
+        // A flat `<Cell N="User.VsdxRole">` is written but never found, which is how a stored role
+        // came back as "caption" on the first attempt at this fix.
+        if (!string.IsNullOrWhiteSpace(block.Role))
+        {
+            var userSection = shape.Elements(VisioNs + "Section")
+                .FirstOrDefault(section => (string?)section.Attribute("N") == "User");
+
+            if (userSection is null)
+            {
+                userSection = new XElement(VisioNs + "Section", new XAttribute("N", "User"));
+
+                // Sections must follow every <Cell> child: a section placed before them is parsed as
+                // part of the shape's cell block and its rows are never found. Inserting at the end
+                // appends it after the Character/Paragraph sections, which is the order Visio writes.
+                shape.Add(userSection);
+            }
+
+            userSection.Add(new XElement(VisioNs + "Row",
+                new XAttribute("N", "VsdxRole"),
+                new XElement(VisioNs + "Cell", new XAttribute("N", "Value"), new XAttribute("V", block.Role))));
+        }
+
         return shape;
     }
 
