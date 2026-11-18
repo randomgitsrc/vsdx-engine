@@ -88,7 +88,11 @@ public static class LayoutAnalyzer
                 report.Add(new LayoutIssue
                 {
                     Code = "text.overflow-vertical",
-                    Severity = "warning",
+                    // Clipped text loses content. Spacing and alignment are matters of taste;
+                    // this is not, and treating it as advisory made the project's own acceptance
+                    // item ("不发生文本裁切") impossible to falsify — whatever the overflow, the
+                    // answer was yes.
+                    Severity = "error",
                     Page = page.Name,
                     Targets = new[] { node.Id },
                     Message = $"'{node.Id}' 文字需要约 {estimate.RequiredHeightInches:F2}\" 高度，实际 {node.Bounds.H:F2}\""
@@ -99,7 +103,7 @@ public static class LayoutAnalyzer
                 report.Add(new LayoutIssue
                 {
                     Code = "text.overflow-horizontal",
-                    Severity = "warning",
+                    Severity = "error",
                     Page = page.Name,
                     Targets = new[] { node.Id },
                     Message = $"'{node.Id}' 最长行约 {estimate.LongestLineInches:F2}\" 宽，实际 {node.Bounds.W:F2}\""
