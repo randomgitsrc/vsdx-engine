@@ -51,7 +51,10 @@ public sealed class RoleShapeClaimsTests
     [Theory]
     [InlineData("database", "Process")]
     [InlineData("decision", "Diamond")]
-    [InlineData("process", "Rectangle")]
+    // `process` used to fall through to Rectangle because ShapeForRole had no entry and did not consult the
+    // catalogue. It now resolves to the Visio `Process` master — the rounded step box — which is what the word
+    // means in a flow. The change is deliberate; see RoleShapeAliasTests.
+    [InlineData("process", "Process")]
     public void TheRoleSelectsTheMaster(string role, string expected)
     {
         var (nameU, file) = Write(role, """{"specVersion":"1.0"}""");

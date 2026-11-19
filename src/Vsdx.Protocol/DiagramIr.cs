@@ -428,19 +428,41 @@ public static class DiagramIrConverter
         return diagram;
     }
 
-    /// <summary>Maps a semantic role to a Visio shape family.</summary>
-    public static string ShapeForRole(string? role) => role?.ToLowerInvariant() switch
+    /// <summary>
+    /// Maps a semantic role to a Visio shape family, falling back to the shape catalogue.
+    ///
+    /// The semantic table below wins, because `database` means "the process master", not a shape that happens to
+    /// be called database. But a caller who writes `"role": "diamond"` means the shape, and the default arm used
+    /// to swallow it: `MasterCatalog.Aliases` knows sixty-odd shape names and none of them was reachable from
+    /// here. So an unrecognised role is offered to the catalogue before defaulting to a rectangle.
+    /// </summary>
+    public static string ShapeForRole(string? role)
     {
-        "gateway" => "Hexagon",
-        "database" or "storage" => "Process",
-        "queue" or "bus" => "Parallelogram",
-        "client" or "actor" or "user" => "Circle",
-        "decision" => "Diamond",
-        "monitor" => "Hexagon",
-        "external" => "Rectangle",
-        "zone" or "boundary" => "Rectangle",
-        _ => "Rectangle"
-    };
+        var semantic = role?.ToLowerInvariant() switch
+        {
+            "gateway" => "Hexagon",
+            "database" or "storage" => "Process",
+            "queue" or "bus" => "Parallelogram",
+            "client" or "actor" or "user" => "Circle",
+            "decision" => "Diamond",
+            "monitor" => "Hexagon",
+            "external" => "Rectangle",
+            "zone" or "boundary" => "Rectangle",
+            _ => null
+        };
+
+        if (semantic is not null) return semantic;
+        if (string.IsNullOrWhiteSpace(role)) return "Rectangle";
+
+        // A shape name used as a role: `diamond`, `hexagon`, `pentagon`, … The catalogue is the authority on
+        // which names it knows, so ask it rather than duplicating the list here.
+        var resolved = Vsdx.Adapters.MasterCatalog.ResolveMaster(role);
+
+        return string.Equals(resolved, "Rectangle", StringComparison.OrdinalIgnoreCase)
+               && !string.Equals(role.Trim(), "rectangle", StringComparison.OrdinalIgnoreCase)
+            ? "Rectangle"
+            : resolved;
+    }
 
     /// <summary>Relations that imply an arrowhead; "contains" does not.</summary>
     public static bool RelationUsesArrow(string? relation) =>
