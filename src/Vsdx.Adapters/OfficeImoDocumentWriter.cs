@@ -337,6 +337,19 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
 
         ApplyStyle(shape, node.Style, isContainer: false, diagram);
 
+        // The masters ship one connection point, at the centre of the box. Every connector ending on this node then
+        // lands on the same coordinate: a node with three inbound edges gets three lines meeting at a point, which
+        // reads as a knot and cannot be routed around. Replacing them with one per side gives the router somewhere
+        // to go.
+        //
+        // Replacing rather than appending: an extra centre point would still be chosen by anything that snaps to
+        // the nearest anchor, and the knot would survive.
+        var anchors = ConnectionPointLayout.For(node);
+        shape.ConnectionPoints.Clear();
+        foreach (var anchor in anchors)
+            shape.ConnectionPoints.Add(new OfficeIMO.Visio.VisioConnectionPoint(
+                anchor.X, anchor.Y, anchor.DirX, anchor.DirY));
+
         if (node.ShapeData is { Count: > 0 })
         {
             foreach (var (key, value) in node.ShapeData)
