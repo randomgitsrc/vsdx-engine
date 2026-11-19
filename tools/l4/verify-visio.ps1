@@ -75,21 +75,27 @@ try {
     }
     Add-Check "text-blocks-present" ($textShapes.Count -ge 1) "$($textShapes.Count) text block(s)"
 
-    if ($textShapes.Count -ge 2) {
-        $sizes = @()
-        foreach ($t in $textShapes) {
-            try { $sizes += [double]$t.CellsU("Char.Size").ResultIU } catch { }
-        }
-        if ($sizes.Count -ge 2) {
-            $distinct = ($sizes | Sort-Object -Unique).Count
-            Add-Check "text-size-hierarchy" ($distinct -ge 2) `
-                "$distinct distinct text sizes: $(($sizes | ForEach-Object { [math]::Round($_ * 72, 1) }) -join ', ') pt"
-        }
-
-        $withText = @($textShapes | Where-Object { $_.Text -and $_.Text.Trim().Length -gt 0 })
-        Add-Check "text-content-not-empty" ($withText.Count -eq $textShapes.Count) `
-            "$($withText.Count)/$($textShapes.Count) blocks carry text"
+    # These two run whenever there is at least one block. They used to sit inside
+    # `if ($textShapes.Count -ge 2)` and were skipped silently on a one-block diagram — the run still
+    # reported PASS overall, having checked less than it said it would.
+    $sizes = @()
+    foreach ($t in $textShapes) {
+        try { $sizes += [double]$t.CellsU("Char.Size").ResultIU } catch { }
     }
+
+    if ($sizes.Count -ge 2) {
+        $distinct = ($sizes | Sort-Object -Unique).Count
+        Add-Check "text-size-hierarchy" ($distinct -ge 2) `
+            "$distinct distinct text sizes: $(($sizes | ForEach-Object { [math]::Round($_ * 72, 1) }) -join ', ') pt"
+    }
+    elseif ($textShapes.Count -ge 1) {
+        Add-Check "text-size-hierarchy" $false `
+            "only $($sizes.Count) size(s) readable — a hierarchy needs at least two text blocks"
+    }
+
+    $withText = @($textShapes | Where-Object { $_.Text -and $_.Text.Trim().Length -gt 0 })
+    Add-Check "text-content-not-empty" ($withText.Count -eq $textShapes.Count) `
+        "$($withText.Count)/$($textShapes.Count) blocks carry text"
 
     # --- 2. Free path: custom geometry survives as a real outline --------------
     # A free path is written with NameU "FreePath" (see VisioFreePathBridge). Counting geometry
