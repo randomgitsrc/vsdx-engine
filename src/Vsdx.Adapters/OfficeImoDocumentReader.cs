@@ -555,7 +555,10 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
             Kind = "container",
             Bounds = new Bounds(shape.PinX.ToInches(), shape.PinY.ToInches(), shape.Width.ToInches(), shape.Height.ToInches()),
             Layers = shape.LayerNames.Count > 0 ? shape.LayerNames.ToList() : null,
-            Style = ReadStyle(shape)
+            Style = ReadStyle(shape),
+
+            // Written by `WriteGroup`; absent on packages the engine did not produce.
+            Order = int.TryParse(UserCellOf(shape, "VsdxGroupOrder"), out int bandOrder) ? bandOrder : null
         };
 
         // ContainerMemberIds hold Visio shape ids; translate them to the stable model ids the

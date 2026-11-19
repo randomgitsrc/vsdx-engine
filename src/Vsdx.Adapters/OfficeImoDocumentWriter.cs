@@ -253,6 +253,13 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
             container.TextStyle.LeftMargin = 0.10;
             if (group.Style?.FontSize is null) container.TextStyle.Size = 12;
 
+            // Stacking order is a model field with documented semantics ("lower = higher on the page"), and
+            // nothing was persisting it: a container written with Order=1 read back with Order=null. Stored in
+            // a user cell like the other model-only fields, since Visio has no equivalent.
+            if (group.Order is int order)
+                container.SetUserCell("VsdxGroupOrder", order.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture), prompt: "Agent VSDX Engine band order");
+
             return container;
         }
         catch (Exception ex)
