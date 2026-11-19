@@ -1,0 +1,18 @@
+{
+  "id": "probe", "name": "probe", "type": "architecture",
+  "pageSize": { "width": 11.69, "height": 8.27, "unit": "inches" },
+  "style": { "font": "Microsoft YaHei", "fontSize": 11 },
+  "pages": [{
+    "id": "p0", "name": "P", "size": { "width": 11.69, "height": 8.27, "unit": "inches" },
+    "groups": [
+      { "id": "g1", "name": "Two Row Band", "kind": "container", "autoSize": false,
+        "bounds": { "x": 5.845, "y": 4.0, "w": 6.0, "h": 2.2 } }
+    ],
+    "nodes": [
+      { "id": "a", "text": "A", "shape": "rounded", "bounds": { "x": 4.0, "y": 4.6, "w": 1.4, "h": 0.55 }, "groupId": "g1" },
+      { "id": "b", "text": "B", "shape": "rounded", "bounds": { "x": 6.0, "y": 4.6, "w": 1.4, "h": 0.55 }, "groupId": "g1" },
+      { "id": "c", "text": "C", "shape": "rounded", "bounds": { "x": 4.0, "y": 3.4, "w": 1.4, "h": 0.55 }, "groupId": "g1" }
+    ],
+    "edges": [ { "id": "e1", "from": "a", "to": "c", "kind": "straight" } ]
+  }]
+}
