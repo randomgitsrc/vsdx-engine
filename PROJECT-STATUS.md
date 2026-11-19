@@ -105,7 +105,7 @@ $ diff     --before a.vsdx --after a2.vsdx                               exit 0 
 **结论：25/25 已修复。**
 
 复核方式：每一项都由测试固定，`dotnet test` 全绿即证明未回归。
-历史缺陷清单与逐项证据见 `docs/phase8/phase8.3-defect-register.md`。
+历史缺陷清单与逐项证据见 [`docs/phase8/known-issues.md`](docs/phase8/known-issues.md)。
 
 ### 抽样复验（2026-11-19）
 
