@@ -54,8 +54,16 @@ public static class VisioFreePathBridge
         XDocument doc;
         using (var stream = entry.Open()) doc = XDocument.Load(stream);
 
+        // An empty page serialises as a self-closing <PageContents/> with no <Shapes> child. Treating that as
+        // "nothing to do" dropped every path on a page whose only content was a custom outline, and the run
+        // reported `lossless` because nothing had been recorded as lost. Create the container instead —
+        // `VisioTextBlockBridge` was fixed the same way for the same reason.
         var shapesContainer = doc.Descendants(VisioNs + "Shapes").FirstOrDefault();
-        if (shapesContainer is null) return 0;
+        if (shapesContainer is null)
+        {
+            shapesContainer = new XElement(VisioNs + "Shapes");
+            doc.Root!.Add(shapesContainer);
+        }
 
         // Existing ids, so new shapes cannot collide with the writer's shapes.
         var usedIds = new HashSet<int>(
