@@ -186,6 +186,33 @@ Prefer authoring the model with only ids, text, `groupId` and edges, then let `-
 --fit-text --fit-page` derive all geometry. Hand-writing coordinates is what makes a diagram
 look assembled rather than designed.
 
+**But the canvas mode decides more than the layout does.** Measured on a real three-band diagram with a title:
+
+| Setup | Score | Page |
+| --- | --- | --- |
+| `layout=auto`, `canvas=auto` | **98** | 8.55 × 8.72", fitted to content |
+| `layout=auto`, `canvas=fixed` | 98 | as given |
+| `layout=auto`, `canvas=paper` | 93 | snapped to A4, 29% utilised |
+| hand-placed coordinates | 96 | A4 |
+
+`auto` layout is not the weak link — pinning a standard sheet is. When the content does not fit A4, `paper`
+snaps to the nearest sheet and leaves the page mostly empty; the diagram is still valid, it just reads as a
+small drawing on a big page.
+
+**Choose the canvas from what the reader needs:**
+
+- **The sheet is a requirement** (it will be printed on A4, bound into a report) → `paper`, and expect the
+  layout to be judged against that sheet. If the score drops on utilisation, the content is the problem, not
+  the mode: split the diagram or drop detail.
+- **The diagram decides its own size** (screen viewing, an appendix, a wiki page) → `auto` with `--fit-page`.
+  This scores highest because the page matches the content exactly.
+
+Do not mix them: asking for A4 and then judging the result by utilisation asks the engine to do two
+incompatible things.
+
+These numbers are from `docs/research/experiments/agent-trial-01/`, which holds the IR and design spec — rerun
+them rather than trusting the table if the engine has changed since.
+
 ### Let the engine size the boxes, then look
 
 Hand-writing every `bounds` is what makes a diagram look assembled rather than designed. If
