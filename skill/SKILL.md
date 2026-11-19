@@ -433,20 +433,36 @@ wrong one corrupts the layout:
 
 ### Text blocks
 
+**`create` and `execute` take different field names. Getting this wrong fails silently.**
+
+| Path | Box field | Style |
+| --- | --- | --- |
+| `create --input model.json` | `bounds: {x, y, w, h}` | `style: {bold, font, textColor}` |
+| `execute --ir x.ir.json` | `box: {x, y, width, height}` | `bold` / `color` at top level |
+
+Model form (`create`):
+
 ```jsonc
 "textBlocks": [
   { "id": "title", "text": "订单处理平台", "role": "title",
-    "box": { "x": 5.5, "y": 8.6, "width": 6, "height": 0.6 },
-    "align": "center", "bold": true },
+    "bounds": { "x": 5.5, "y": 8.6, "w": 6, "h": 0.6 },
+    "align": "center", "style": { "bold": true } },
   { "id": "legend", "text": "蓝 = 服务   绿 = 数据", "role": "legend",
-    "box": { "x": 5.5, "y": 1.2, "width": 6, "height": 0.35 },
+    "bounds": { "x": 5.5, "y": 1.2, "w": 6, "h": 0.35 },
     "align": "center" }
 ]
 ```
 
+IR form (`execute`) uses `box` with `width`/`height` — see `examples/realworld/*.ir.json`.
+
 `role` sets the size for you — `title` 20pt, `subtitle` 12pt, `legend` 10pt, `note` 8pt.
-`fontSize` overrides it. **`box` is required**: text is not laid out, so where it goes is a
+`fontSize` overrides it. **The box is required**: text is not laid out, so where it goes is a
 design decision, not something the engine should guess.
+
+> **If a title lands at the bottom-left corner instead of where you put it**, you used the wrong
+> box field for this path. The wrong field is *ignored*, not rejected — `create` returns `ok: true`
+> and `check-layout` reports only `page.margins` with a negative left value. Since v0.9.x the run also
+> reports `spec.unknown-field`; before that there was no signal at all.
 
 ### Paths
 

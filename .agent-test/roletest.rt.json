@@ -1,0 +1,133 @@
+{
+  "id": "roletest",
+  "name": "roletest",
+  "pageSize": {
+    "width": 11.69,
+    "height": 8.27,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "Page-1",
+      "nameU": "Page-1",
+      "visioId": 0,
+      "size": {
+        "width": 11.69,
+        "height": 8.27,
+        "unit": "inches"
+      },
+      "groups": [],
+      "nodes": [
+        {
+          "id": "a",
+          "name": "a",
+          "text": "A",
+          "shape": "Rectangle",
+          "visioShapeId": "a",
+          "bounds": {
+            "x": 3,
+            "y": 4,
+            "w": 2,
+            "h": 1
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "font": "Microsoft YaHei",
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "a",
+        "2",
+        "3"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "t1",
+          "name": "标题文字",
+          "text": "标题文字",
+          "role": "title",
+          "visioShapeId": "2",
+          "bounds": {
+            "x": 5.5,
+            "y": 7,
+            "w": 6,
+            "h": 0.5
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 20.000016,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "top"
+          },
+          "imported": true
+        },
+        {
+          "id": "t2",
+          "name": "注释文字",
+          "text": "注释文字",
+          "role": "note",
+          "visioShapeId": "3",
+          "bounds": {
+            "x": 5.5,
+            "y": 6,
+            "w": 6,
+            "h": 0.3
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 7.999992,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-19T05:52:17.2160768+00:00",
+    "modified": "2026-11-19T05:52:17.2330882+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.agent-test/roletest.vsdx",
+    "sourceHash": "8f1c80aaa931653a876539e069c1a962a8aac524d098ffb9cbe7990b825c5641",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 0.9.0",
+    "history": [
+      {
+        "at": "2026-11-19T05:52:17.2560333+00:00",
+        "action": "create",
+        "target": "roletest.vsdx",
+        "detail": "pages=1, nodes=1, edges=0",
+        "tool": "Agent VSDX Engine 0.9.0"
+      }
+    ]
+  }
+}

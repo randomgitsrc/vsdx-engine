@@ -1,0 +1,663 @@
+{
+  "id": "v1",
+  "name": "订单系统运作架构图",
+  "pageSize": {
+    "width": 11.69,
+    "height": 8.27,
+    "unit": "inches"
+  },
+  "orientation": "landscape",
+  "modelVersion": "1.0",
+  "pages": [
+    {
+      "id": "page-0",
+      "name": "订单系统架构",
+      "nameU": "订单系统架构",
+      "visioId": 0,
+      "size": {
+        "width": 11.69,
+        "height": 8.27,
+        "unit": "inches"
+      },
+      "background": "#FFFFFF",
+      "groups": [
+        {
+          "id": "grp-data",
+          "name": "数据与消息层  Data & Messaging",
+          "nameU": "Container",
+          "members": [
+            "pg",
+            "redis",
+            "kafka",
+            "analytics"
+          ],
+          "visioShapeId": "grp-data",
+          "bounds": {
+            "x": 5.85,
+            "y": 1.33,
+            "w": 11,
+            "h": 2.01
+          },
+          "style": {
+            "fill": "#F2E9F7",
+            "fillPattern": "1",
+            "stroke": "#C5A3D9",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#4B1F6F",
+            "font": "Microsoft YaHei",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        },
+        {
+          "id": "grp-svc",
+          "name": "业务服务层  Service Layer",
+          "nameU": "Container",
+          "members": [
+            "pay",
+            "order",
+            "stock"
+          ],
+          "visioShapeId": "grp-svc",
+          "bounds": {
+            "x": 4.5,
+            "y": 3.78,
+            "w": 8.3,
+            "h": 2.01
+          },
+          "style": {
+            "fill": "#EDF7ED",
+            "fillPattern": "1",
+            "stroke": "#A9D08E",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#375623",
+            "font": "Microsoft YaHei",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        },
+        {
+          "id": "grp-access",
+          "name": "接入层  Access Layer",
+          "nameU": "Container",
+          "members": [
+            "web",
+            "gateway",
+            "app"
+          ],
+          "visioShapeId": "grp-access",
+          "bounds": {
+            "x": 4.5,
+            "y": 6.23,
+            "w": 8.3,
+            "h": 2.01
+          },
+          "style": {
+            "fill": "#EAF3FB",
+            "fillPattern": "1",
+            "stroke": "#9DC3E6",
+            "strokeWidth": 0.014,
+            "strokePattern": 1,
+            "textColor": "#1F4E79",
+            "font": "Microsoft YaHei",
+            "fontSize": 12,
+            "bold": true,
+            "italic": false,
+            "hAlign": "left",
+            "vAlign": "top"
+          },
+          "kind": "container"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "web",
+          "name": "web",
+          "text": "Web 门户\nReact SPA",
+          "shape": "Rectangle",
+          "visioShapeId": "web",
+          "bounds": {
+            "x": 1.8,
+            "y": 6,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-access",
+          "style": {
+            "fill": "#4472C4",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "gateway",
+          "name": "gateway",
+          "text": "API 网关\nKong",
+          "shape": "Hexagon",
+          "visioShapeId": "gateway",
+          "bounds": {
+            "x": 4.5,
+            "y": 6,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-access",
+          "style": {
+            "fill": "#ED7D31",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "app",
+          "name": "app",
+          "text": "手机 App\niOS / Android",
+          "shape": "Rectangle",
+          "visioShapeId": "app",
+          "bounds": {
+            "x": 7.2,
+            "y": 6,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-access",
+          "style": {
+            "fill": "#4472C4",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "pay",
+          "name": "pay",
+          "text": "支付服务\nPayment",
+          "shape": "Rectangle",
+          "visioShapeId": "pay",
+          "bounds": {
+            "x": 1.8,
+            "y": 3.55,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-svc",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "order",
+          "name": "order",
+          "text": "订单服务\nOrder",
+          "shape": "Rectangle",
+          "visioShapeId": "order",
+          "bounds": {
+            "x": 4.5,
+            "y": 3.55,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-svc",
+          "style": {
+            "fill": "#548235",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "stock",
+          "name": "stock",
+          "text": "库存服务\nInventory",
+          "shape": "Rectangle",
+          "visioShapeId": "stock",
+          "bounds": {
+            "x": 7.2,
+            "y": 3.55,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-svc",
+          "style": {
+            "fill": "#70AD47",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "pg",
+          "name": "pg",
+          "text": "PostgreSQL\n订单数据",
+          "shape": "Process",
+          "visioShapeId": "pg",
+          "bounds": {
+            "x": 1.8,
+            "y": 1.1,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-data",
+          "style": {
+            "fill": "#C55A11",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "redis",
+          "name": "redis",
+          "text": "Redis\n缓存",
+          "shape": "Process",
+          "visioShapeId": "redis",
+          "bounds": {
+            "x": 4.5,
+            "y": 1.1,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-data",
+          "style": {
+            "fill": "#C00000",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "kafka",
+          "name": "kafka",
+          "text": "Kafka\n事件总线",
+          "shape": "Parallelogram",
+          "visioShapeId": "kafka",
+          "bounds": {
+            "x": 7.2,
+            "y": 1.1,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-data",
+          "style": {
+            "fill": "#7030A0",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        },
+        {
+          "id": "analytics",
+          "name": "analytics",
+          "text": "下游分析系统\nBI / 报表",
+          "shape": "Rectangle",
+          "visioShapeId": "analytics",
+          "bounds": {
+            "x": 9.9,
+            "y": 1.1,
+            "w": 2.3,
+            "h": 0.95
+          },
+          "groupId": "grp-data",
+          "style": {
+            "fill": "#7F7F7F",
+            "fillPattern": "1",
+            "stroke": "#000000",
+            "strokeWidth": 0.0138889,
+            "strokePattern": 1,
+            "textColor": "#FFFFFF",
+            "font": "Microsoft YaHei",
+            "fontSize": 11,
+            "bold": true,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "middle"
+          },
+          "imported": true
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-web-gw",
+          "from": "web",
+          "to": "gateway",
+          "kind": "straight",
+          "label": "HTTPS",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-web-gw"
+        },
+        {
+          "id": "e-app-gw",
+          "from": "app",
+          "to": "gateway",
+          "kind": "straight",
+          "label": "HTTPS",
+          "lineColor": "#2E75B6",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-app-gw"
+        },
+        {
+          "id": "e-gw-order",
+          "from": "gateway",
+          "to": "order",
+          "kind": "straight",
+          "label": "REST",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-gw-order"
+        },
+        {
+          "id": "e-gw-pay",
+          "from": "gateway",
+          "to": "pay",
+          "kind": "straight",
+          "label": "REST",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-gw-pay"
+        },
+        {
+          "id": "e-gw-stock",
+          "from": "gateway",
+          "to": "stock",
+          "kind": "straight",
+          "label": "REST",
+          "lineColor": "#BF8F00",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-gw-stock"
+        },
+        {
+          "id": "e-order-pay",
+          "from": "order",
+          "to": "pay",
+          "kind": "straight",
+          "label": "扣款",
+          "lineColor": "#507E32",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-order-pay"
+        },
+        {
+          "id": "e-order-stock",
+          "from": "order",
+          "to": "stock",
+          "kind": "straight",
+          "label": "锁定库存",
+          "lineColor": "#507E32",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-order-stock"
+        },
+        {
+          "id": "e-order-pg",
+          "from": "order",
+          "to": "pg",
+          "kind": "straight",
+          "label": "订单数据",
+          "lineColor": "#843C0C",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-order-pg"
+        },
+        {
+          "id": "e-order-redis",
+          "from": "order",
+          "to": "redis",
+          "kind": "straight",
+          "label": "缓存",
+          "lineColor": "#7F0000",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-order-redis"
+        },
+        {
+          "id": "e-order-kafka",
+          "from": "order",
+          "to": "kafka",
+          "kind": "straight",
+          "label": "订单事件",
+          "lineColor": "#4B1F6F",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-order-kafka"
+        },
+        {
+          "id": "e-pay-kafka",
+          "from": "pay",
+          "to": "kafka",
+          "kind": "curved",
+          "label": "支付事件",
+          "lineColor": "#4B1F6F",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "waypoints": [
+            {
+              "x": 3.1499999999999995,
+              "y": 3.549999999999999
+            },
+            {
+              "x": 3.15,
+              "y": 1.8349999999999997
+            }
+          ],
+          "visioShapeId": "e-pay-kafka"
+        },
+        {
+          "id": "e-stock-kafka",
+          "from": "stock",
+          "to": "kafka",
+          "kind": "straight",
+          "label": "库存事件",
+          "lineColor": "#4B1F6F",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-stock-kafka"
+        },
+        {
+          "id": "e-kafka-ana",
+          "from": "kafka",
+          "to": "analytics",
+          "kind": "straight",
+          "label": "消费",
+          "lineColor": "#4B1F6F",
+          "lineWeight": 0.013,
+          "linePattern": 1,
+          "endArrow": "triangle",
+          "visioShapeId": "e-kafka-ana"
+        }
+      ],
+      "layers": [],
+      "unmapped": [],
+      "shapeOrder": [
+        "web",
+        "gateway",
+        "app",
+        "pay",
+        "order",
+        "stock",
+        "pg",
+        "redis",
+        "kafka",
+        "analytics",
+        "27",
+        "grp-data",
+        "grp-svc",
+        "grp-access",
+        "e-web-gw",
+        "e-app-gw",
+        "e-gw-order",
+        "e-gw-pay",
+        "e-gw-stock",
+        "e-order-pay",
+        "e-order-stock",
+        "e-order-pg",
+        "e-order-redis",
+        "e-order-kafka",
+        "e-pay-kafka",
+        "e-stock-kafka",
+        "e-kafka-ana"
+      ],
+      "paths": [],
+      "textBlocks": [
+        {
+          "id": "title",
+          "name": "订单系统运作架构",
+          "text": "订单系统运作架构",
+          "role": "title",
+          "visioShapeId": "27",
+          "bounds": {
+            "x": 0,
+            "y": 0,
+            "w": 4,
+            "h": 0.5
+          },
+          "style": {
+            "fill": "#FFFFFF",
+            "fillPattern": "0",
+            "stroke": "#000000",
+            "strokeWidth": 0.01041666666666667,
+            "strokePattern": 0,
+            "fontSize": 20.000016,
+            "bold": false,
+            "italic": false,
+            "hAlign": "center",
+            "vAlign": "top"
+          },
+          "imported": true
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created": "2026-11-19T05:33:04.0821672+00:00",
+    "modified": "2026-11-19T05:33:04.1166704+00:00",
+    "modelVersion": "1.0",
+    "sourceFile": "/home/kity/oclab/vsdx-engine/.agent-test/v1.vsdx",
+    "sourceHash": "d4739a665d992bb5e580e84e3b40a8b0a10fa38774f3364c26c6ef8cf7b3eac8",
+    "backend": "OfficeIMO.Visio",
+    "backendVersion": "3.6.1.0",
+    "generator": "Agent VSDX Engine 0.9.0",
+    "history": [
+      {
+        "at": "2026-11-19T05:33:04.1188608+00:00",
+        "action": "create",
+        "target": "v1.vsdx",
+        "detail": "pages=1, nodes=10, edges=13",
+        "tool": "Agent VSDX Engine 0.9.0"
+      }
+    ]
+  }
+}

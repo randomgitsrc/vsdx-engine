@@ -685,9 +685,17 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
         };
 
         if (connector.Waypoints.Count > 0)
+        {
             edge.Waypoints = connector.Waypoints
                 .Select(w => new Model.Point(w.X, w.Y))
                 .ToList();
+
+            // OfficeIMO reports every routed connector as "curved", so an edge written as `rightAngle` comes
+            // back labelled curved while its geometry is a polyline of axis-aligned segments. The label is the
+            // only thing lost; recover it from the geometry rather than passing OfficeIMO's word through.
+            if (IsAxisAlignedRoute(edge.Waypoints))
+                edge.Kind = "rightAngle";
+        }
 
         if (edge.From is null)
         {
@@ -736,6 +744,21 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
     {
         var value = shape.GetUserCellValue(name);
         return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    /// <summary>True when every segment of the route runs horizontally or vertically.</summary>
+    private static bool IsAxisAlignedRoute(IReadOnlyList<Model.Point> points)
+    {
+        for (int i = 0; i < points.Count - 1; i++)
+        {
+            double dx = Math.Abs(points[i + 1].X - points[i].X);
+            double dy = Math.Abs(points[i + 1].Y - points[i].Y);
+
+            // 0.01" tolerance: routed segments land on rounded coordinates.
+            if (dx > 0.01 && dy > 0.01) return false;
+        }
+
+        return true;
     }
 
     private static Node? FindNodeByVisioId(Page page, string visioId) =>

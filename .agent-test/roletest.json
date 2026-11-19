@@ -1,0 +1,6 @@
+{"id":"rt","name":"roletest","type":"architecture","pageSize":{"width":11.69,"height":8.27,"unit":"inches"},
+ "pages":[{"id":"p1","size":{"width":11.69,"height":8.27,"unit":"inches"},
+  "nodes":[{"id":"a","text":"A","shape":"rectangle","bounds":{"x":3,"y":4,"w":2,"h":1}}],
+  "edges":[],
+  "textBlocks":[{"id":"t1","text":"标题文字","role":"title","bounds":{"x":5.5,"y":7,"w":6,"h":0.5},"align":"center"},
+                {"id":"t2","text":"注释文字","role":"note","bounds":{"x":5.5,"y":6,"w":6,"h":0.3},"align":"center"}]}]}
