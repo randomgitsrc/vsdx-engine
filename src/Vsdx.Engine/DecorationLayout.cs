@@ -49,6 +49,11 @@ public static class DecorationLayout
         return moved;
     }
 
+    /// <summary>True for the roles that belong to the page rather than to a band.</summary>
+    private static bool IsPageHeading(TextBlock text) =>
+        string.Equals(text.Role, "title", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(text.Role, "subtitle", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>
     /// Moves <paramref name="text"/> up past the highest border it straddles.
     /// Returns false when it straddles nothing.
@@ -73,8 +78,13 @@ public static class DecorationLayout
 
             if (textTop <= groupBottom || textBottom >= groupTop) continue;
 
-            // Wholly inside: the author meant it.
-            if (textBottom >= groupBottom && textTop <= groupTop) continue;
+            // Wholly inside: the author meant it — unless this is a page title, which the layout can swallow.
+            //
+            // A band is derived from its members and grows upward, so it can close over a title that was clear
+            // when the author placed it. To this test the result is indistinguishable from a deliberate inside
+            // label: the geometry says "contained". The difference is authorship, which the model does not
+            // record, so role is the closest available proxy — a band never authors a title inside itself.
+            if (textBottom >= groupBottom && textTop <= groupTop && !IsPageHeading(text)) continue;
 
             straddles = true;
             highestTop = Math.Max(highestTop, groupTop);
