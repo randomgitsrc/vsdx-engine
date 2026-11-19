@@ -24,6 +24,7 @@
 | 跨境电商架构 `cbo` | 3 层容器 | Layered | 92 | ⚠️ 2 处连线穿容器标题 |
 | 部署拓扑 `deploy-topology` | 3 层容器 + 扇出 | Layered | 92 | ⚠️ 少量连线交叉（拓扑性，见 §八）|
 | 用户数据流 `user-data-flow` | 无容器长链 | Flow | 100 | ✅ |
+| **Slack 蜂窝** `slack-cellular` | 1 边缘 + 3 平行单元 | Layered | 96 | ⚠️ **布局无法表达容器并排**；第 2 个外部案例 |
 | **Netflix 双活** `netflix-active-active` | 2 区域 + 跨区复制 | Layered | 90 | ⚠️ 跨区边交叉；**唯一外部来源案例** |
 | 下单支付时序 `checkout-sequence` | 6 参与者 9 消息 | Flow | 88 | ⚠️ 结构对但不合时序 |
 | 订单履约泳道 `order-swimlane` | 3 泳道 | Swimlane | 96 | ✅ 跨泳道连线为斜线 |
