@@ -26,8 +26,8 @@ public sealed class UnknownSpecFieldTests
             """{"irVersion":"1.0","id":"t","kind":"architecture","nodes":[{"id":"a","label":"A"}],"edges":[]}""",
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 
-        var spec = JsonSerializer.Deserialize<DesignSpec>(
-            specJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        // Must go through the loader: plain deserialisation never records what it could not map.
+        var spec = DesignSpecLoader.Load(specJson);
 
         var path = Path.Combine(Path.GetTempPath(), $"vsdx-unk-{Guid.NewGuid():N}.vsdx");
 

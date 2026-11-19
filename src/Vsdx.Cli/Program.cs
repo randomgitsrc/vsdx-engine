@@ -744,7 +744,9 @@ public static class Program
         if (!string.IsNullOrWhiteSpace(specPath))
         {
             if (!File.Exists(specPath)) throw new FileNotFoundException($"DesignSpec not found: {specPath}", specPath);
-            spec = JsonSerializer.Deserialize<DesignSpec>(File.ReadAllText(specPath), irOptions);
+            // `DesignSpecLoader` also records fields the model has no home for, so they can be reported
+            // instead of silently disappearing in the deserialiser.
+            spec = DesignSpecLoader.Load(File.ReadAllText(specPath));
         }
 
         var runner = new ProtocolRunner(new VsdxEngine());

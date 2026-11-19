@@ -69,6 +69,19 @@ public sealed class ProtocolRunner
                 var application = DesignSpecApplier.Apply(diagram, spec);
                 result.AppliedDesignNotes.AddRange(application.Applied);
                 result.UnmetConstraints.AddRange(application.Unmet);
+
+                // Fields the loader could not map. Reported rather than dropped: a caller who wrote
+                // `canvas.profile` gets no effect, and without this line no explanation either.
+                foreach (var field in spec.UnknownFields)
+                {
+                    result.UnmetConstraints.Add(new UnmetConstraint
+                    {
+                        Code = "spec.unknown-field",
+                        Reason = $"DesignSpec 中不存在字段 '{field}'，已忽略",
+                        IsHard = false
+                    });
+                }
+
                 result.StagesCompleted.Add("design.apply");
             }
             else

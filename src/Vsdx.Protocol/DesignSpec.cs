@@ -14,6 +14,17 @@ namespace Vsdx.Protocol;
 /// </summary>
 public sealed class DesignSpec
 {
+    /// <summary>
+    /// Property names present in the JSON but not mapped to any field.
+    ///
+    /// Populated by the loader, never serialised. `System.Text.Json` ignores unmapped properties by default, so
+    /// without this a misspelled or unsupported field — `canvas.profile`, say — deserialises cleanly and the
+    /// request evaporates while the run reports success. Goal §5.3 forbids that: a request the engine cannot
+    /// honour has to be reported, not dropped.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public List<string> UnknownFields { get; } = new();
+
     public string SpecVersion { get; set; } = ProtocolVersion.DesignSpec;
 
     /// <summary>Layout arrangement: layered | flow | tree | grid | auto | manual.</summary>
@@ -125,6 +136,52 @@ public sealed class ConstraintSpec
 /// The contract is: the engine never silently ignores a declared constraint. Each one is either
 /// satisfied, or reported in the execution result with a machine-readable code.
 /// </summary>
+/// <summary>Finds fields present in the JSON that no `DesignSpec` type maps to.</summary>
+public static class DesignSpecLoader
+{
+    /// <summary>
+    /// Reads a spec and records every property name the model does not have.
+    ///
+    /// Only names are reported, not values — a caller who wrote `canvas.profile` needs to know the field was
+    /// ignored, and the value is already in their file.
+    /// </summary>
+    public static DesignSpec Load(string json)
+    {
+        var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var spec = System.Text.Json.JsonSerializer.Deserialize<DesignSpec>(json, options)
+                   ?? new DesignSpec();
+
+        Collect(System.Text.Json.JsonDocument.Parse(json).RootElement, typeof(DesignSpec), "", spec.UnknownFields);
+
+        return spec;
+    }
+
+    private static void Collect(
+        System.Text.Json.JsonElement element, Type type, string path, List<string> unknown)
+    {
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Object) return;
+
+        var properties = type.GetProperties()
+            .Where(p => p.GetCustomAttributes(typeof(System.Text.Json.Serialization.JsonIgnoreAttribute), false).Length == 0)
+            .ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var property in element.EnumerateObject())
+        {
+            var name = property.Name;
+            var full = path.Length == 0 ? name : $"{path}.{name}";
+
+            if (!properties.TryGetValue(name, out var matched))
+            {
+                unknown.Add(full);
+                continue;
+            }
+
+            // Recurse into nested objects only; arrays of scalars carry no field names worth checking.
+            Collect(property.Value, matched.PropertyType, full, unknown);
+        }
+    }
+}
+
 public static class DesignSpecApplier
 {
     /// <summary>Runs the spec against a diagram, returning what was applied and what was not.</summary>
