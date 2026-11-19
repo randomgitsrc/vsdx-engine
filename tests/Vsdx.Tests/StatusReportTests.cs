@@ -60,7 +60,7 @@ public sealed class StatusReportTests
     [Theory]
     [InlineData("cbo", 92)]
     [InlineData("user-data-flow", 100)]
-    [InlineData("deploy-topology", 90)]
+    [InlineData("deploy-topology", 92)]
     [InlineData("checkout-sequence", 88)]
     public void TheStatedScoreIsWhatTheEngineProduces(string scenario, int expected)
     {

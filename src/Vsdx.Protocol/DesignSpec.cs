@@ -552,14 +552,6 @@ public static class DesignSpecApplier
         if (DecorationLayout.SpreadLabels(diagram) > 0)
             applied.Add("label.spread");
 
-        // After the avoid passes: a legend is placed below the drawing, and running it earlier would let the
-        // clearance logic lift it back over the content it is describing.
-        if (spec.Canvas.Legend)
-        {
-            int rows = LegendLayout.Apply(diagram, spec.Theme?.Palette);
-            if (rows > 0) applied.Add($"legend.rows={rows}");
-        }
-
         // --- Container styling ---------------------------------------------
         // Containers previously inherited the writer's default fill, so every band rendered in
         // the same pale blue and the diagram read as one undifferentiated block. Bands get a
@@ -832,6 +824,18 @@ public static class DesignSpecApplier
                     });
                 }
             }
+        }
+
+        // The legend is drawn here, after every path that can change the page size, so its type follows the page
+        // it will actually sit on. Built earlier it was sized against the pre-shrink page and came out larger than
+        // the node labels: measured on `netflix-active-active`, legend 10.0pt against node title 8.4pt.
+        //
+        // Its position does not depend on the page — `LegendLayout` places rows below the lowest drawn element —
+        // so moving it later changes only the type scale.
+        if (spec.Canvas.Legend)
+        {
+            int rows = LegendLayout.Apply(diagram, spec.Theme?.Palette);
+            if (rows > 0) applied.Add($"legend.rows={rows}");
         }
 
         // Headings are re-centred here, after every path that can change the page size. Doing it earlier would

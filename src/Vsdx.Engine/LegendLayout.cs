@@ -69,7 +69,11 @@ public static class LegendLayout
     /// A diagram with fewer than two distinct roles gets no legend: one colour needs no key, and adding one is the
     /// kind of decoration that makes a drawing look generated.
     /// </summary>
-    public static int Apply(Diagram diagram, string? paletteName)
+    /// <param name="typeScale">
+    /// The page's type scale, so legend labels sit below the node titles they explain. Passing null falls back to
+    /// the scale derived from each page's own size.
+    /// </param>
+    public static int Apply(Diagram diagram, string? paletteName, TypeScale? typeScale = null)
     {
         var entries = LegendBuilder.Entries(diagram, paletteName);
         if (entries.Count < 2) return 0;
@@ -122,6 +126,14 @@ public static class LegendLayout
                     Id = $"legend-label-{page.Name}-{entry.Role}",
                     Text = entry.Label,
                     Role = "legend",
+
+                    // Below the node titles, never above: the key explains the drawing, it is not part of it.
+                    Style = new ShapeStyle
+                    {
+                        FontSize = (typeScale ?? TypeScale.ForCanvas(
+                            page.Size?.Width ?? 11, page.Size?.Height ?? 8.5, page.Nodes.Count)).NodeCaption
+                    },
+
                     Bounds = new Bounds(
                         x + SwatchWidth + GapAfterSwatch + labelWidth / 2,
                         y + 0.16,
