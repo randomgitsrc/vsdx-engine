@@ -125,7 +125,7 @@ public sealed class ArtifactFreshnessTests
             """{"specVersion":"1.0","theme":{"palette":"enterprise"},"layout":"swimlane","direction":"topToBottom"}""",
         "org-tree" =>
             """{"specVersion":"1.0","theme":{"palette":"enterprise"},"layout":"tree","direction":"topToBottom"}""",
-        "netflix-active-active" or "slack-cellular" =>
+        "netflix-active-active" or "slack-cellular" or "kafka-pipeline" =>
             """{"specVersion":"1.0","layout":"layered","direction":"topToBottom","theme":{"palette":"enterprise"}}""",
         _ => """{"specVersion":"1.0","theme":{"palette":"enterprise"}}"""
     };

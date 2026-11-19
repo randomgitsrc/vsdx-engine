@@ -1,0 +1,145 @@
+{
+  "irVersion": "1.0",
+  "id": "kafka-pipeline",
+  "title": "事件驱动订单管道（Kafka）",
+  "kind": "architecture",
+  "metadata": {
+    "source": "Confluent 官方文档（docs.confluent.io）：Kafka Connect / Kafka Streams / Schema Registry / Tiered Storage",
+    "note": "组件取文档中真实存在的产品；拓扑是典型的「多源 -> 中心总线 -> 多消费方」",
+    "tags": {
+      "sourceUrl": "https://docs.confluent.io/platform/current/overview.html"
+    }
+  },
+  "containers": [
+    {
+      "id": "src",
+      "label": "数据源",
+      "order": 3
+    },
+    {
+      "id": "core",
+      "label": "流平台",
+      "order": 2
+    },
+    {
+      "id": "sink",
+      "label": "消费方",
+      "order": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "oltp",
+      "label": "订单库 CDC",
+      "role": "database",
+      "containerId": "src"
+    },
+    {
+      "id": "api",
+      "label": "订单 API",
+      "role": "service",
+      "containerId": "src"
+    },
+    {
+      "id": "connect",
+      "label": "Kafka Connect",
+      "role": "gateway",
+      "containerId": "core"
+    },
+    {
+      "id": "broker",
+      "label": "Kafka Broker",
+      "role": "queue",
+      "containerId": "core"
+    },
+    {
+      "id": "sr",
+      "label": "Schema Registry",
+      "role": "storage",
+      "containerId": "core"
+    },
+    {
+      "id": "ksqldb",
+      "label": "ksqlDB",
+      "role": "service",
+      "containerId": "core"
+    },
+    {
+      "id": "search",
+      "label": "搜索索引",
+      "role": "database",
+      "containerId": "sink"
+    },
+    {
+      "id": "dw",
+      "label": "数仓",
+      "role": "database",
+      "containerId": "sink"
+    },
+    {
+      "id": "notify",
+      "label": "通知服务",
+      "role": "service",
+      "containerId": "sink"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "oltp",
+      "to": "connect",
+      "label": "Debezium",
+      "relation": "publishes"
+    },
+    {
+      "id": "e2",
+      "from": "api",
+      "to": "broker",
+      "label": "produce",
+      "relation": "publishes"
+    },
+    {
+      "id": "e3",
+      "from": "connect",
+      "to": "broker",
+      "label": "produce",
+      "relation": "publishes"
+    },
+    {
+      "id": "e4",
+      "from": "sr",
+      "to": "broker",
+      "label": "校验 schema",
+      "bidirectional": true,
+      "relation": "calls"
+    },
+    {
+      "id": "e5",
+      "from": "broker",
+      "to": "ksqldb",
+      "label": "stream",
+      "relation": "reads"
+    },
+    {
+      "id": "e6",
+      "from": "ksqldb",
+      "to": "search",
+      "label": "sink",
+      "relation": "writes"
+    },
+    {
+      "id": "e7",
+      "from": "broker",
+      "to": "dw",
+      "label": "Tiered Storage",
+      "relation": "writes"
+    },
+    {
+      "id": "e8",
+      "from": "broker",
+      "to": "notify",
+      "label": "consume",
+      "relation": "consumes"
+    }
+  ]
+}
