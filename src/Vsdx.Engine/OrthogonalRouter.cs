@@ -319,6 +319,51 @@ public static class OrthogonalRouter
     }
 
     /// <summary>
+    /// The side whose straight line to <paramref name="peer"/> crosses no other node, preferring
+    /// <paramref name="preferred"/> when several qualify.
+    ///
+    /// A side whose first stretch is blocked is never returned unless every side is blocked — in that case the
+    /// caller's preference stands and the candidate search downstream deals with it.
+    /// </summary>
+    private static string BestClearSide(Node node, Node peer, List<Node> others, string preferred)
+    {
+        if (others.Count == 0) return preferred;
+
+        var b = node.Bounds;
+        var target = new Point(peer.Bounds.X, peer.Bounds.Y);
+
+        var clear = new List<(string Side, double Error)>();
+
+        foreach (var candidate in new[] { "left", "right", "top", "bottom" })
+        {
+            var (dx, dy) = candidate switch
+            {
+                "left" => (-1.0, 0.0),
+                "right" => (1.0, 0.0),
+                "top" => (0.0, 1.0),
+                _ => (0.0, -1.0)
+            };
+
+            var from = ShapeGeometry.OutlinePoint(b, node.Shape, dx, dy);
+            var path = new List<Point> { from, target };
+
+            if (others.Any(o => PathCrossesBox(path, o.Bounds))) continue;
+
+            // How far this side's outward normal is from the direction of the peer, as a cosine distance.
+            double px = target.X - b.X, py = target.Y - b.Y;
+            double norm = Math.Sqrt(px * px + py * py);
+            if (norm < 1e-9) return candidate;
+
+            double alignment = (px * dx + py * dy) / norm;
+            clear.Add((candidate, 1.0 - alignment));
+        }
+
+        if (clear.Count == 0) return preferred;
+
+        return clear.OrderBy(c => Math.Abs(c.Side == preferred ? 0 : 0.001)).ThenBy(c => c.Error).First().Side;
+    }
+
+    /// <summary>
     /// How far along its side the nth connector on that side sits, as a fraction of the side, in -0.30 .. +0.30.
     ///
     /// The first connector stays at the midpoint; later ones alternate. Bounded so a connector never leaves from a
@@ -363,6 +408,16 @@ public static class OrthogonalRouter
         double scaleY = Math.Abs(dy) < 1e-9 ? double.PositiveInfinity : (b.H / 2) / Math.Abs(dy);
         bool horizontal = Math.Abs(dx) * scaleY > Math.Abs(dy) * scaleX;
         string side = horizontal ? (dx > 0 ? "right" : "left") : (dy > 0 ? "top" : "bottom");
+
+        // Direction alone can pick the worst of the four sides. Measured on `d4` in `deploy-topology`: the peer is
+        // south-west, so direction says `left`, and that line runs through the WAF beside it — while `right` and
+        // `bottom` are both clear.
+        //
+        // Every side is scored by whether a straight line from its anchor to the peer hits another node, and the
+        // side that points most nearly at the peer wins among the clear ones. This is the choice OfficeIMO's own
+        // `Auto` was making correctly; computing it here means the router and the writer agree instead of one
+        // overriding the other.
+        side = BestClearSide(node, peer, others, side);
 
         // Both branches go through `OutlinePoint`, like the explicit sides above. The auto branch used to compute
         // the box edge directly, so on a diamond or hexagon it anchored in empty space while an explicit port on
