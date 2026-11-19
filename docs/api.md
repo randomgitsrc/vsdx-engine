@@ -394,6 +394,17 @@ vsdx-tool execute --ir <model.json> [--spec <design.json>] --output <file.vsdx> 
 | `unmetConstraints` | **每一条未能满足的请求及原因**；引擎不静默丢弃 |
 | `quality.hardConstraintsPassed` | 交付前必查的门禁 |
 | `stagesCompleted` | 已完成的阶段（`ir.validate` → `quality.check`） |
+| `warnings` | 引擎报告的问题，**每条带 `severity`**（`error` / `warning` / `info`）|
+| `errors` | 致命错误；非空时 `status: failed` |
+| `objectMapping` | IR 对象 id → 产物形状 id |
+
+> **`warnings` 与 `compatibility` 是两种输出格式，不要混用。**
+>
+> `execute` 返回 ExecutionResult，问题在 `warnings[]`（每条含 `severity`）。
+> `create` / `update` / `render` / `validate` 返回各命令自己的结果，问题在 `compatibility.issues[]`。
+>
+> 同一个引擎，两套字段名。写通用调用方时按命令分别处理，不要假设 `warnings` 一定存在——
+> `create --json` 就没有这个字段。
 
 `status: partial` 表示文件已写出但部分请求未满足——此时必须读 `unmetConstraints`。
 
