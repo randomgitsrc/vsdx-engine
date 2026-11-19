@@ -101,6 +101,34 @@ public sealed class LegendGenerationTests
     }
 
     [Fact]
+    public void TheSwatchCarriesTheShapeItStandsFor()
+    {
+        // Colour alone cannot separate roles that share a palette entry: `queue`, `database` and `storage` are all
+        // #C85D14, so three identical blocks with three labels told the reader the colour meant three things.
+        // The swatch now draws the master's outline — a hexagon for a gateway, a leaning box for a queue.
+        var ir = System.Text.Json.JsonSerializer.Deserialize<DiagramIr>(
+            """
+            {"irVersion":"1.0","id":"t","kind":"architecture",
+             "nodes":[
+              {"id":"gw","label":"网关","role":"gateway"},
+              {"id":"q","label":"队列","role":"queue"},
+              {"id":"s","label":"服务","role":"service"}],
+             "edges":[]}
+            """,
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+
+        var diagram = DiagramIrConverter.ToDiagram(ir);
+
+        Assert.True(LegendLayout.Apply(diagram, "enterprise") >= 3);
+
+        var swatches = diagram.Pages[0].Paths.Where(p => p.Id.Contains("legend-swatch")).ToList();
+
+        // A rectangle is five rows; a hexagon and a parallelogram take more.
+        Assert.Contains(swatches, s => s.Geometry[0].Rows.Count > 5);
+        Assert.Contains(swatches, s => s.Geometry[0].Rows.Count == 5);
+    }
+
+    [Fact]
     public void AnEmptyDiagramProducesNoLegend()
     {
         var diagram = new Diagram { Id = "t", Pages = { new Page { Name = "p" } } };

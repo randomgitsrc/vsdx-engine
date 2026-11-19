@@ -21,6 +21,49 @@ public static class LegendLayout
     private const double BottomMargin = 0.45;
 
     /// <summary>
+    /// A small outline matching the shape being described, in the swatch's own local coordinates.
+    ///
+    /// Rectangles and process boxes share an outline; a parallelogram leans, and a hexagon has clipped ends. Any
+    /// other master falls back to the rectangle, which is what most of them are.
+    /// </summary>
+    private static PathGeometry SwatchGeometry(string shape)
+    {
+        double w = SwatchWidth, h = 0.16;
+
+        List<PathRow> rows = shape?.Trim().ToLowerInvariant() switch
+        {
+            "parallelogram" => new List<PathRow>
+            {
+                new() { Type = "MoveTo", Cells = { ["X"] = $"{w * 0.22:0.###}", ["Y"] = "0" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w:0.###}", ["Y"] = "0" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w * 0.78:0.###}", ["Y"] = $"{h:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = "0", ["Y"] = $"{h:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w * 0.22:0.###}", ["Y"] = "0" } }
+            },
+            "hexagon" => new List<PathRow>
+            {
+                new() { Type = "MoveTo", Cells = { ["X"] = $"{w * 0.25:0.###}", ["Y"] = "0" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w * 0.75:0.###}", ["Y"] = "0" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w:0.###}", ["Y"] = $"{h / 2:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w * 0.75:0.###}", ["Y"] = $"{h:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w * 0.25:0.###}", ["Y"] = $"{h:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = "0", ["Y"] = $"{h / 2:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w * 0.25:0.###}", ["Y"] = "0" } }
+            },
+            _ => new List<PathRow>
+            {
+                new() { Type = "MoveTo", Cells = { ["X"] = "0", ["Y"] = "0" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w:0.###}", ["Y"] = "0" } },
+                new() { Type = "LineTo", Cells = { ["X"] = $"{w:0.###}", ["Y"] = $"{h:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = "0", ["Y"] = $"{h:0.###}" } },
+                new() { Type = "LineTo", Cells = { ["X"] = "0", ["Y"] = "0" } }
+            }
+        };
+
+        return new PathGeometry { Rows = rows };
+    }
+
+    /// <summary>
     /// Adds legend rows to the page. Returns the number of entries drawn.
     ///
     /// A diagram with fewer than two distinct roles gets no legend: one colour needs no key, and adding one is the
@@ -67,20 +110,11 @@ public static class LegendLayout
                     Id = $"legend-swatch-{page.Name}-{entry.Role}",
                     Bounds = new Bounds(x + SwatchWidth / 2, y + 0.08, SwatchWidth, 0.16),
                     Style = new ShapeStyle { Fill = entry.Fill, Stroke = entry.Fill },
-                    Geometry =
-                    {
-                        new PathGeometry
-                        {
-                            Rows =
-                            {
-                                new PathRow { Type = "MoveTo", Cells = { ["X"] = "0", ["Y"] = "0" } },
-                                new PathRow { Type = "LineTo", Cells = { ["X"] = $"{SwatchWidth:0.###}", ["Y"] = "0" } },
-                                new PathRow { Type = "LineTo", Cells = { ["X"] = $"{SwatchWidth:0.###}", ["Y"] = "0.16" } },
-                                new PathRow { Type = "LineTo", Cells = { ["X"] = "0", ["Y"] = "0.16" } },
-                                new PathRow { Type = "LineTo", Cells = { ["X"] = "0", ["Y"] = "0" } }
-                            }
-                        }
-                    }
+
+                    // The swatch carries the shape it stands for. Colour alone is not enough: `queue`, `database`
+                    // and `storage` all resolve to the same orange, so three identical blocks with three different
+                    // labels told the reader the colours meant three things when they meant one.
+                    Geometry = { SwatchGeometry(entry.Shape) }
                 };
 
                 var label = new TextBlock
