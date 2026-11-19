@@ -104,6 +104,15 @@ public sealed class ProtocolRunner
 
             // After routing, because a junction only exists where the routes actually run. Before the write, so the
             // marks are part of the file rather than something a renderer draws.
+            // After routing: a label belongs on its own branch, and which branch that is only exists once the
+            // routes do.
+            int relabelled = BranchLabels.Apply(diagram);
+            if (relabelled > 0)
+            {
+                result.AppliedDesignNotes.Add($"label.branch={relabelled}");
+                result.StagesCompleted.Add("label.branch");
+            }
+
             int junctions = JunctionMarks.Apply(diagram);
             if (junctions > 0)
             {

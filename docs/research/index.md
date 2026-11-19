@@ -71,6 +71,7 @@
 | E11 | [`experiments/E11-style-boundary.md`](experiments/E11-style-boundary.md) | 四个「不支持」样式字段不可达的原因是 **IR 不暴露逐节点样式**（有意约束），非 Writer 缺陷 |
 | E12 | [`experiments/E12-type-hierarchy.md`](experiments/E12-type-hierarchy.md) | 排版整段被 `if` 包住，默认 spec 下从不运行，节点与边标签同字号；已修为始终运行 |
 | E13 | [`experiments/E13-junction-dots.md`](experiments/E13-junction-dots.md) | 总线分叉点标记；注释节点会被 `edge.through-node` 当成主体，靠前缀豁免 |
+| E14 | [`experiments/E14-branch-labels.md`](experiments/E14-branch-labels.md) | 共享干线标签改贴自己分支，偏差 2.41/1.67/0.44 → 0.00/0.00/0.00 |
 | **AT-1** | [`experiments/agent-trial-01/`](experiments/agent-trial-01/) | **独立 Agent 自主制图**：96 分、3 轮内完成，但 40% 时间在读源码补指南缺口；发现 2 个引擎缺陷 |
 
 ### 3.1 建议的下一批实验（按 Goal §8.5 的要求设计）
