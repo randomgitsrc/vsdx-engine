@@ -153,7 +153,7 @@ WARNING render.font-missing: 文档请求字体 'Georgia'，本机未安装，�
 
 ### 7.1 已经具备的
 
-- 可靠的 VSDX 创建 / 读取 / 增量修改（L1–L3 全绿，416 测试）
+- 可靠的 VSDX 创建 / 读取 / 增量修改（L1–L3 全绿，测试数见 `dotnet test`）
 - 六类图形家族的差异化表达（不是同一模板）
 - 完整的 CLI + 协议（IR / DesignSpec / ExecutionResult）
 - 保真机制（几何、母版、z-order、自由路径、文本块、嵌套）

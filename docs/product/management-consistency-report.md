@@ -39,15 +39,17 @@
 
 ## 三、冲突（4 处）
 
-### 3.1 `PROJECT-STATUS.md` 的"未解项"与 `known-issues.md` 数量不符
+### 3.1 `ROADMAP.md` 说 L4 是"唯一未解的阻塞"，`known-issues.md` 列了 7 项
 
-| 文件 | 说法 |
-| --- | --- |
-| `PROJECT-STATUS.md` | 提到"未解"1 处，指向 `known-issues.md` |
-| `ROADMAP.md` | **"L4 是唯一未解的阻塞"** |
-| `docs/phase8/known-issues.md` | **列了 7 项** |
+| 文件 | 说法 | 核实方式 |
+| --- | --- | --- |
+| `ROADMAP.md` | 「L4……这是**唯一未解的阻塞**」 | `grep -n "唯一未解" ROADMAP.md` |
+| `docs/phase8/known-issues.md` | 列出 **7 项**未解 | `grep -cE "^## [0-9]+\." docs/phase8/known-issues.md` |
 
-**影响**：读者如果先读 ROADMAP，会以为除了 L4 一切就绪。
+**影响**：读者先读 ROADMAP，会以为除了 L4 一切就绪。
+
+**注意**：`PROJECT-STATUS.md` 中**既没有"未解"也没有指向 `known-issues.md`**
+（`grep -c "未解\|known-issues" PROJECT-STATUS.md` 为 0）——本报告初稿声称它"提到 1 处"，**该行是虚构的，已删除**。
 
 **建议**：ROADMAP 改为"L4 是唯一需要**外部环境**的阻塞"，并指向 `known-issues.md`。
 
@@ -55,8 +57,8 @@
 
 同一份文件里：
 
-- 正文第 12 行：「**已完成的**：……风格系统（阶段 B）」
-- 状态图第 20 行：「`[未开始]`──── 设计能力（风格系统）」
+- 正文：「**已完成的**：……风格系统（阶段 B）」`grep -n "已完成的" ROADMAP.md`
+- 状态图：「`[未开始]`──── 设计能力（风格系统）」`grep -n "未开始" ROADMAP.md`
 
 **影响**：无法判断风格系统到底做没做。
 
@@ -92,11 +94,11 @@
 
 ### 3.5 【最严重】`ROADMAP.md` 声称"阶段 A 已完成"，实际七步工作流只验证了 4 步
 
-`ROADMAP.md` 第 54 行写「阶段 A：真实制图验证 ✅ **已完成**」，并称：
+`ROADMAP.md` 写「阶段 A：真实制图验证 ✅ **已完成**」（`grep -n "阶段 A" ROADMAP.md`），并称：
 
 > 「由 Agent 按 Skill 指导独立完成制图（不含我手工调 JSON）」
 
-而同一仓库的 `docs/phase8/phase8.3-realworld-validation.md` 第 110–117 行自述：
+而同一仓库的 `docs/phase8/phase8.3-realworld-validation.md` 自述（`grep -n "自然语言" docs/phase8/phase8.3-realworld-validation.md`）：
 
 | 步骤 | 该报告的实际状态 |
 | --- | --- |
@@ -108,7 +110,7 @@
 | 6 Visio 打开编辑 | ⬜ **未验证** |
 | 7 人工改后 Agent 续改 | ⬜ **未验证** |
 
-第 147 行更明确：「**未测**自然语言 → IR 的自动转换（本次手工写 JSON）」
+另一处更明确：「**未测**自然语言 → IR 的自动转换（本次手工写 JSON）」
 
 **两个问题叠加**：
 
@@ -138,6 +140,19 @@ Goal §3.1 定义三个优先级，实测六个示例的分布：
 **建议**：阶段 1 补足架构类示例——至少覆盖 Goal §3.1 A 的 7 个子类
 （分层/模块/微服务/企业应用/技术平台/部署/数据平台）。
 
+### 3.8 【Reviewer 补充，已核实】两处更硬的冲突
+
+| # | 冲突 | 证据 |
+| --- | --- | --- |
+| a | 「25/25 已修复」vs「24 / 25 已修复」 | `grep -n "25/25" PROJECT-STATUS.md`、`grep -n "24 / 25" TASK-REGISTER.md` |
+| b | **证据链断裂**：25/25 的唯一来源文件不存在 | `PROJECT-STATUS.md` 指向 `docs/phase8/phase8.3-defect-register.md`，`ls` 报不存在 |
+
+(a) 是纯数值矛盾，同一事实两个数字。
+(b) 更严重——Goal §9.1 要求能力声明可追溯，而「25/25 已修复」**没有可追溯的来源**。
+
+**另**：`ROADMAP.md` 与 `PROJECT-STATUS.md` 多处引用「目标文档 §5」「目标文档 §3」，
+但 `goal-2.1.md` 中 `grep -c "25 项"` 为 0——引用的是**已废弃的旧 Goal**。
+
 ---
 
 ## 四、遗漏（Goal 要求但不存在）
@@ -163,7 +178,7 @@ Goal 认可的验证方式是（§1.3 第 9 条、§4.4、§9.1）：
 > 「搜集**真实专业架构图案例**」
 > 「能力矩阵记录……**真实案例**」
 
-而当前项目的主要回归手段是 `benchmarks/` 下的 18 个**合成**用例（6 家族 × 3 复杂度）。
+而当前项目的主要回归手段是 `benchmarks/` 下的**合成**用例（`ls benchmarks/*/*.json | wc -l`，6 家族 × 3 复杂度）。
 
 **这不是说 benchmark 无用**——它们能防回归、能测规模。问题是：
 

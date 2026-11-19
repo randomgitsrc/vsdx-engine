@@ -24,7 +24,7 @@ dotnet test VsdxEngine.sln -c Release             # 测试数
 | 维度 | 状态 | 说明 |
 | --- | --- | --- |
 | 构建 | ✅ 健康 | 0 warning，0 error，`--no-incremental` 全量 |
-| 测试 | ✅ 健康 | 416 通过 / 0 失败 |
+| 测试 | ✅ 健康 | `dotnet test` 全绿（数字不写死，见命令） |
 | 基准 | ✅ 健康 | 18 / 18 硬约束通过 |
 | 依赖 | ✅ 健康 | 仅 2 个外部包，集中式版本管理 |
 | 分层 | ✅ 健康 | 依赖方向无环，`Adapters` 不依赖 `Engine` |
@@ -154,7 +154,7 @@ Phase7Regression LocalRelayout ExternalVsdx ExternalFixtures TestData
 
 ### 需核实的文档数据
 
-- `docs/test-report.md` 的测试数可能已过时（当前 416）
+- `docs/test-report.md` 的测试数是历史快照，当前值以 `dotnet test` 为准
 - `docs/capability-matrix.md` 可能仍标"Palette 已实现"
 - `phase8.2-audit.md` 的 25 项缺陷状态需与代码同步
 
