@@ -508,6 +508,36 @@ Coordinates are **local to the box**. `MoveTo` must come first. `ArcTo`, `Spline
 other instruction are carried through verbatim — the engine does not compute the curve, but it
 will not drop or straighten it either.
 
+### Band widths and line style
+
+Two behaviours that are on by default and change what the drawing looks like. Both are worth knowing before you
+wonder why a diagram came out a particular way.
+
+**`evenBands` makes every band the same width (default `true`).** A band is otherwise sized by its own members, so
+a layer of wide nodes ends up wider than a layer of narrow ones and the right-hand edge steps in. Measured on the
+shipped `cbo` example:
+
+```
+evenBands: true   band widths 6.04, 6.04, 6.04
+evenBands: false  band widths 5.60, 5.60, 6.04
+```
+
+Turn it off with `"spacing": {"evenBands": false}` when the content genuinely wants uneven bands — it costs a
+little layout quality on diagrams that cross bands a lot, because widening a band moves its edges under existing
+connectors.
+
+**`relation` decides the arrowhead and the line style.** These are the values that differ:
+
+| relation | line | arrowhead |
+| --- | --- | --- |
+| `publishes`, `consumes` | **dashed** | yes |
+| `contains` | solid | **none** |
+| `calls`, `reads`, `writes`, `flows`, `depends`, omitted | solid | yes |
+
+An edge with no `relation` gets an arrowhead, because the alternative — the directionless lines this engine used to
+produce — is worse than an occasional arrow that does not earn its place. Use `publishes`/`consumes` for anything
+asynchronous and the difference reaches the page.
+
 ### Legend
 
 `"canvas": {"legend": true}` adds a key below the drawing: one swatch and label per role the diagram actually
