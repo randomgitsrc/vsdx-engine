@@ -41,30 +41,6 @@
       "containerId": "src"
     },
     {
-      "id": "connect",
-      "label": "Kafka Connect",
-      "role": "gateway",
-      "containerId": "core"
-    },
-    {
-      "id": "broker",
-      "label": "Kafka Broker",
-      "role": "queue",
-      "containerId": "core"
-    },
-    {
-      "id": "sr",
-      "label": "Schema Registry",
-      "role": "storage",
-      "containerId": "core"
-    },
-    {
-      "id": "ksqldb",
-      "label": "ksqlDB",
-      "role": "service",
-      "containerId": "core"
-    },
-    {
       "id": "search",
       "label": "搜索索引",
       "role": "database",
@@ -81,6 +57,30 @@
       "label": "通知服务",
       "role": "service",
       "containerId": "sink"
+    },
+    {
+      "id": "connect",
+      "label": "Kafka Connect",
+      "role": "gateway",
+      "containerId": "core"
+    },
+    {
+      "id": "broker",
+      "label": "Kafka Broker",
+      "role": "queue",
+      "containerId": "core"
+    },
+    {
+      "id": "ksqldb",
+      "label": "ksqldb",
+      "role": "service",
+      "containerId": "core"
+    },
+    {
+      "id": "sr",
+      "label": "Schema Registry",
+      "role": "storage",
+      "containerId": "core"
     }
   ],
   "edges": [
