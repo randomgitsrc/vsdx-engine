@@ -362,7 +362,8 @@ public static class DiagramIrConverter
                     FromPort = edge.FromPort,
                     ToPort = edge.ToPort,
                     LabelPosition = edge.LabelPosition,
-                    EndArrow = RelationUsesArrow(edge.Relation) ? "triangle" : "none"
+                    EndArrow = RelationUsesArrow(edge.Relation) ? "triangle" : "none",
+                    LinePattern = RelationLinePattern(edge.Relation)
                 });
             }
 
@@ -474,6 +475,22 @@ public static class DiagramIrConverter
     ///
     /// "contains" stays arrowless because containment has no direction to point in.
     /// </summary>
+    /// <summary>
+    /// Visio line pattern for a relation: dashed for asynchronous, solid otherwise.
+    ///
+    /// `IrEdge.Relation` has always claimed to drive "line style and arrow defaults", but only the arrow half
+    /// existed — `publishes` and `consumes` drew exactly like `calls`. A reader cannot tell "waits for an answer"
+    /// from "fires and forgets", which is the distinction that matters most in a service diagram.
+    ///
+    /// Visio's pattern indices: 1 solid, 2 dashed, 3 dotted, 4 dash-dot.
+    /// </summary>
+    public static int? RelationLinePattern(string? relation) =>
+        relation?.ToLowerInvariant() switch
+        {
+            "publishes" or "consumes" => 2,   // dashed: a message, not a call
+            _ => null                          // solid, the default
+        };
+
     public static bool RelationUsesArrow(string? relation) =>
         relation?.ToLowerInvariant() is not "contains";
 }
