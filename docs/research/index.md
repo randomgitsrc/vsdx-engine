@@ -54,7 +54,7 @@
 
 ## 三、实验记录
 
-**已完成 5 个实验**（均在本机可复现）：
+**已完成 6 个实验**（均在本机可复现）：
 
 | 编号 | 文件 | 结论 |
 | --- | --- | --- |
@@ -62,6 +62,7 @@
 | E2 | [`experiments/E2-multi-text-component.md`](experiments/E2-multi-text-component.md) | 组件内**无分区样式**，三行文本共用一套 font/fill |
 | E3 | [`experiments/E3-density-and-font.md`](experiments/E3-density-and-font.md) | 引擎**不检查成品字号**，24 组件放 A4 仍报 `succeeded` |
 | E4 | [`experiments/E4-multi-run-text.md`](experiments/E4-multi-run-text.md) | 组件内分区文本**可写入但不可验证**——Renderer 不读字符级样式，L4 前无法证明 |
+| E5 | [`experiments/E5-crossing-awareness.md`](experiments/E5-crossing-awareness.md) | 路由器对交叉**结构性无感知**；且现有交叉几乎全在 straight 边上，改正交搜索零收益 |
 | **AT-1** | [`experiments/agent-trial-01/`](experiments/agent-trial-01/) | **独立 Agent 自主制图**：96 分、3 轮内完成，但 40% 时间在读源码补指南缺口；发现 2 个引擎缺陷 |
 
 ### 3.1 建议的下一批实验（按 Goal §8.5 的要求设计）
