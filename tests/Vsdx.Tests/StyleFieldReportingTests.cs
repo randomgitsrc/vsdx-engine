@@ -39,7 +39,6 @@ public sealed class StyleFieldReportingTests
     }
 
     [Theory]
-    [InlineData("opacity")]
     [InlineData("shadow")]
     [InlineData("radius")]
     [InlineData("lineJoin")]

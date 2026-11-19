@@ -352,7 +352,10 @@ public static class DiagramIrConverter
                         group.Style.Stroke ??= "#9E9E9E";
                     }
 
-                    group.Style.Opacity ??= state == "drained" ? 0.45 : 0.70;
+                    // 0.75, not 0.45. Measured on the rendered Slack case: at 0.45 the band's fill came out
+                    // (237,247,237) -> (255,255,255), i.e. invisible, which reads as "this cell is gone" rather
+                    // than "this cell is idle". A drained cell must still look like a place.
+                    group.Style.Opacity ??= state == "drained" ? 0.75 : 0.85;
                 }
             }
 
@@ -497,7 +500,7 @@ public static class DiagramIrConverter
         {
             case "drained":
                 node.Style.StrokePattern ??= 2;   // dashed
-                node.Style.Opacity ??= 0.45;
+                node.Style.Opacity ??= 0.75;
                 break;
 
             case "degraded":

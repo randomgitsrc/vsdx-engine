@@ -189,6 +189,9 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         // page part. Rows are emitted verbatim, including types the engine does not interpret.
         VisioFreePathBridge.Apply(diagram, vsdxPath, compat);
 
+        // Opacity has no OfficeIMO representation, so it is written into the page part the same way free paths are.
+        VisioOpacityBridge.Apply(diagram, vsdxPath, compat);
+
         // Standalone text is not a connector or container, so it is written as native shapes.
         VisioTextBlockBridge.Apply(diagram, vsdxPath, compat);
 
@@ -563,9 +566,9 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
     /// <summary>
     /// Names the style fields the model and schema accept but this writer cannot express.
     ///
-    /// Opacity, shadow, radius, lineJoin and paddingBottom are declared in
+    /// Shadow, radius, lineJoin and paddingBottom are declared in
     /// `schemas/diagram.schema.json` and have properties on <see cref="ShapeStyle"/>, yet nothing
-    /// downstream reads them. Without this scan a caller can set all five, be told the write was
+    /// downstream reads them. Without this scan a caller can set them, be told the write was
     /// lossless, and receive a file where none of them took effect — accepted by the protocol,
     /// permitted by the schema, ignored at execution, and silent.
     ///
@@ -581,7 +584,6 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         {
             if (style is null) return;
 
-            if (style.Opacity is not null) Note("opacity");
             if (style.Shadow is not null) Note("shadow");
             if (style.Radius is not null) Note("radius");
             if (style.LineJoin is not null) Note("lineJoin");
