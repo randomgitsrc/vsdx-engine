@@ -123,7 +123,8 @@
       "from": "cass-e",
       "to": "cass-w",
       "label": "双向复制",
-      "relation": "publishes"
+      "relation": "publishes",
+      "bidirectional": true
     },
     {
       "id": "e6",

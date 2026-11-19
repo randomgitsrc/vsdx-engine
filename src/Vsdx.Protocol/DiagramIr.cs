@@ -173,6 +173,16 @@ public sealed class IrEdge
     public string To { get; set; } = "";
 
     /// <summary>
+    /// Draw an arrowhead at both ends.
+    ///
+    /// A connector model with one `From` and one `To` can only point one way, so a relationship that genuinely runs
+    /// both ways — Cassandra replicating in two directions, two services calling each other — was drawn with a
+    /// single arrowhead while its label claimed both. `Edge.BeginArrow` and the writer already supported it; the
+    /// protocol had no way to ask.
+    /// </summary>
+    public bool Bidirectional { get; set; }
+
+    /// <summary>
     /// Relationship semantics: calls | reads | writes | publishes | consumes | depends |
     /// contains | flows. Drives line style and arrow defaults.
     /// </summary>
@@ -363,6 +373,9 @@ public static class DiagramIrConverter
                     ToPort = edge.ToPort,
                     LabelPosition = edge.LabelPosition,
                     EndArrow = RelationUsesArrow(edge.Relation) ? "triangle" : "none",
+
+                    // Only when the relation has arrowheads at all: `contains` stays arrowless at both ends.
+                    BeginArrow = edge.Bidirectional && RelationUsesArrow(edge.Relation) ? "triangle" : null,
                     LinePattern = RelationLinePattern(edge.Relation)
                 });
             }
