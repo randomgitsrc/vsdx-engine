@@ -23,7 +23,7 @@ public static class VisioBackgroundBridge
     private static readonly XNamespace VisioNs = "http://schemas.microsoft.com/office/visio/2012/main";
 
     /// <summary>Writes page backgrounds recorded on the model. Returns how many were written.</summary>
-    public static int Apply(Diagram diagram, string vsdxPath)
+    public static int Apply(Diagram diagram, string vsdxPath, CompatibilityReport? compat = null)
     {
         var wanted = diagram.Pages
             .Where(p => !string.IsNullOrWhiteSpace(p.Background))
@@ -47,12 +47,24 @@ public static class VisioBackgroundBridge
             int written = 0;
             for (int i = 0; i < diagram.Pages.Count && i < sheets.Count; i++)
             {
-                var colour = diagram.Pages[i].Background;
+                var page = diagram.Pages[i];
+                var colour = page.Background;
                 if (string.IsNullOrWhiteSpace(colour)) continue;
 
-                if (!ColorUtil.TryParse(colour, out _, out _, out _)) continue;
+                // Write the normalised hex, not the string as given. `PageBackground` is a colour cell;
+                // `rgb(999,0,0)` parses (clamped to #FF0000) but writing the original text would put a value
+                // Visio does not accept into the cell.
+                var normalized = ColorUtil.Normalize(colour);
+                if (normalized is null)
+                {
+                    // Reported rather than skipped: a caller who wrote "#GGG" got a white page and no
+                    // indication the request had been rejected.
+                    compat?.Warn("write.background-unparsed",
+                        $"页面背景色 '{colour}' 无法解析，已跳过", page.Name);
+                    continue;
+                }
 
-                SetCell(sheets[i], "PageBackground", colour);
+                SetCell(sheets[i], "PageBackground", normalized);
                 written++;
             }
 

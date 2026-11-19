@@ -194,7 +194,7 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
 
         // Page background lives in pages.xml's PageSheet, which none of the page-part bridges
         // touch, so this needs no position in their order.
-        int backgrounds = VisioBackgroundBridge.Apply(diagram, vsdxPath);
+        int backgrounds = VisioBackgroundBridge.Apply(diagram, vsdxPath, compat);
         if (backgrounds > 0)
             compat.Info("write.background", $"写入了 {backgrounds} 个页面背景色");
 
