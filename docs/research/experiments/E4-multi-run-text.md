@@ -44,7 +44,22 @@ E2 实验已证明当前 `Node` 只有一个 `Text` 字段，多行共用一套�
 | `render` | ✅ 成功生成 PNG |
 | **渲染效果** | ❌ **两行字号相同** |
 
-**根因**：`OfficeImoVsdxRenderer` 只用 `shape.TextStyle`（形状级），**不读 `Character` 段的多行样式**。
+**根因（已定位到依赖层）**：
+
+渲染走 `page.SaveAsImage()` / `page.ToSvg()`，完全委托 OfficeIMO。
+而 OfficeIMO **加载时就把分段信息丢掉了**：
+
+```csharp
+var doc = VisioDocument.Load(path);
+var shape = doc.Pages[0].Shapes[0];
+shape.TextStyle.Size        // 空
+shape.TextStyle.FontFamily  // "Microsoft YaHei"
+```
+
+`VisioTextStyle` 的 19 个属性**全部是形状级**（`FontFamily`/`Size`/`Bold`/…），
+`VisioShape` 也没有 `Runs`/`Spans` 成员。**OfficeIMO 3.6.1 的文本模型不支持分段。**
+
+所以不是渲染器「没读」，是**依赖库没有这个概念**。
 
 ---
 
@@ -63,6 +78,24 @@ E2 实验已证明当前 `Node` 只有一个 `Text` 字段，多行共用一套�
 | Visio 原生 | **未知**（L4 Blocked）|
 
 ---
+
+### 四附、3.6.2 的验证（2026-11-19）
+
+查 NuGet 发现 **OfficeIMO.Visio 3.6.2 已发布**，其 README 声称支持
+"mixed character runs … run fonts, **sizes**, colors, bold and italic"。
+
+**实测 3.6.2，结论不变**：
+
+| 检查 | 3.6.1 | 3.6.2 |
+| --- | --- | --- |
+| `VisioShape` 有 `Runs` 成员 | ❌ | ❌ 仍只有 `Text` + `TextStyle` |
+| `VisioTextStyle` 属性数 | 19 | 27（新增全是 `TextPinX`/`TextWidth`/`TextAngle` 等**形状级**布局）|
+| 渲染两个不同 `Size` 的 Row | 两行同字号 | **仍同字号**（SVG 拆成两个 `<text>`，但 `font-size` 都是 24）|
+
+README 描述的"mixed character runs"是**读取已存在文件时的渲染能力**，
+不是**新建时的 API**。3.6.2 没有暴露构造分段文本的入口。
+
+**所以升级依赖不能解决 E4。** 这个结论现在对两个版本都成立。
 
 ## 五、对产品的影响
 
