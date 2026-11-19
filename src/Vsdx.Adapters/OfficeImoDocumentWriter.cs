@@ -478,6 +478,11 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         else if (isContainer)
             shape.SetStroke(OfficeColor.FromRgb(0x92, 0xCA, 0xE0), 0.014);
 
+        // `ShapeStyler.Apply` writes this and the writer's own copy did not, so a dashed container border silently
+        // came out solid. Two implementations of the same idea drift; this is the one containers actually use.
+        if (stroke is not null && style?.StrokePattern is int strokePattern)
+            shape.LinePattern = strokePattern;
+
         var textColor = ColorUtil.Normalize(style?.TextColor);
         if (textColor is not null && ColorUtil.TryParse(textColor, out var tr, out var tg, out var tb))
             shape.SetTextColor(OfficeColor.FromRgb(tr, tg, tb));

@@ -29,7 +29,8 @@
     {
       "id": "az-c",
       "label": "us-east-1c",
-      "order": 1
+      "order": 1,
+      "status": "drained"
     }
   ],
   "nodes": [
@@ -106,21 +107,21 @@
       "id": "e3",
       "from": "envoy",
       "to": "fe-a",
-      "label": "33%",
+      "label": "50%",
       "relation": "calls"
     },
     {
       "id": "e4",
       "from": "envoy",
       "to": "fe-b",
-      "label": "33%",
+      "label": "50%",
       "relation": "calls"
     },
     {
       "id": "e5",
       "from": "envoy",
       "to": "fe-c",
-      "label": "33%",
+      "label": "0% 已切走",
       "relation": "calls"
     },
     {

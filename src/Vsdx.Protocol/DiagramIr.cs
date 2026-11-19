@@ -156,6 +156,17 @@ public sealed class IrNode
     /// the node. IR must not degenerate into a coordinate list, so this stays optional.
     /// </summary>
     public IrAnchor? Anchor { get; set; }
+
+    /// <summary>
+    /// Lifecycle state: live | drained | degraded. Absent means live.
+    ///
+    /// The IR could describe what a component *is* but not what state it is in, so an architecture whose point is
+    /// that one cell has been taken out of service could only be drawn as N identical cells. `ShapeStyle` already
+    /// carries `Opacity`, `StrokePattern` and `Fill`; the protocol had no way to set them.
+    ///
+    /// Visual only — no geometry changes, so a drained component sits exactly where a live one would.
+    /// </summary>
+    public string? Status { get; set; }
 }
 
 public sealed class IrAnchor
@@ -216,6 +227,9 @@ public sealed class IrContainer
 
     /// <summary>Optional ordering hint for stacked bands or lanes (lower = higher on the page).</summary>
     public int? Order { get; set; }
+
+    /// <summary>Lifecycle state: live | drained | degraded. Absent means live.</summary>
+    public string? Status { get; set; }
 }
 
 public sealed class IrMetadata
@@ -308,7 +322,7 @@ public static class DiagramIrConverter
             // Containers first, so nodes can reference them.
             foreach (var container in source.Containers)
             {
-                page.Groups.Add(new Group
+                var group = new Group
                 {
                     Id = container.Id,
                     Name = container.Label ?? container.Id,
@@ -319,7 +333,27 @@ public static class DiagramIrConverter
                     Kind = container.Kind ?? "container",
                     ParentId = container.ParentId,
                     Order = container.Order
-                });
+                };
+
+                page.Groups.Add(group);
+
+                // A container carries the same lifecycle idea as a node: a cell taken out of service is still drawn,
+                // faded and dashed, so the reader sees that it exists and is idle.
+                var state = container.Status?.Trim().ToLowerInvariant();
+                if (state is "drained" or "degraded")
+                {
+                    group.Style ??= new ShapeStyle();
+                    if (state == "drained")
+                    {
+                        group.Style.StrokePattern ??= 2;
+
+                        // `ShapeStyler` writes a line pattern only when a stroke colour is also present, so the
+                        // pattern alone would be silently dropped.
+                        group.Style.Stroke ??= "#9E9E9E";
+                    }
+
+                    group.Style.Opacity ??= state == "drained" ? 0.45 : 0.70;
+                }
             }
 
             // Every node used to get the same placeholder X, so the layout engine's ordering by
@@ -343,6 +377,8 @@ public static class DiagramIrConverter
 
                 if (node.Attributes is { Count: > 0 })
                     model.ShapeData = new Dictionary<string, string>(node.Attributes, StringComparer.Ordinal);
+
+                ApplyStatus(model, node.Status);
 
                 // A fixed anchor is honoured; otherwise the engine places the node.
                 if (node.Anchor is { Mode: "fixed", X: not null, Y: not null })
@@ -440,6 +476,34 @@ public static class DiagramIrConverter
         // Inherit the container hierarchy into member lists.
         DiagramJson.Normalize(diagram);
         return diagram;
+    }
+
+    /// <summary>
+    /// Gives a component a visual state. Visual only: nothing here touches geometry, so a drained component sits
+    /// exactly where a live one would and can be compared with it.
+    ///
+    /// `drained` is drawn dashed and faded — the conventional way of saying "out of service" without removing the
+    /// thing from the picture, which is the point: a reader has to see that it is still there and idle.
+    /// `degraded` keeps a solid outline but fades, so it does not read as fully removed.
+    /// </summary>
+    private static void ApplyStatus(Node node, string? status)
+    {
+        var state = status?.Trim().ToLowerInvariant();
+        if (state is null or "" or "live") return;
+
+        node.Style ??= new ShapeStyle();
+
+        switch (state)
+        {
+            case "drained":
+                node.Style.StrokePattern ??= 2;   // dashed
+                node.Style.Opacity ??= 0.45;
+                break;
+
+            case "degraded":
+                node.Style.Opacity ??= 0.70;
+                break;
+        }
     }
 
     /// <summary>
