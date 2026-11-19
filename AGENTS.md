@@ -21,6 +21,7 @@ C#/.NET 8，七个项目，**无循环依赖**（`Cli` 与 `Protocol` 都直接�
 | **管理文件一致性** | [`docs/product/management-consistency-report.md`](docs/product/management-consistency-report.md) |
 | 验证到哪一步 | [`docs/limitations.md`](docs/limitations.md) |
 | 当前状态 | [`PROJECT-STATUS.md`](PROJECT-STATUS.md) |
+| **当前阶段自评** | [`docs/plans/active/stage-1-report.md`](docs/plans/active/stage-1-report.md) |
 | Agent 用法 | [`skill/SKILL.md`](skill/SKILL.md) |
 
 ## 数字与引用

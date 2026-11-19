@@ -47,6 +47,17 @@
 
 ## 阶段记录
 
+### 当前阶段（Goal 2.1 阶段 1）
+
+| 文件 | 性质 |
+| --- | --- |
+| [`plans/active/stage-1-report.md`](plans/active/stage-1-report.md) | **阶段 1 收尾自评**：七条核对、交付物、已修与受限项、能力现状 |
+| [`plans/active/phase0-to-phase1-plan.md`](plans/active/phase0-to-phase1-plan.md) | 阶段 0 → 1 的实施计划与 P1-1～P1-4 进展 |
+
+**注意**：阶段 1 报告是**自评**，按 Goal §15.7 不能单独作为阶段完成的依据。
+
+### 历史阶段（Phase 8）
+
 `phase8/` 下有几十份文件（`ls docs/phase8/*.md | wc -l`），大部分是**过程记录**——审查轮次、评审包、
 阶段性报告。
 它们是决策依据，不是入门材料。
