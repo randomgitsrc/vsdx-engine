@@ -1,0 +1,164 @@
+{
+  "irVersion": "1.0",
+  "id": "netflix-active-active",
+  "title": "Netflix 双区域双活架构",
+  "kind": "architecture",
+  "metadata": {
+    "source": "Netflix Tech Blog, 'Active-Active for Multi-Regional Resiliency'",
+    "sourceUrl": "https://netflixtechblog.com/active-active-for-multi-regional-resiliency-c47719f6685b",
+    "note": "组件与拓扑取自公开技术博客，非虚构；连线语义按原文的 region autonomy 约束建模",
+    "tags": {
+      "sourceUrl": "https://netflixtechblog.com/active-active-for-multi-regional-resiliency-c47719f6685b"
+    }
+  },
+  "containers": [
+    {
+      "id": "east",
+      "label": "us-east-1",
+      "order": 3
+    },
+    {
+      "id": "west",
+      "label": "us-west-2",
+      "order": 2
+    },
+    {
+      "id": "global",
+      "label": "跨区复制",
+      "order": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "users",
+      "label": "用户请求",
+      "role": "client"
+    },
+    {
+      "id": "zuul-e",
+      "label": "Zuul 边缘",
+      "role": "gateway",
+      "containerId": "east"
+    },
+    {
+      "id": "disc-e",
+      "label": "服务发现",
+      "role": "service",
+      "containerId": "east"
+    },
+    {
+      "id": "evc-e",
+      "label": "EVCache",
+      "role": "storage",
+      "containerId": "east"
+    },
+    {
+      "id": "cass-e",
+      "label": "Cassandra",
+      "role": "database",
+      "containerId": "east"
+    },
+    {
+      "id": "zuul-w",
+      "label": "Zuul 边缘",
+      "role": "gateway",
+      "containerId": "west"
+    },
+    {
+      "id": "disc-w",
+      "label": "服务发现",
+      "role": "service",
+      "containerId": "west"
+    },
+    {
+      "id": "evc-w",
+      "label": "EVCache",
+      "role": "storage",
+      "containerId": "west"
+    },
+    {
+      "id": "cass-w",
+      "label": "Cassandra",
+      "role": "database",
+      "containerId": "west"
+    },
+    {
+      "id": "sqs",
+      "label": "SQS 失效通知",
+      "role": "queue",
+      "containerId": "global"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "users",
+      "to": "zuul-e",
+      "label": "GeoDNS",
+      "relation": "calls"
+    },
+    {
+      "id": "e2",
+      "from": "zuul-e",
+      "to": "disc-e",
+      "label": "本地发现",
+      "relation": "calls"
+    },
+    {
+      "id": "e3",
+      "from": "disc-e",
+      "to": "evc-e",
+      "label": "读",
+      "relation": "reads"
+    },
+    {
+      "id": "e4",
+      "from": "disc-e",
+      "to": "cass-e",
+      "label": "写本地",
+      "relation": "writes"
+    },
+    {
+      "id": "e5",
+      "from": "cass-e",
+      "to": "cass-w",
+      "label": "双向复制",
+      "relation": "publishes"
+    },
+    {
+      "id": "e6",
+      "from": "evc-e",
+      "to": "sqs",
+      "label": "跨区失效",
+      "relation": "publishes"
+    },
+    {
+      "id": "e7",
+      "from": "sqs",
+      "to": "evc-w",
+      "label": "订阅失效",
+      "relation": "consumes"
+    },
+    {
+      "id": "e8",
+      "from": "disc-w",
+      "to": "cass-w",
+      "label": "本地读",
+      "relation": "reads"
+    },
+    {
+      "id": "e9",
+      "from": "zuul-w",
+      "to": "disc-w",
+      "label": "本地发现",
+      "relation": "calls"
+    },
+    {
+      "id": "e10",
+      "from": "users",
+      "to": "zuul-w",
+      "label": "GeoDNS 西区",
+      "relation": "calls"
+    }
+  ]
+}

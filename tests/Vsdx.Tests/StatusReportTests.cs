@@ -46,7 +46,9 @@ public sealed class StatusReportTests
             .Select(f => Path.GetFileName(f).Replace(".ir.json", "", StringComparison.Ordinal))
             .ToHashSet(StringComparer.Ordinal);
 
-        var named = Regex.Matches(report, @"`([a-z][a-z-]+)`")
+        // Digits are part of scenario names: `netflix-active-active` has none, but the pattern must not
+        // silently drop a name that does, or a real example goes unverified.
+        var named = Regex.Matches(report, @"`([a-z][a-z0-9-]+)`")
             .Select(m => m.Groups[1].Value)
             .Where(available.Contains)
             .Distinct(StringComparer.Ordinal)
