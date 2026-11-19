@@ -22,7 +22,7 @@
 | 场景 | 结构 | 策略 | 分数 | 可用性 |
 | --- | --- | --- | --- | --- |
 | 跨境电商架构 `cbo` | 3 层容器 | Layered | 98 | ✅ |
-| 部署拓扑 `deploy-topology` | 3 层容器 + 扇出 | Layered | 94 | ⚠️ 少量连线交叉（拓扑性，见 §八）|
+| 部署拓扑 `deploy-topology` | 3 层容器 + 扇出 | Layered | 96 | ⚠️ 少量连线交叉（拓扑性，见 §八）|
 | 用户数据流 `user-data-flow` | 无容器长链 | Flow | 100 | ✅ |
 | 下单支付时序 `checkout-sequence` | 6 参与者 9 消息 | Flow | 88 | ⚠️ 结构对但不合时序 |
 | 订单履约泳道 `order-swimlane` | 3 泳道 | Swimlane | 100 | ✅ 跨泳道连线为斜线 |

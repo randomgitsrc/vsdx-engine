@@ -30,6 +30,7 @@ public static class OrthogonalRouter
     private static int RoutePage(Page page)
     {
         _currentPage = page;
+        ResetSideUse();
 
         var nodes = page.Nodes.ToDictionary(n => n.Id, StringComparer.Ordinal);
         if (nodes.Count == 0) return 0;
@@ -152,8 +153,8 @@ public static class OrthogonalRouter
 
         // Anchor on the declared port, with a short perpendicular stub so the line leaves the
         // shape squarely instead of clipping its corner.
-        var (p0, d0, side0) = Anchor(from, edge.FromPort, to);
-        var (p1, d1, side1) = Anchor(to, edge.ToPort, from);
+        var (p0, d0, side0) = Anchor(from, edge.FromPort, to, others);
+        var (p1, d1, side1) = Anchor(to, edge.ToPort, from, others);
 
         const double Stub = 0.26;
         var a = new Point(p0.X + d0.X * Stub, p0.Y + d0.Y * Stub);
@@ -295,6 +296,11 @@ public static class OrthogonalRouter
 
         // Nothing was clear. Emit the least-bad route but still report the sides used, so the
         // checker anchors its measurement to the same geometry the renderer will draw.
+        //
+        // `PickLane` now prefers a lane that is actually clear. That matters because this is the branch that runs
+        // when every candidate above failed: if it also ignores obstacles, a connector goes through a node and the
+        // hard constraint fires — which is exactly what happened when anchor offsets pushed every candidate into
+        // the blocked set and the fallback drew through a neighbour.
         double fallback = PickLane(lanes, from.Bounds.Y, to.Bounds.Y, a, b, others);
         return new RouteAttempt(
             StripEnds(Simplify(new List<Point> { a, new(a.X, fallback), new(b.X, fallback), b }), a, b),
@@ -312,8 +318,33 @@ public static class OrthogonalRouter
         return inner;
     }
 
+    /// <summary>
+    /// How far along its side the nth connector on that side sits, as a fraction of the side, in -0.30 .. +0.30.
+    ///
+    /// The first connector stays at the midpoint; later ones alternate. Bounded so a connector never leaves from a
+    /// corner, where a shape's outline may not reach.
+    /// </summary>
+    private static double SpreadOffset(Node node, string side)
+    {
+        var key = node.Id + "|" + side;
+        int used = _sideUse.TryGetValue(key, out var n) ? n : 0;
+        _sideUse[key] = used + 1;
+
+        return used switch { 0 => 0.0, 1 => 0.18, 2 => -0.18, 3 => 0.30, 4 => -0.30, _ => 0.0 };
+    }
+
+    /// <summary>How many connectors have left each node from each side, cleared per routing pass.</summary>
+    private static readonly Dictionary<string, int> _sideUse = new(StringComparer.Ordinal);
+
+    private static void ResetSideUse() => _sideUse.Clear();
+
     /// <summary>Port anchor point plus the outward unit direction.</summary>
-    private static (Point point, Point direction, string side) Anchor(Node node, string? port, Node peer)
+    /// <param name="others">
+    /// Every node neither end of this connector. Available so a side can be chosen with the obstacles in view;
+    /// the auto case does not consult it yet, which is why a connector can still be routed through a neighbour.
+    /// </param>
+    private static (Point point, Point direction, string side) Anchor(
+        Node node, string? port, Node peer, List<Node> others)
     {
         var b = node.Bounds;
         switch ((port ?? "auto").ToLowerInvariant())
@@ -330,9 +361,22 @@ public static class OrthogonalRouter
         double dx = peer.Bounds.X - b.X, dy = peer.Bounds.Y - b.Y;
         double scaleX = Math.Abs(dx) < 1e-9 ? double.PositiveInfinity : (b.W / 2) / Math.Abs(dx);
         double scaleY = Math.Abs(dy) < 1e-9 ? double.PositiveInfinity : (b.H / 2) / Math.Abs(dy);
-        return Math.Abs(dx) * scaleY > Math.Abs(dy) * scaleX
-            ? (new Point(b.X + Math.Sign(dx) * b.W / 2, b.Y), new Point(Math.Sign(dx), 0), dx > 0 ? "right" : "left")
-            : (new Point(b.X, b.Y + Math.Sign(dy) * b.H / 2), new Point(0, Math.Sign(dy)), dy > 0 ? "top" : "bottom");
+        bool horizontal = Math.Abs(dx) * scaleY > Math.Abs(dy) * scaleX;
+        string side = horizontal ? (dx > 0 ? "right" : "left") : (dy > 0 ? "top" : "bottom");
+
+        // Both branches go through `OutlinePoint`, like the explicit sides above. The auto branch used to compute
+        // the box edge directly, so on a diamond or hexagon it anchored in empty space while an explicit port on
+        // the same shape anchored correctly — the same node, two answers.
+        //
+        // Connectors sharing a side are spread along it: three edges arriving from the west otherwise land on one
+        // pixel. The offset is a fraction of the side, bounded to its middle half so nothing leaves from a corner.
+        double offset = SpreadOffset(node, side);
+
+        return horizontal
+            ? (ShapeGeometry.OutlinePoint(b, node.Shape, Math.Sign(dx), offset * Math.Sign(dx) * b.H / Math.Max(b.W, 1e-6)),
+               new Point(Math.Sign(dx), 0), side)
+            : (ShapeGeometry.OutlinePoint(b, node.Shape, offset * Math.Sign(dy) * b.W / Math.Max(b.H, 1e-6), Math.Sign(dy)),
+               new Point(0, Math.Sign(dy)), side);
     }
 
     private static double Snap(double value) => Math.Round(value * 20) / 20.0;
@@ -447,7 +491,29 @@ public static class OrthogonalRouter
             }
         }
 
-        return candidates.FirstOrDefault((fromY + toY) / 2);
+        // Every lane and both page margins failed. Rather than return a lane known to cut through something,
+        // return the one that cuts through least: this branch has to produce a path, but it can produce the least
+        // bad one, and the caller records the attempt as blocked either way.
+        var all = lanes.Count > 0 ? lanes : new List<double> { (fromY + toY) / 2 };
+
+        double leastBad = all[0];
+        int fewest = int.MaxValue;
+
+        foreach (var lane in all)
+        {
+            var path = new List<Point> { start, new(start.X, lane), new(end.X, lane), end };
+            int hits = others.Count(n => PathHitsShapes(path, new List<Node> { n }));
+
+            if (hits < fewest)
+            {
+                fewest = hits;
+                leastBad = lane;
+            }
+
+            if (hits == 0) break;
+        }
+
+        return leastBad;
     }
 
     private static double PickChannel(
