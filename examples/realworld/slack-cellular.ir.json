@@ -11,35 +11,138 @@
     }
   },
   "containers": [
-    { "id": "edge", "label": "边缘层（跨区）", "order": 4 },
-    { "id": "az-a", "label": "us-east-1a", "order": 3 },
-    { "id": "az-b", "label": "us-east-1b", "order": 2 },
-    { "id": "az-c", "label": "us-east-1c", "order": 1 }
+    {
+      "id": "edge",
+      "label": "边缘层（跨区）",
+      "order": 4
+    },
+    {
+      "id": "az-a",
+      "label": "us-east-1a",
+      "order": 1
+    },
+    {
+      "id": "az-b",
+      "label": "us-east-1b",
+      "order": 1
+    },
+    {
+      "id": "az-c",
+      "label": "us-east-1c",
+      "order": 1
+    }
   ],
   "nodes": [
-    { "id": "users", "label": "用户请求", "role": "client" },
-    { "id": "envoy", "label": "Envoy 边缘", "role": "gateway", "containerId": "edge" },
-    { "id": "rotor", "label": "Rotor xDS", "role": "service", "containerId": "edge" },
-
-    { "id": "fe-a", "label": "前端 A", "role": "service", "containerId": "az-a" },
-    { "id": "vit-a", "label": "Vitess A", "role": "database", "containerId": "az-a" },
-
-    { "id": "fe-b", "label": "前端 B", "role": "service", "containerId": "az-b" },
-    { "id": "vit-b", "label": "Vitess B", "role": "database", "containerId": "az-b" },
-
-    { "id": "fe-c", "label": "前端 C", "role": "service", "containerId": "az-c" },
-    { "id": "vit-c", "label": "Vitess C", "role": "database", "containerId": "az-c" }
+    {
+      "id": "users",
+      "label": "用户请求",
+      "role": "client"
+    },
+    {
+      "id": "envoy",
+      "label": "Envoy 边缘",
+      "role": "gateway",
+      "containerId": "edge"
+    },
+    {
+      "id": "rotor",
+      "label": "Rotor xDS",
+      "role": "service",
+      "containerId": "edge"
+    },
+    {
+      "id": "fe-a",
+      "label": "前端 A",
+      "role": "service",
+      "containerId": "az-a"
+    },
+    {
+      "id": "vit-a",
+      "label": "Vitess A",
+      "role": "database",
+      "containerId": "az-a"
+    },
+    {
+      "id": "fe-b",
+      "label": "前端 B",
+      "role": "service",
+      "containerId": "az-b"
+    },
+    {
+      "id": "vit-b",
+      "label": "Vitess B",
+      "role": "database",
+      "containerId": "az-b"
+    },
+    {
+      "id": "fe-c",
+      "label": "前端 C",
+      "role": "service",
+      "containerId": "az-c"
+    },
+    {
+      "id": "vit-c",
+      "label": "Vitess C",
+      "role": "database",
+      "containerId": "az-c"
+    }
   ],
   "edges": [
-    { "id": "e1", "from": "users", "to": "envoy", "label": "HTTPS", "relation": "calls" },
-    { "id": "e2", "from": "rotor", "to": "envoy", "label": "下发权重", "relation": "publishes" },
-
-    { "id": "e3", "from": "envoy", "to": "fe-a", "label": "33%", "relation": "calls" },
-    { "id": "e4", "from": "envoy", "to": "fe-b", "label": "33%", "relation": "calls" },
-    { "id": "e5", "from": "envoy", "to": "fe-c", "label": "33%", "relation": "calls" },
-
-    { "id": "e6", "from": "fe-a", "to": "vit-a", "label": "只读同区", "relation": "reads" },
-    { "id": "e7", "from": "fe-b", "to": "vit-b", "label": "只读同区", "relation": "reads" },
-    { "id": "e8", "from": "fe-c", "to": "vit-c", "label": "只读同区", "relation": "reads" }
+    {
+      "id": "e1",
+      "from": "users",
+      "to": "envoy",
+      "label": "HTTPS",
+      "relation": "calls"
+    },
+    {
+      "id": "e2",
+      "from": "rotor",
+      "to": "envoy",
+      "label": "下发权重",
+      "relation": "publishes"
+    },
+    {
+      "id": "e3",
+      "from": "envoy",
+      "to": "fe-a",
+      "label": "33%",
+      "relation": "calls"
+    },
+    {
+      "id": "e4",
+      "from": "envoy",
+      "to": "fe-b",
+      "label": "33%",
+      "relation": "calls"
+    },
+    {
+      "id": "e5",
+      "from": "envoy",
+      "to": "fe-c",
+      "label": "33%",
+      "relation": "calls"
+    },
+    {
+      "id": "e6",
+      "from": "fe-a",
+      "to": "vit-a",
+      "label": "只读同区",
+      "relation": "reads"
+    },
+    {
+      "id": "e7",
+      "from": "fe-b",
+      "to": "vit-b",
+      "label": "只读同区",
+      "relation": "reads"
+    },
+    {
+      "id": "e8",
+      "from": "fe-c",
+      "to": "vit-c",
+      "label": "只读同区",
+      "relation": "reads"
+    }
   ]
 }

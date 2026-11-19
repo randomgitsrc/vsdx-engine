@@ -247,3 +247,44 @@ Goal §4.6 要求：
 grep -c 'Row T="Connection"' <解压后的 page1.xml>   # 应为每形状 4
 ```
 再对比渲染 PNG 的哈希——**相同就说明预览不认连接点**。
+
+---
+
+## 附：容器并排（2026-11-20 新增）
+
+**背景**：引擎此前**无法表达「容器并排」**。`layered` 把每个容器当成一个带，按位置上下堆叠；
+六种策略里 `Grid` 遇到容器直接退化为 `layered`，`Swimlane` 排的是泳道**内部**的流程。
+
+**代价**：蜂窝架构、多区域部署、任何「N 个平行单元」的图都被画成竖排列表。
+`slack-cellular` 案例暴露了它——三个 AZ 应该并排，实际竖排且连线绕出页面右侧。
+
+### 用法
+
+**给同层的容器相同的 `order`**：
+
+```jsonc
+"containers": [
+  { "id": "az-a", "label": "us-east-1a", "order": 1 },
+  { "id": "az-b", "label": "us-east-1b", "order": 1 },
+  { "id": "az-c", "label": "us-east-1c", "order": 1 }
+]
+```
+
+- **order 相同** → 同层 → **并排**
+- **order 不同** → 不同层 → 竖排（原有行为）
+- **不写 order** → 每容器一层 → 竖排（向后兼容）
+
+### 两条实现约束
+
+1. **同层成员按容器分组排列**，组间加间隙。否则各容器的包围盒会横跨整行——
+   实测过 `az-a` 宽 10.78 英寸而它的成员只占约 4。
+2. **`EvenBands` 按行生效**：单容器行仍对齐到**全页**宽度（`cbo` 三层等宽），
+   多容器行保留各自列位置（否则三个容器叠在同一处）。
+
+### 验证方式
+
+```
+grep -n "ContainersSharingALayerSitSideBySide" tests/Vsdx.Tests/SideBySideContainersTests.cs
+```
+
+以及 `examples/realworld/slack-cellular.ir.json` 的渲染结果。

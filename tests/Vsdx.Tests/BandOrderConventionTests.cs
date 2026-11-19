@@ -66,9 +66,11 @@ public sealed class BandOrderConventionTests
     }
 
     [Fact]
-    public void LayeredIgnoresTheOrder()
+    public void LayeredNowReadsTheOrder()
     {
-        // The gap. Swapping the two values changes nothing in this engine.
+        // Swapping the two values used to change nothing, because `AssignBands` sorted by member position alone.
+        // It now reads `Order` so that containers sharing one can stand side by side; swapping therefore moves
+        // them.
         static string Topmost(Diagram d) => d.Pages[0].Groups
             .Where(g => g.Bounds is not null)
             .OrderByDescending(g => g.Bounds!.Y)
@@ -85,7 +87,7 @@ public sealed class BandOrderConventionTests
         DiagramLayoutEngine.Apply(swapped,
             new LayoutOptions { Direction = LayoutDirection.TopToBottom }, LayoutStrategy.Layered);
 
-        Assert.Equal(Topmost(original), Topmost(swapped));
+        Assert.NotEqual(Topmost(original), Topmost(swapped));
     }
 
     [Fact]

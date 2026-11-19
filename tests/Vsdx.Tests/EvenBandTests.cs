@@ -37,11 +37,17 @@ public sealed class EvenBandTests
         page.Nodes.Add(new Node { Id = "s2", Text = "支付", GroupId = "mid" });
         page.Nodes.Add(new Node { Id = "s3", Text = "库存", GroupId = "mid" });
 
-        page.Nodes.Add(new Node { Id = "d1", Text = "PG", GroupId = "solo" });
+        page.Nodes.Add(new Node { Id = "d1", Text = "PG", GroupId = "bot" });
+        page.Nodes.Add(new Node { Id = "d2", Text = "Redis", GroupId = "bot" });
+        page.Nodes.Add(new Node { Id = "d3", Text = "ES", GroupId = "bot" });
 
-        // A third band with a single member guarantees a width difference regardless of how the sizer normalises
+        // A fourth band with a single member guarantees a width difference regardless of how the sizer normalises
         // individual nodes: three members cannot come out the same width as one.
-        page.Groups.Add(new Group { Id = "solo", Name = "数据层", Kind = "layer", Order = 0, Members = { "d1" } });
+        //
+        // Its order must differ from `bot`'s. Containers that share an `order` now share a layer and stand side by
+        // side, which is a different layout and not what this fixture is about.
+        page.Nodes.Add(new Node { Id = "s1solo", Text = "Solo", GroupId = "solo" });
+        page.Groups.Add(new Group { Id = "solo", Name = "单节点层", Kind = "layer", Order = 0, Members = { "s1solo" } });
 
         return new Diagram { Id = "t", Type = "architecture", Pages = { page } };
     }

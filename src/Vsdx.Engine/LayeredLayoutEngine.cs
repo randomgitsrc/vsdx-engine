@@ -55,11 +55,32 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
             double slack = options.EvenBands ? Math.Max(0, (maxContentWidth - rowWidth) / 2) : 0;
             x += slack;
 
-            foreach (var node in members)
+            // Containers sharing a layer stand side by side, and their boxes extend past their members by the
+            // container padding on each side. Spacing consecutive members by `NodeGapX` alone therefore lets the
+            // boxes overlap: measured, two containers meeting at x=2.60/2.65 with a 0.05" overlap. A member that
+            // starts a new container gets the padding back, plus a gutter.
+            // Members of one container stay together: the row is ordered container by container, so a cell's nodes
+            // do not interleave with its neighbour's. Without this the whole layer was one continuous run and each
+            // container's box stretched across every other container — measured, three Slack cells each 10.78"
+            // wide while their members covered about 4".
+            var byContainer = members
+                .GroupBy(n => n.GroupId ?? "")
+                .OrderBy(grp => grp.Min(n => n.Bounds.X))
+                .SelectMany(grp => grp)
+                .ToList();
+
+            string? previousContainer = null;
+
+            foreach (var node in byContainer)
             {
+                if (previousContainer is not null && !string.Equals(previousContainer, node.GroupId, StringComparison.Ordinal))
+                    x += 2 * DiagramLayout.ContainerPaddingX + options.BandGapY * 0.6;
+
                 node.Bounds.X = Round(x + node.Bounds.W / 2);
                 node.Bounds.Y = Round(y + rowHeight / 2);
                 x += node.Bounds.W + options.NodeGapX;
+
+                previousContainer = node.GroupId;
             }
 
             maxContentWidth = Math.Max(maxContentWidth, rowWidth);
@@ -115,17 +136,38 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
         var sized = page.Groups.Where(g => g.Bounds is not null).ToList();
         if (sized.Count < 2) return;
 
-        double left = sized.Min(g => g.Bounds!.X - g.Bounds!.W / 2);
-        double right = sized.Max(g => g.Bounds!.X + g.Bounds!.W / 2);
+        // Evenness applies per row, not across the page: containers sharing a layer stand side by side and must
+        // keep their own columns, while containers on different rows still align to one envelope. Flattening every
+        // container to the same x and width erased the side-by-side arrangement entirely — measured on the Slack
+        // case, three cells landed at x[0.55,17.25] on top of each other.
+        // The envelope every single-container row aligns to is measured across the whole page, not per row: a
+        // layer that stands alone should still be flush with the layers above and below it. Measured on `cbo`,
+        // banding per row alone gave 6.04 / 5.60 / 5.60 instead of three equal widths.
+        double pageLeft = sized.Min(g => g.Bounds!.X - g.Bounds!.W / 2);
+        double pageRight = sized.Max(g => g.Bounds!.X + g.Bounds!.W / 2);
 
-        foreach (var group in sized)
+        foreach (var row in sized.GroupBy(g => Math.Round(g.Bounds!.Y, 2)))
         {
-            var b = group.Bounds!;
-            group.Bounds = new Bounds((left + right) / 2, b.Y, right - left, b.H);
+            var rowGroups = row.ToList();
+            if (rowGroups.Count == 0) continue;
 
-            // Pin it: `DiagramLayout.Apply` re-derives width from members, which would undo the alignment on the
-            // next pass — `execute` runs one after the layout engines have finished.
-            group.AutoSize = false;
+            // A row of one container stretches to the page envelope. A row of several keeps each container's own
+            // column — flattening them would land every cell in the same place.
+            bool single = rowGroups.Count == 1;
+
+            foreach (var group in rowGroups)
+            {
+                var b = group.Bounds!;
+
+                if (single)
+                    group.Bounds = new Bounds((pageLeft + pageRight) / 2, b.Y, pageRight - pageLeft, b.H);
+                else
+                    group.Bounds = new Bounds(b.X, b.Y, b.W, b.H);
+
+                // Pin it: `DiagramLayout.Apply` re-derives width from members, which would undo the alignment on
+                // the next pass — `execute` runs one after the layout engines have finished.
+                group.AutoSize = false;
+            }
         }
     }
 
@@ -170,25 +212,55 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
 
         if (containers.Count > 0)
         {
-            // containers is ordered top-first (descending Y). Layer numbers grow upward with the
-            // page, so the topmost container gets the highest number and ends up drawn highest.
-            int topLayer = containers.Count;
-            int layer = topLayer;
-            foreach (var group in containers)
+            // Containers that share an `order` share a layer, which is what makes them sit side by side instead of
+            // stacking. Every container used to get its own layer number unconditionally, so an architecture whose
+            // defining shape is parallel units — a cellular topology, a set of regional replicas — came out as a
+            // list. Measured before this: two containers with the same order rendered at (1.50, 3.42) and
+            // (1.50, 1.23).
+            //
+            // Containers without an order keep the old behaviour of one layer each, so existing diagrams that
+            // never set `order` are unaffected.
+            var ordered = containers
+                .OrderByDescending(g => g.Order ?? int.MinValue)
+                .ThenByDescending(g => g.Members
+                    .Select(id => byId.TryGetValue(id, out var n) ? n.Bounds.Y : double.NaN)
+                    .Where(y => !double.IsNaN(y))
+                    .DefaultIfEmpty(g.Bounds?.Y ?? 0)
+                    .Average())
+                .ToList();
+
+            // Group adjacent containers that declare the same order into one layer.
+            int layer = ordered.Count;
+            int i = 0;
+
+            while (i < ordered.Count)
             {
-                foreach (var memberId in group.Members)
+                var head = ordered[i];
+                int runEnd = i;
+
+                if (head.Order is int sameOrder)
                 {
-                    if (byId.TryGetValue(memberId, out var node)) Add(bands, layer, node);
+                    while (runEnd + 1 < ordered.Count && ordered[runEnd + 1].Order == sameOrder) runEnd++;
                 }
+
+                for (int k = i; k <= runEnd; k++)
+                {
+                    foreach (var memberId in ordered[k].Members)
+                    {
+                        if (byId.TryGetValue(memberId, out var node)) Add(bands, layer, node);
+                    }
+                }
+
                 layer--;
+                i = runEnd + 1;
             }
 
             // Nodes outside any container go in the band above the topmost container.
             var placed = bands.Values.SelectMany(x => x).Select(n => n.Id).ToHashSet(StringComparer.Ordinal);
             foreach (var node in nodes.Where(n => !placed.Contains(n.Id)))
-                Add(bands, topLayer + 1, node);
+                Add(bands, layer + 2, node);   // above the topmost container layer
 
-            notes.Add($"分层由 {containers.Count} 个容器决定（按容器 Y 位置自顶向下）");
+            notes.Add($"分层由 {containers.Count} 个容器决定（同 order 的容器共享一层，可并排）");
             return bands;
         }
 

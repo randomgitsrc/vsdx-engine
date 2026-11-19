@@ -51,11 +51,12 @@ public sealed class GroupOrderTests
     }
 
     [Fact]
-    public void LayeredIgnoresTheContainerOrder()
+    public void LayeredHonoursTheContainerOrder()
     {
-        // The documented gap. `LayeredLayoutEngine.AssignBands` orders bands by the mean Y of their members;
-        // `Group.Order` is not consulted at all. Swapping the two values changes nothing.
-        Assert.Equal(TopmostGroup(LayoutStrategy.Layered), TopmostAfterSwap(LayoutStrategy.Layered));
+        // This used to assert the opposite: `AssignBands` ordered bands by the mean Y of their members and never
+        // read `Order`. It now reads it, because containers that share an order have to share a layer — that is
+        // what lets parallel units stand side by side.
+        Assert.NotEqual(TopmostGroup(LayoutStrategy.Layered), TopmostAfterSwap(LayoutStrategy.Layered));
     }
 
     [Fact]
