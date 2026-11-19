@@ -60,7 +60,7 @@ public sealed class LegendGenerationTests
         var client = entries.Single(e => e.Role.Equals("client", StringComparison.OrdinalIgnoreCase));
 
         Assert.Equal("#2E75B6", client.Fill, ignoreCase: true);
-        Assert.Equal("Circle", client.Shape);
+        Assert.Equal("Rectangle", client.Shape);
     }
 
     [Fact]

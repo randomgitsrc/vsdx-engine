@@ -444,7 +444,13 @@ public static class DiagramIrConverter
             "gateway" => "Hexagon",
             "database" or "storage" => "Process",
             "queue" or "bus" => "Parallelogram",
-            "client" or "actor" or "user" => "Circle",
+            // Clients are supporting elements in C4 terms, not primary ones. A circle master needs its diameter
+            // inflated by 1/0.70 to hold a label, which made the least important box on the page 3.94x the area of
+            // a service and pushed the top band to twice the height of the others. A rectangle holds the same
+            // label at 1.30 x 0.55, so the three bands come out equal and the eye settles on the services.
+            //
+            // Shape encodes role, not species: the colour already says "this is an entry point".
+            "client" or "actor" or "user" => "Rectangle",
             "decision" => "Diamond",
             "monitor" => "Hexagon",
             "external" => "Rectangle",

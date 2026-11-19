@@ -35,7 +35,7 @@ public sealed class RoleShapeAliasTests
     [InlineData("gateway", "Hexagon")]
     [InlineData("database", "Process")]
     [InlineData("queue", "Parallelogram")]
-    [InlineData("client", "Circle")]
+    [InlineData("client", "Rectangle")]
     [InlineData("decision", "Diamond")]
     public void SemanticRolesKeepTheirMappings(string role, string expected)
     {

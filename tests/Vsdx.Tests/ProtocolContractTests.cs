@@ -391,7 +391,7 @@ public sealed class ProtocolContractTests
     [InlineData("gateway", "Hexagon")]
     [InlineData("database", "Process")]
     [InlineData("queue", "Parallelogram")]
-    [InlineData("actor", "Circle")]
+    [InlineData("actor", "Rectangle")]
     [InlineData("decision", "Diamond")]
     [InlineData("service", "Rectangle")]
     [InlineData(null, "Rectangle")]

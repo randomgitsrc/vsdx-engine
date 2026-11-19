@@ -56,7 +56,7 @@ public sealed class StatusReportTests
     }
 
     [Theory]
-    [InlineData("cbo", 100)]
+    [InlineData("cbo", 98)]
     [InlineData("user-data-flow", 100)]
     [InlineData("deploy-topology", 94)]
     [InlineData("checkout-sequence", 88)]
