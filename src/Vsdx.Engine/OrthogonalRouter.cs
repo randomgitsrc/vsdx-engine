@@ -51,8 +51,10 @@ public static class OrthogonalRouter
                 var others = nodes.Values.Where(n => n.Id != from.Id && n.Id != to.Id).ToList();
                 var direct = new List<Point>
                 {
-                    BoundaryPoint(from.Bounds, to.Bounds.X - from.Bounds.X, to.Bounds.Y - from.Bounds.Y),
-                    BoundaryPoint(to.Bounds, from.Bounds.X - to.Bounds.X, from.Bounds.Y - to.Bounds.Y)
+                    ShapeGeometry.OutlinePoint(from.Bounds, from.Shape,
+                        to.Bounds.X - from.Bounds.X, to.Bounds.Y - from.Bounds.Y),
+                    ShapeGeometry.OutlinePoint(to.Bounds, to.Shape,
+                        from.Bounds.X - to.Bounds.X, from.Bounds.Y - to.Bounds.Y)
                 };
                 if (!PathHitsShapes(direct, others)) continue;
             }
@@ -310,10 +312,12 @@ public static class OrthogonalRouter
         var b = node.Bounds;
         switch ((port ?? "auto").ToLowerInvariant())
         {
-            case "left": return (new Point(b.X - b.W / 2, b.Y), new Point(-1, 0), "left");
-            case "right": return (new Point(b.X + b.W / 2, b.Y), new Point(1, 0), "right");
-            case "top": return (new Point(b.X, b.Y + b.H / 2), new Point(0, 1), "top");
-            case "bottom": return (new Point(b.X, b.Y - b.H / 2), new Point(0, -1), "bottom");
+            // Explicit sides follow the shape's outline, not its box. On a parallelogram or diamond the box
+            // edge is empty space at the middle of a side, so a connector anchored there stops short of the ink.
+            case "left": return (ShapeGeometry.OutlinePoint(b, node.Shape, -1, 0), new Point(-1, 0), "left");
+            case "right": return (ShapeGeometry.OutlinePoint(b, node.Shape, 1, 0), new Point(1, 0), "right");
+            case "top": return (ShapeGeometry.OutlinePoint(b, node.Shape, 0, 1), new Point(0, 1), "top");
+            case "bottom": return (ShapeGeometry.OutlinePoint(b, node.Shape, 0, -1), new Point(0, -1), "bottom");
         }
 
         // Auto: pick the side facing the peer, preferring the dominant axis.
