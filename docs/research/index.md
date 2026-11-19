@@ -54,15 +54,21 @@
 
 ## 三、实验记录
 
-**当前无已完成的实验。** 目录 `experiments/` 为空。
+**已完成 3 个实验**（均在本机可复现）：
+
+| 编号 | 文件 | 结论 |
+| --- | --- | --- |
+| E1 | [`experiments/E1-band-expression.md`](experiments/E1-band-expression.md) | 通条只能视觉近似，`groupId=null`，**无跨层语义** |
+| E2 | [`experiments/E2-multi-text-component.md`](experiments/E2-multi-text-component.md) | 组件内**无分区样式**，三行文本共用一套 font/fill |
+| E3 | [`experiments/E3-density-and-font.md`](experiments/E3-density-and-font.md) | 引擎**不检查成品字号**，24 组件放 A4 仍报 `succeeded` |
 
 ### 3.1 建议的下一批实验（按 Goal §8.5 的要求设计）
 
 | 编号 | 问题 | 输入 | 预期证据 | 优先级 |
 | --- | --- | --- | --- | --- |
-| E1 | 通条（band）能否用现有模型表达 | 一个跨 3 层的横向条 | 产出的 VSDX 是否保持跨容器关系 | 高 |
-| E2 | 多文本区组件（标题/说明/状态） | 单组件含 3 个文本区 | 是否只能拆成 3 个独立 TextBlock | 高 |
-| E3 | A4 下多少组件会突破 7 pt | 递增组件数的同一架构 | 成品字号随密度的实测曲线 | 高 |
+| ~~E1~~ | ~~通条表达~~ | — | ✅ 已完成 | — |
+| ~~E2~~ | ~~多文本区~~ | — | ✅ 已完成 | — |
+| ~~E3~~ | ~~密度与字号~~ | — | ✅ 已完成 | — |
 | E4 | 嵌套容器在 Visio 中的真实层级 | 两层嵌套容器 | 本机无法验证（L4 Blocked）| — |
 | E5 | 图标作为组件主体的可行性 | 一个 FreePath 作图标 + 文字 | 渲染与读回是否保持 | 中 |
 
