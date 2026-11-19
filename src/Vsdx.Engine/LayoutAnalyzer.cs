@@ -221,7 +221,15 @@ public static class LayoutAnalyzer
                 // connector has to come from outside, so it must cross the heading strip. That is a layout
                 // decision made by the band engine, not a routing mistake, and reporting it here would ask the
                 // router to solve something it cannot.
-                if (EndpointBelowHeading(headingFrom, group) || EndpointBelowHeading(headingTo, group)) continue;
+                // Only when *both* ends live in this container is the crossing forced: the connector runs from one
+                // member to another and every path between them starts below the heading. A connector arriving
+                // from another container has a choice — it can enter through any side — so its crossing is the
+                // router's to avoid.
+                //
+                // The condition used to test each endpoint separately, which silenced every edge leaving a band:
+                // measured on `cbo`, `order → pg` (service band to data band) cut the data band's heading at
+                // x=1.50 and nothing reported it.
+                if (EndpointBelowHeading(headingFrom, group) && EndpointBelowHeading(headingTo, group)) continue;
 
                 report.Add(new LayoutIssue
                 {

@@ -55,8 +55,11 @@ public sealed class ConnectorOverHeadingTests
         // The router now treats the heading as an obstacle and reroutes around it, so neither check fires: the
         // crossing never exists in the finished diagram. What this test records is that nothing is silently
         // left crossing the title.
+        // Reported again. The check had been silenced by an over-broad exemption: it skipped any edge with one
+        // endpoint below the heading, which covered every connector arriving from another band. Only an edge whose
+        // *both* ends sit inside the container is forced to cross, so only that case is exempt now.
         Assert.DoesNotContain(report.Issues, i => i.Code == "edge.through-node");
-        Assert.DoesNotContain(report.Issues, i => i.Code == "edge.through-container-heading");
+        Assert.Contains(report.Issues, i => i.Code == "edge.through-container-heading");
     }
 
     [Fact]
