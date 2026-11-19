@@ -17,7 +17,7 @@
 
 ## 二、实测结果
 
-六个可复现场景（`examples/realworld/*.ir.json`），分数用 `check-layout` 实测：
+可复现场景（`examples/realworld/*.ir.json`），分数用 `check-layout` 实测：
 
 | 场景 | 结构 | 策略 | 分数 | 可用性 |
 | --- | --- | --- | --- | --- |
@@ -27,7 +27,7 @@
 | **Netflix 双活** `netflix-active-active` | 2 区域 + 跨区复制 | Layered | 94 | ⚠️ 跨区边交叉；**唯一外部来源案例** |
 | 下单支付时序 `checkout-sequence` | 6 参与者 9 消息 | Flow | 88 | ⚠️ 结构对但不合时序 |
 | 订单履约泳道 `order-swimlane` | 3 泳道 | Swimlane | 100 | ✅ 跨泳道连线为斜线 |
-| 组织架构 `org-tree` | 3 层树 | Tree | 100 | ✅ |
+| 组织架构 `org-tree` | 3 层树 | Tree | 96 | ✅ |
 
 > 分数会随修复变化。**以 `check-layout` 实测为准**，本表只是当时的快照。
 
