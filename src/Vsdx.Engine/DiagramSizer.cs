@@ -117,6 +117,19 @@ public static class DiagramSizer
                 bool changed = Math.Abs(targetW - node.Bounds.W) > 0.01
                             || Math.Abs(targetH - node.Bounds.H) > 0.01;
 
+                // A circle authored 2.0 x 0.9 draws as an ellipse. The sizing above only intervenes when the box
+                // is too small for its text, so a shape whose author-given box happened to fit kept its
+                // proportions — a round master rendered as an oval, reported by nothing.
+                if (!changed && ShapeGeometry.IsSquareShape(node.Shape))
+                {
+                    double side = Math.Max(node.Bounds.W, node.Bounds.H);
+                    if (Math.Abs(side - node.Bounds.W) > 0.01 || Math.Abs(side - node.Bounds.H) > 0.01)
+                    {
+                        targetW = targetH = side;
+                        changed = true;
+                    }
+                }
+
                 if (changed)
                 {
                     node.Bounds.W = Round(targetW);
