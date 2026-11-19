@@ -101,7 +101,13 @@ public sealed class BenchmarkTests
             ["fault-crossing"] = "edge.crossing",
             ["fault-misaligned"] = "row.misaligned",
             ["fault-size-mix"] = "row.size-jitter",
-            ["fault-cross-region"] = "edge.diagonal-across-band"
+            ["fault-cross-region"] = "edge.diagonal-across-band",
+        ["fault-group-overlap"] = "group.overlap",
+        ["fault-text-vertical"] = "text.overflow-vertical",
+        ["fault-through-node"] = "edge.through-node",
+            ["fault-group-overlap"] = "group.overlap",
+            ["fault-text-vertical"] = "text.overflow-vertical",
+            ["fault-through-node"] = "edge.through-node"
         };
 
         foreach (var (_, c, p) in Cases("faults"))

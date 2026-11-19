@@ -61,7 +61,10 @@ public sealed class FaultCorpusTests
         ["fault-crossing"] = "edge.crossing",
         ["fault-misaligned"] = "row.misaligned",
         ["fault-size-mix"] = "row.size-jitter",
-        ["fault-cross-region"] = "edge.diagonal-across-band"
+        ["fault-cross-region"] = "edge.diagonal-across-band",
+        ["fault-group-overlap"] = "group.overlap",
+        ["fault-text-vertical"] = "text.overflow-vertical",
+        ["fault-through-node"] = "edge.through-node"
     };
 
     [Fact]

@@ -1,0 +1,18 @@
+{
+  "id": "fault-through-node",
+  "type": "architecture",
+  "pages": [
+    {
+      "id": "p",
+      "size": { "width": 12, "height": 8 },
+      "nodes": [
+        { "id": "a", "text": "A", "bounds": { "x": 2, "y": 4, "w": 1.4, "h": 0.6 } },
+        { "id": "m", "text": "挡", "bounds": { "x": 6, "y": 4, "w": 1.4, "h": 0.6 } },
+        { "id": "b", "text": "B", "bounds": { "x": 10, "y": 4, "w": 1.4, "h": 0.6 } }
+      ],
+      "edges": [
+        { "id": "e", "from": "a", "to": "b", "waypoints": [ { "x": 6, "y": 4 } ] }
+      ]
+    }
+  ]
+}

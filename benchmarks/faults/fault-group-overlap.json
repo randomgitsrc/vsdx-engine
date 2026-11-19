@@ -1,0 +1,19 @@
+{
+  "id": "fault-group-overlap",
+  "type": "architecture",
+  "pages": [
+    {
+      "id": "p",
+      "size": { "width": 10, "height": 8 },
+      "groups": [
+        { "id": "g1", "name": "容器一", "autoSize": false, "bounds": { "x": 4, "y": 4, "w": 5, "h": 3 } },
+        { "id": "g2", "name": "容器二", "autoSize": false, "bounds": { "x": 5, "y": 4.5, "w": 5, "h": 3 } }
+      ],
+      "nodes": [
+        { "id": "a", "text": "A", "groupId": "g1", "bounds": { "x": 3, "y": 4, "w": 1.2, "h": 0.5 } },
+        { "id": "b", "text": "B", "groupId": "g2", "bounds": { "x": 5, "y": 4.5, "w": 1.2, "h": 0.5 } }
+      ],
+      "edges": []
+    }
+  ]
+}

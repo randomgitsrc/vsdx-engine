@@ -1,0 +1,14 @@
+{
+  "id": "fault-text-vertical",
+  "type": "architecture",
+  "pages": [
+    {
+      "id": "p",
+      "size": { "width": 10, "height": 8 },
+      "nodes": [
+        { "id": "a", "text": "一行\n二行\n三行\n四行\n五行", "bounds": { "x": 3, "y": 4, "w": 2, "h": 0.3 } }
+      ],
+      "edges": []
+    }
+  ]
+}
