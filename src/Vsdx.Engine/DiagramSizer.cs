@@ -29,6 +29,15 @@ public static class DiagramSizer
     /// in a wide page with a large empty band, which is exactly the defect the audit found. The
     /// floor exists to keep a page usable, not to impose a preferred aspect ratio.
     /// </summary>
+    /// <summary>
+    /// Print every `FitPage` decision to stderr. Set `VSDX_TRACE_FIT=1`.
+    ///
+    /// Page sizing is the one place where a wrong branch is invisible in the output — the drawing looks fine and
+    /// the sheet is simply too big. Reading the code three rounds running did not explain why `canvas.auto` leaves
+    /// `cbo` at 11.00" with 4.41" of blank paper; a line per call shows which branch ran and with what numbers.
+    /// </summary>
+    private static bool Trace => Environment.GetEnvironmentVariable("VSDX_TRACE_FIT") == "1";
+
     public const double MinPageWidth = 4.0;
     public const double MinPageHeight = 3.0;
 
@@ -236,18 +245,42 @@ public static class DiagramSizer
         double currentW = page.Size?.Width ?? 0;
         double currentH = page.Size?.Height ?? 0;
 
-        bool mustGrow = neededW > currentW + 0.01 || neededH > currentH + 0.01;
-        if (mustGrow)
-        {
-            page.Size ??= new PageSize();
-            page.Size.Width = Round(Math.Max(currentW, neededW));
-            page.Size.Height = Round(Math.Max(currentH, neededH));
+        // Each dimension is decided on its own.
+        //
+        // This used to be `mustGrow = overW || overH`, followed by `Math.Max(current, needed)` on *both* — so a
+        // drawing needing 0.13" more height kept a width of 11.00" while its content was 7.35" wide. Traced on
+        // `cbo`: `grow=true current=11.00x9.32 needed=7.35x9.45`. The blank paper on the right was never a
+        // separate defect; it was this branch carrying the width along because the height crossed the line.
+        bool growW = neededW > currentW + 0.01;
+        bool growH = neededH > currentH + 0.01;
 
-            return new PageFit(true, currentW, currentH, page.Size.Width, page.Size.Height)
-            {
-                NeedsRecenter = needsRecenter
-            };
+        if (growW || growH)
+        {
+            if (Trace) Console.Error.WriteLine(
+                $"[fit] growW={growW} growH={growH} current={currentW:F2}x{currentH:F2} " +
+                $"needed={neededW:F2}x{neededH:F2}");
+
+            page.Size ??= new PageSize();
+
+            // Grow only what is short. The other dimension is left for the shrink pass below, which already knows
+            // whether trimming is wanted.
+            if (growW) page.Size.Width = Round(Math.Max(currentW, neededW));
+            if (growH) page.Size.Height = Round(Math.Max(currentH, neededH));
+
+            if (growW && growH)
+                return new PageFit(true, currentW, currentH, page.Size.Width, page.Size.Height)
+                {
+                    NeedsRecenter = needsRecenter
+                };
+
+            // One dimension grew; the other may still be too generous. Fall through so it gets trimmed.
+            currentW = page.Size.Width;
+            currentH = page.Size.Height;
         }
+
+        if (Trace) Console.Error.WriteLine(
+            $"[fit] grow=false shrink={shrink} current={currentW:F2}x{currentH:F2} " +
+            $"needed={neededW:F2}x{neededH:F2}");
 
         // The page is larger than necessary. Shrinking is opt-in: an author may deliberately
         // want a standard paper size, so only trim when asked.
@@ -255,6 +288,9 @@ public static class DiagramSizer
 
         double trimmedW = Math.Max(neededW, MinPageWidth);
         double trimmedH = Math.Max(neededH, MinPageHeight);
+
+        if (Trace) Console.Error.WriteLine(
+            $"[fit] trimmed={trimmedW:F2}x{trimmedH:F2} excessW={currentW - trimmedW:F2} excessH={currentH - trimmedH:F2}");
 
         // Do not shrink for a marginal gain; leave the page alone when the excess is small.
         if (currentW - trimmedW < 1.0 && currentH - trimmedH < 1.0)
