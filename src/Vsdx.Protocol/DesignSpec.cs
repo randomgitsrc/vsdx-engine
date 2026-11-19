@@ -94,10 +94,17 @@ public sealed class CanvasSpec
     public bool ShrinkToFit { get; set; } = true;
 
     /// <summary>
-    /// Draw a legend describing the roles the diagram uses. Off by default: it adds objects to the page, and a
-    /// caller who laid out a tight drawing should get exactly that unless they asked otherwise.
+    /// Draw a legend describing the roles the diagram uses. **On by default.**
+    ///
+    /// It used to be opt-in, on the reasoning that a legend adds objects and a caller who laid out a tight drawing
+    /// should get exactly that. What that produced in practice was worse: diagrams with five colours, four shapes
+    /// and three bands, and no key — or a hand-written one that had drifted. The shipped `deploy-topology` example
+    /// carried "蓝=入口" while both of its entry-zone nodes are `#F2B705` gold. A false legend is worse than none,
+    /// and a derived one cannot drift: the labels come from the roles the drawing actually contains.
+    ///
+    /// Set `"canvas": {"legend": false}` to omit it.
     /// </summary>
-    public bool Legend { get; set; }
+    public bool Legend { get; set; } = true;
 }
 
 public sealed class TypographySpec

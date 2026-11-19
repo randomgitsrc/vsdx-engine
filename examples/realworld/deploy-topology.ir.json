@@ -195,18 +195,6 @@
         "height": 0.6
       },
       "align": "center"
-    },
-    {
-      "id": "legend",
-      "text": "蓝=入口  绿=应用  橙=数据",
-      "role": "legend",
-      "box": {
-        "x": 5,
-        "y": 4.2,
-        "width": 6,
-        "height": 0.3
-      },
-      "align": "center"
     }
   ]
 }
