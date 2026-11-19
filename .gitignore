@@ -65,6 +65,7 @@ desktop.ini
 .review*/
 .review-scratch*/
 /.sm/
+/.rv*/
 /.[a-z][0-9]*/
 .p9/
 .lab/

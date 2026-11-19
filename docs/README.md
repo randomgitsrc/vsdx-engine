@@ -18,6 +18,19 @@
 | [`installation.md`](installation.md) | 安装与环境要求 |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | 对外可见的能力变化 |
 
+## 专业制图知识
+
+**这是 Goal 2.1 §4 要求的知识基线**——让未参与此前讨论的 Agent 也能理解产品要求。
+
+| 文档 | 内容 |
+| --- | --- |
+| [`diagram-knowledge/architecture-diagrams.md`](diagram-knowledge/architecture-diagrams.md) | 专业架构图的七种构成要素；可判定的评审清单 |
+| [`diagram-knowledge/diagram-complexity-levels.md`](diagram-knowledge/diagram-complexity-levels.md) | **Level 1–3 的校准**：E（表达）/ D（布局）双维度模型 |
+| [`diagram-knowledge/output-profiles.md`](diagram-knowledge/output-profiles.md) | A4/A3/Web 适配与物理可读性（成品字号公式） |
+| [`research/index.md`](research/index.md) | **外部来源登记、实验记录、证据缺口** |
+| [`plans/active/phase0-to-phase1-plan.md`](plans/active/phase0-to-phase1-plan.md) | 阶段 0 → 1 的实施计划 |
+| [`product/management-consistency-report.md`](product/management-consistency-report.md) | 管理文件冲突/遗漏/重复清单 |
+
 ## 设计与架构
 
 | 文档 | 内容 |

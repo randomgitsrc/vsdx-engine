@@ -5,11 +5,20 @@ C#/.NET 8，七个项目，**无循环依赖**（`Cli` 与 `Protocol` 都直接�
 
 ## 读什么
 
+**长期章程优先于一切**：`goal-2.1.md`（18 章，1853 行）。它定义产品目标、范围、
+知识义务、研究要求与阶段路线。本文件只是启动入口。
+
 | 需要 | 文档 |
 | --- | --- |
+| **长期章程（必读）** | [`goal-2.1.md`](goal-2.1.md) |
 | 全貌 | [`README.md`](README.md) |
 | 文档地图 | [`docs/README.md`](docs/README.md) |
 | 能画什么、不能画什么 | [`docs/capability-boundaries.md`](docs/capability-boundaries.md) |
+| **专业架构图是什么** | [`docs/diagram-knowledge/architecture-diagrams.md`](docs/diagram-knowledge/architecture-diagrams.md) |
+| **复杂度分级（Level 校准）** | [`docs/diagram-knowledge/diagram-complexity-levels.md`](docs/diagram-knowledge/diagram-complexity-levels.md) |
+| **输出适配与可读性** | [`docs/diagram-knowledge/output-profiles.md`](docs/diagram-knowledge/output-profiles.md) |
+| **研究索引与证据** | [`docs/research/index.md`](docs/research/index.md) |
+| **管理文件一致性** | [`docs/product/management-consistency-report.md`](docs/product/management-consistency-report.md) |
 | 验证到哪一步 | [`docs/limitations.md`](docs/limitations.md) |
 | 当前状态 | [`PROJECT-STATUS.md`](PROJECT-STATUS.md) |
 | Agent 用法 | [`skill/SKILL.md`](skill/SKILL.md) |
