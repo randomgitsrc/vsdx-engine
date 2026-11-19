@@ -104,6 +104,64 @@ public static class DecorationLayout
     private static readonly double[] LabelSlots = { 0.25, 0.75, 0.15, 0.85 };
 
     /// <summary>
+    /// Lifts a text block clear of nodes it sits on top of.
+    ///
+    /// `AvoidContainers` handles band borders and `SpreadLabels` handles connector labels; neither looks at nodes,
+    /// so a legend whose box lands inside a band is drawn over whatever is there. The analyser reports it as
+    /// `text.overlaps-node` and nothing acts on that.
+    ///
+    /// The block is raised to just above the highest node it overlaps, keeping its x so the author's horizontal
+    /// placement survives. If raising it would push it off the page, it is left alone — a reported overlap beats
+    /// an unreported clipping.
+    /// </summary>
+    public static int AvoidNodes(Diagram diagram)
+    {
+        int moved = 0;
+
+        foreach (var page in diagram.Pages)
+        {
+            if (page.Nodes.Count == 0) continue;
+
+            double pageTop = page.Size?.Height ?? double.MaxValue;
+
+            foreach (var text in page.TextBlocks)
+            {
+                if (string.IsNullOrWhiteSpace(text.Text)) continue;
+
+                for (int pass = 0; pass < 4; pass++)
+                {
+                    var hit = page.Nodes
+                        .Where(n => n.Bounds is not null && Overlaps(text.Bounds, n.Bounds))
+                        .OrderByDescending(n => n.Bounds!.Y + n.Bounds!.H / 2)
+                        .FirstOrDefault();
+
+                    if (hit is null) break;
+
+                    double wanted = hit.Bounds!.Y + hit.Bounds!.H / 2
+                                  + Clearance + text.Bounds.H / 2;
+
+                    // Off the page already: leave it, the overlap is the lesser problem.
+                    if (wanted + text.Bounds.H / 2 > pageTop) break;
+                    if (Math.Abs(wanted - text.Bounds.Y) < 0.01) break;
+
+                    text.Bounds.Y = Math.Round(wanted * 40) / 40;
+                    moved++;
+                }
+            }
+        }
+
+        return moved;
+    }
+
+    /// <summary>True when two boxes share area.</summary>
+    private static bool Overlaps(Bounds a, Bounds b)
+    {
+        bool x = Math.Abs(a.X - b.X) < (a.W + b.W) / 2;
+        bool y = Math.Abs(a.Y - b.Y) < (a.H + b.H) / 2;
+        return x && y;
+    }
+
+    /// <summary>
     /// Separates edge labels that landed on each other, by moving the ones the author did not place.
     ///
     /// A label without an explicit position is a default, not a decision, so it is the one that

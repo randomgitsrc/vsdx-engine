@@ -506,6 +506,10 @@ public static class DesignSpecApplier
         if (DecorationLayout.AvoidContainers(diagram) > 0)
             applied.Add("decoration.clearance");
 
+        // A text block that lands on a node is drawn over it, and nothing else in the pipeline moves it.
+        if (DecorationLayout.AvoidNodes(diagram) > 0)
+            applied.Add("decoration.node-clearance");
+
         // Labels that land on each other are separated here rather than left for the caller to fix
         // by hand. Only labels without an explicit position move; the result is re-checked, so this
         // either helps or does nothing.

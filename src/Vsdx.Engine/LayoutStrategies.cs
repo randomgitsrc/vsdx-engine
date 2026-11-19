@@ -177,6 +177,7 @@ public static class DiagramLayoutEngine
         // derived from its members can grow into a title placed earlier, and the page clamp alone
         // does not notice.
         DecorationLayout.AvoidContainers(diagram);
+        DecorationLayout.AvoidNodes(diagram);
 
         // Direction is applied once for the whole document, after every page has been laid out.
         //

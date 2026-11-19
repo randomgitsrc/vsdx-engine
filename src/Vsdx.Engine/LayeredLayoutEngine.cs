@@ -23,6 +23,14 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
         var bands = AssignBands(page, options, notes);
         var ordered = OrderWithinBands(page, bands);
 
+        // Reorder within each band to reduce crossings. The order above comes from the graph and is stable, but
+        // stable is not the same as readable: three nodes above three others with the connectors reversed cross
+        // three times, and rotating the lower band removes all three without touching the router.
+        //
+        // Measured on that case before this existed: 94 with three `edge.crossing`, 98 with none after reversing
+        // the lower band by hand.
+        MinimiseCrossings(page, ordered);
+
         const double baseY = 2.0;
         double y = baseY;
         double maxContentWidth = 0;
@@ -200,6 +208,114 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
     /// Orders nodes inside a band by the mean X of their predecessors, so a node appears after
     /// the things that feed it. Falls back to the author's X when there are no predecessors.
     /// </summary>
+    /// <summary>
+    /// Reorders nodes inside each band to reduce connector crossings, by adjacent swaps.
+    ///
+    /// Only the position within a band changes — never which band a node belongs to, and never the node set. That
+    /// keeps the operation safe: the report it is optimising is computed on the same graph, and a band that had
+    /// one node still has one.
+    ///
+    /// Adjacent swapping is enough here because the bands are single rows. A full Sugiyama pass would pair it
+    /// with a barycentre initialisation and a transpose phase; this is the transpose phase alone, which is where
+    /// the crossings in these diagrams come from.
+    /// </summary>
+    private static void MinimiseCrossings(Page page, Dictionary<int, List<Node>> bands)
+    {
+        if (bands.Count < 2) return;
+
+        var bandOf = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var (layer, members) in bands)
+            foreach (var node in members)
+                bandOf[node.Id] = layer;
+
+        // Edges that span two different bands are the ones whose crossings depend on ordering. Edges inside one
+        // band cannot cross each other through reordering, and are left out.
+        var spanning = page.Edges
+            .Where(e => e.From is not null && e.To is not null
+                     && bandOf.ContainsKey(e.From) && bandOf.ContainsKey(e.To)
+                     && bandOf[e.From] != bandOf[e.To])
+            .ToList();
+
+        if (spanning.Count == 0) return;
+
+        int before = CountCrossings(bands, spanning);
+        if (before == 0) return;
+
+        // Repeatedly sweep each band and accept a swap when it lowers the count. Bounded so a pathological graph
+        // cannot spin: each pass either improves the count or ends the loop.
+        for (int pass = 0; pass < 8; pass++)
+        {
+            bool improved = false;
+
+            foreach (var layer in bands.Keys.OrderBy(k => k))
+            {
+                var members = bands[layer];
+
+                for (int i = 0; i + 1 < members.Count; i++)
+                {
+                    (members[i], members[i + 1]) = (members[i + 1], members[i]);
+
+                    int after = CountCrossings(bands, spanning);
+
+                    if (after < before)
+                    {
+                        before = after;
+                        improved = true;
+                    }
+                    else
+                    {
+                        (members[i], members[i + 1]) = (members[i + 1], members[i]);
+                    }
+                }
+            }
+
+            if (!improved || before == 0) break;
+        }
+    }
+
+    /// <summary>
+    /// Counts pairs of spanning edges that cross, using each node's index within its band.
+    ///
+    /// Two edges cross when their endpoints sit in the same two bands and the order of their endpoints is
+    /// inverted. Edges sharing an endpoint never count: they meet, they do not cross.
+    /// </summary>
+    private static int CountCrossings(
+        Dictionary<int, List<Node>> bands, List<Vsdx.Model.Edge> spanning)
+    {
+        var position = new Dictionary<string, (int Layer, int Index)>(StringComparer.Ordinal);
+
+        foreach (var (layer, members) in bands)
+            for (int i = 0; i < members.Count; i++)
+                position[members[i].Id] = (layer, i);
+
+        var placed = spanning
+            .Where(e => position.ContainsKey(e.From!) && position.ContainsKey(e.To!))
+            .Select(e => (From: position[e.From!], To: position[e.To!], Id: e.Id))
+            .ToList();
+
+        int crossings = 0;
+
+        for (int a = 0; a < placed.Count; a++)
+        for (int b = a + 1; b < placed.Count; b++)
+        {
+            var (ea, eb) = (placed[a], placed[b]);
+
+            // Only edges between the same pair of bands can cross each other.
+            if (ea.From.Layer != eb.From.Layer || ea.To.Layer != eb.To.Layer) continue;
+
+            // Sharing an endpoint is a meeting, not a crossing.
+            if (ea.Id == eb.Id) continue;
+            if (position[spanning[a].From!] == position[spanning[b].From!]) continue;
+            if (position[spanning[a].To!] == position[spanning[b].To!]) continue;
+
+            // Inverted endpoint order.
+            bool inverted = (ea.From.Index - eb.From.Index) * (ea.To.Index - eb.To.Index) < 0;
+            if (inverted) crossings++;
+        }
+
+        return crossings;
+    }
+
     private static Dictionary<int, List<Node>> OrderWithinBands(
         Page page, Dictionary<int, List<Node>> bands)
     {

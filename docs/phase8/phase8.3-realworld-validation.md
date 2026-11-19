@@ -391,7 +391,7 @@ $ execute --spec '{"layout":"grid"}'
 | 场景 | 分数 | 目视发现 |
 | --- | --- | --- |
 | 跨境电商架构 | 100 | 容器标题被压的问题已修（推导加入标题间隙） |
-| 部署拓扑 | 82 | 标题冲突与上边距**均已修**；剩余 5 处 `edge.crossing`，属拓扑性边界（见 `capability-boundaries.md` §7） |
+| 部署拓扑 | 96 | 标题冲突、上边距、文本压节点**均已修**；剩余少量 `edge.crossing`，属拓扑性边界（见 `boundaries` §八） |
 | 用户数据流 | 100 | **未发现缺陷** |
 | 下单时序 | 88 | 结构对但非时序形态（已知限制） |
 
@@ -460,5 +460,5 @@ $ execute --spec '{"layout":"grid"}'
 
 ### 剩余的真实问题
 
-`deploy-topology` 仍是 82，5 处扣分全部是 `edge.crossing`。这与
+`deploy-topology` 曾为 82，扣分全部是 `edge.crossing`。补上交叉最小化与文本避让后为 **96**。这与
 `capability-boundaries.md` 中「不保证正交路由」一致，属已知能力边界。

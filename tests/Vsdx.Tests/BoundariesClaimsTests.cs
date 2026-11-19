@@ -10,7 +10,7 @@ namespace Vsdx.Tests;
 /// <summary>
 /// `capability-boundaries.md` must describe scenarios that exist and numbers that are reproducible.
 ///
-/// It listed five scenarios with scores. Two were stale (cbo 98 against 100, deploy-topology 94 against 82),
+/// It listed five scenarios with scores. Two were stale (cbo 98 against 100, deploy-topology 94 against 82 at the time),
 /// one — "订单状态机 96" — had no example file at all and appears never to have had one, and the paper-size
 /// claim ("all three land on A3") was wrong for two of the three: they land on A4, portrait and landscape
 /// respectively, with only `user-data-flow` needing A3.
