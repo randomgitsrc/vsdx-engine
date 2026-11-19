@@ -21,8 +21,8 @@
 
 | 场景 | 结构 | 策略 | 分数 | 可用性 |
 | --- | --- | --- | --- | --- |
-| 跨境电商架构 `cbo` | 3 层容器 | Layered | 100 | ✅ |
-| 部署拓扑 `deploy-topology` | 3 层容器 + 扇出 | Layered | 96 | ⚠️ 少量连线交叉（拓扑性，见 §八）|
+| 跨境电商架构 `cbo` | 3 层容器 | Layered | 92 | ⚠️ 2 处连线穿容器标题 |
+| 部署拓扑 `deploy-topology` | 3 层容器 + 扇出 | Layered | 92 | ⚠️ 少量连线交叉（拓扑性，见 §八）|
 | 用户数据流 `user-data-flow` | 无容器长链 | Flow | 100 | ✅ |
 | 下单支付时序 `checkout-sequence` | 6 参与者 9 消息 | Flow | 88 | ⚠️ 结构对但不合时序 |
 | 订单履约泳道 `order-swimlane` | 3 泳道 | Swimlane | 100 | ✅ 跨泳道连线为斜线 |
@@ -75,7 +75,7 @@ label.overlaps-label (4)
 - 标签不重叠（只能减少，无法完全消除）
 
 
-## 三附、检测器实际覆盖的 24 类问题
+## 三附、检测器实际覆盖的问题类别
 
 `check-layout` 与 `execute` 的 `quality` 字段会报告以下代码。**这是引擎能自动发现的问题全集。**
 
@@ -108,6 +108,7 @@ label.overlaps-label (4)
 | --- | --- | --- |
 | `edge.crossing` | 两条连线交叉 | warning |
 | `edge.through-node` | 连线穿过节点 | **error** |
+| `edge.through-container-heading` | 连线穿过容器标题文字 | warning |
 | `edge.diagonal-across-band` | 斜线跨容器 | warning |
 | `edge.detour` | 连线绕行过长 | warning |
 | `edge.fan-in` / `edge.fan-out` | 扇入/扇出过多 | warning |
@@ -125,7 +126,7 @@ label.overlaps-label (4)
 **error 级（令 `hardConstraintsPassed=false`）：**
 
 `node.overlap` · `node.out-of-page` · `group.overlap` · `group.member-escapes` ·
-`edge.through-node` · `text.overflow-horizontal` · `text.overflow-vertical`
+`edge.through-node` · `edge.through-container-heading` · `text.overflow-horizontal` · `text.overflow-vertical`
 
 **warning / info 级（只影响 `score`）：** 其余全部。
 

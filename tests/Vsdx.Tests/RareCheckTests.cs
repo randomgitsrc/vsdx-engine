@@ -107,7 +107,7 @@ public sealed class RareCheckTests
         string[] observed =
         {
             "container.heading-collision", "edge.crossing", "edge.detour", "edge.diagonal-across-band",
-            "edge.fan-in", "edge.fan-out", "edge.through-node", "group.gutter", "group.member-escapes",
+            "edge.fan-in", "edge.fan-out", "edge.through-node", "edge.through-container-heading", "group.gutter", "group.member-escapes",
             "group.overlap", "label.overlaps-label", "label.overlaps-node", "node.out-of-page",
             "node.overlap", "page.margins", "page.underused", "row.misaligned", "row.size-jitter",
             "spacing.too-tight", "text.overflow-horizontal", "text.overflow-vertical",

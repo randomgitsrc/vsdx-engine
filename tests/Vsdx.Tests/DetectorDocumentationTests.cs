@@ -74,13 +74,16 @@ public sealed class DetectorDocumentationTests
     }
 
     [Fact]
-    public void TheStatedCountMatches()
+    public void TheDocumentDoesNotCarryACountThatWillDrift()
     {
-        // The doc says "22 类问题"; if a check is added the number must move with it.
-        int count = CodesInCode().Count;
+        // The doc used to say "N 类问题" and this test enforced the number, which meant every added check
+        // required editing prose. `AGENTS.md` forbids counts in prose for exactly that reason: the count is
+        // derivable from the source, so a hard-coded copy is a second truth that goes stale silently.
+        //
+        // What matters is that the section exists and enumerates codes; the number is checked against the source
+        // by `EveryEmittedCodeIsDocumented` below.
         var doc = File.ReadAllText(Path.Combine(RepoRoot(), "docs", "capability-boundaries.md"));
 
-        Assert.Contains($"{count} 类问题", doc);
-        Assert.Contains($"合计 {count} 个代码", doc);
+        Assert.DoesNotMatch(@"\d+\s*类问题", doc);
     }
 }

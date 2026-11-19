@@ -37,19 +37,18 @@ public sealed class ChangelogTests
             .Select(m => m.Groups[1].Value).Distinct().Count();
 
     [Fact]
-    public void TheStatedIssueCountMatches()
+    public void TheIssueCountIsNotRestatedInProse()
     {
-        int actual = DistinctIssueCodes();
-
-        Assert.Contains($"{actual} 类问题", Changelog());
+        // This used to assert the changelog contained "N 类问题", matching the source. That made every new check
+        // require an edit to a *released* changelog entry — and a released entry describes a tag, not the current
+        // tree. `AGENTS.md` forbids counts in prose; the source is the count.
+        Assert.DoesNotMatch(@"\d+\s*类问题", Changelog());
     }
 
     [Fact]
-    public void TheStatedErrorCountMatches()
+    public void TheErrorCountIsNotRestatedInProse()
     {
-        int actual = ErrorIssueCodes();
-
-        Assert.Contains($"{actual} 类为 error 级", Changelog());
+        Assert.DoesNotMatch(@"\d+\s*类为 error 级", Changelog());
     }
 
     [Fact]

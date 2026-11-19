@@ -10,9 +10,13 @@ namespace Vsdx.Tests;
 /// `edge.through-node` walks `page.Nodes` only, so a line crossing a band's title band is invisible to it.
 /// `container.heading-collision` checks a *member* node overlapping the heading, not an edge.
 ///
-/// Seen on the diagram the independent agent produced: two connectors from the service band run down into
-/// "数据与消息层 Data & Messaging", crossing its heading band at x=1.50 and x=2.72 while the title text spans
-/// x=0.65-2.95. Score 98, and the only issue reported was an unrelated `edge.crossing`.
+/// Both the visual reviewer and I believed the agent's diagram had connectors cutting through "数据与消息层
+/// Data & Messaging". Measured properly, it does not: two connectors do cross the heading *band*, at x=4.49-5.20,
+/// but the heading text is `x[0.85, 4.38]` once measured at 12pt bold rather than estimated. They pass to the
+/// right of the words.
+///
+/// The reviewer's other two claims held up and are fixed: there were no arrowheads anywhere (see
+/// `ArrowDefaultTests`), and the agent's connector to Kafka did stop 0.1" short of the trapezoid.
 ///
 /// **I checked `cbo` for the same thing and was wrong.** Its `index` connector does cross the data band's top
 /// edge, but at x=4.5-4.9, well to the right of the title at x=0.65-2.85. Looking at the render made it appear
@@ -39,19 +43,18 @@ public sealed class ConnectorOverHeadingTests
     }
 
     [Fact]
-    public void ACutThroughAHeadingIsNotReported()
+    public void ACutThroughAHeadingIsNowReported()
     {
-        // Recording the gap. When this starts failing, a check was added and the document should say so.
+        // This test used to assert the opposite: the gap existed and was recorded here. `edge.through-container-
+        // heading` closed it, so the assertion is inverted deliberately.
         var diagram = EdgeThroughHeading();
 
         DiagramLayout.Apply(diagram);
         var report = LayoutAnalyzer.Analyze(diagram);
 
-        // The node is not cut, so `edge.through-node` stays quiet.
+        // The node is not cut, so `edge.through-node` stays quiet — the new check is what fires.
         Assert.DoesNotContain(report.Issues, i => i.Code == "edge.through-node");
-
-        // And no other code covers a line crossing a band's title.
-        Assert.DoesNotContain(report.Issues, i => i.Targets.Contains("band") && i.Code.StartsWith("edge.", StringComparison.Ordinal));
+        Assert.Contains(report.Issues, i => i.Code == "edge.through-container-heading");
     }
 
     [Fact]

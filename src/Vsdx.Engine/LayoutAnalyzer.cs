@@ -177,6 +177,61 @@ public static class LayoutAnalyzer
             }
         }
 
+        // ---- 4b. Edges cutting through a container heading ------------------
+        // `edge.through-node` walks nodes only, so a line crossing a band's title band is invisible to it, and
+        // `container.heading-collision` checks a member node, not an edge. A line through text reads as a mistake
+        // rather than a route, so it is worth its own check.
+        //
+        // Measured against where the heading text actually sits — the block starts at the container's left edge
+        // plus its padding — not against the whole container width. Checking the full width would fire on almost
+        // every crossing, since connectors legitimately pass over a band's empty right-hand side.
+        foreach (var edge in page.Edges)
+        {
+            if (edge.From is null || edge.To is null) continue;
+            if (!nodeById.TryGetValue(edge.From, out var headingFrom)) continue;
+            if (!nodeById.TryGetValue(edge.To, out var headingTo)) continue;
+
+            var headingPath = RoutePoints(headingFrom, headingTo, edge);
+
+            foreach (var group in page.Groups)
+            {
+                if (group.Bounds is null) continue;
+                if (string.IsNullOrWhiteSpace(group.Name)) continue;
+
+                var g = group.Bounds;
+                double headingTop = g.Y + g.H / 2;
+                double headingBottom = headingTop - DiagramLayout.ContainerHeading;
+
+                // The heading text starts at the container's left padding and runs for its measured width.
+                double textLeft = g.X - g.W / 2 + DiagramLayout.ContainerPaddingX;
+                var measured = TextLayout.Measure(group.Name, 12, bold: true);
+                double textRight = Math.Min(g.X + g.W / 2, textLeft + measured.RequiredWidth);
+
+                if (textRight <= textLeft) continue;
+
+                var textBox = new Bounds(
+                    (textLeft + textRight) / 2,
+                    (headingTop + headingBottom) / 2,
+                    textRight - textLeft,
+                    DiagramLayout.ContainerHeading);
+
+                if (!SegmentIntersectsRect(headingPath, textBox, 0)) continue;
+
+                report.Add(new LayoutIssue
+                {
+                    Code = "edge.through-container-heading",
+                    Severity = "warning",
+                    Page = page.Name,
+                    Targets = new[] { edge.Id, group.Id },
+                    Message = $"连线 '{edge.Id}' 穿过容器 '{group.Id}' 的标题文字",
+                    RootCause = "连线路由没有为容器标题预留不可通行区域",
+                    RecommendedFix = "调整连线端口或插入 waypoints 绕开标题带；或把该容器下移",
+                    SuggestedLevel = FixLevel.RegionRelayout,
+                    SoftWeight = 4
+                });
+            }
+        }
+
         // ---- 5. Edge label collision with nodes ----------------------------
         foreach (var edge in page.Edges)
         {

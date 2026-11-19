@@ -78,7 +78,8 @@
 
 **质量检测**
 
-- 24 类问题，其中 7 类为 error 级（令 `hardConstraintsPassed=false`）
+- 检测器覆盖布局、文字与连接问题，其中一部分为 error 级（令 `hardConstraintsPassed=false`）；
+  具体类别以 `LayoutAnalyzer.cs` 为准
 - 覆盖 node↔node、group↔group、group↔child、label↔node、label↔label、
   text↔group、text↔node、text↔text
 

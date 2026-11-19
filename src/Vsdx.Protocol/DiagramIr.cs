@@ -464,7 +464,16 @@ public static class DiagramIrConverter
             : resolved;
     }
 
-    /// <summary>Relations that imply an arrowhead; "contains" does not.</summary>
+    /// <summary>
+    /// Whether a relation implies an arrowhead. Everything except "contains" does, including an absent relation.
+    ///
+    /// `null` used to be excluded along with "contains", so an edge carrying only a `label` — which is every edge
+    /// in all six reference scenarios — was written with `EndArrow = "none"`. The packages contained no arrow
+    /// cells at all, and a layered diagram whose direction is unknowable is not a professional architecture
+    /// diagram however clean its geometry.
+    ///
+    /// "contains" stays arrowless because containment has no direction to point in.
+    /// </summary>
     public static bool RelationUsesArrow(string? relation) =>
-        relation?.ToLowerInvariant() is not ("contains" or null);
+        relation?.ToLowerInvariant() is not "contains";
 }
