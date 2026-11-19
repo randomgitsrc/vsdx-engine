@@ -140,7 +140,10 @@ public sealed class RepairController
             Rationale = plan.RecommendedFix ?? "",
             ExpectedGain = expectedGain ?? $"消除 {plan.IssueCode}",
             ActualGain = improved
-                ? $"问题数 {IssueCount(before)} → {IssueCount(accepted)}，分数 {before?.Score} → {accepted!.Score}"
+                // "问题数" counts errors and warnings; `info` notes are excluded because none of them is worth
+                // repairing. `check-layout` reports the same page with a higher count for that reason, and the
+                // wording says so rather than leaving the reader to notice the discrepancy.
+                ? $"问题数（error+warning）{IssueCount(before)} → {IssueCount(accepted)}，分数 {before?.Score} → {accepted!.Score}"
                 : null,
             IntroducedNewIssues = decision.NewHardViolations.Count > 0,
             NewIssueCodes = decision.NewHardViolations,
