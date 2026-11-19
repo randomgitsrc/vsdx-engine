@@ -198,7 +198,7 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         if (backgrounds > 0)
             compat.Info("write.background", $"写入了 {backgrounds} 个页面背景色");
 
-        VisioMetadataBridge.Write(diagram, vsdxPath);
+        VisioMetadataBridge.Write(diagram, vsdxPath, compat);
 
         return new WriteResult
         {

@@ -386,7 +386,7 @@ public sealed class OfficeImoIncrementalEditor : IIncrementalDocumentEditor
                 "。请改用只读方式检查，或报告该限制。");
         }
 
-        VisioMetadataBridge.Write(model, outputVsdxPath);
+        VisioMetadataBridge.Write(model, outputVsdxPath, compat);
 
         var result = new UpdateResult
         {

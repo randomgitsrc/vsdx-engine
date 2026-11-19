@@ -37,7 +37,7 @@ public static class VisioMetadataBridge
     };
 
     /// <summary>Writes the model metadata into the package at <paramref name="vsdxPath"/>.</summary>
-    public static void Write(Diagram diagram, string vsdxPath)
+    public static void Write(Diagram diagram, string vsdxPath, CompatibilityReport? compat = null)
     {
         try
         {
@@ -65,9 +65,13 @@ public static class VisioMetadataBridge
             WriteCustomProperties(zip, payload);
             EnsureRelationshipAndContentType(zip);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Metadata is an enhancement: a failure here must never fail the document write.
+            // Metadata is an enhancement: a failure here must never fail the document write. It must still
+            // be reported — otherwise a caller who wrote a description gets a package without it and no
+            // indication why.
+            compat?.Warn("write.metadata-failed",
+                $"文档元数据未能写入：{ex.GetType().Name}: {ex.Message}");
         }
     }
 
