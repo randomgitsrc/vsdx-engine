@@ -65,6 +65,18 @@ public sealed record LayoutOptions
 
     /// <summary>Explicit layer assignment, keyed by node id. Overrides group-derived layers.</summary>
     public IReadOnlyDictionary<string, int>? LayerOfNode { get; init; }
+
+    /// <summary>
+    /// Give every band the same width and align their edges.
+    ///
+    /// A band is otherwise sized by its own members, so three clients (1.85" circles) make a 7.11" band and three
+    /// services (1.30 x 0.55) make a 5.60" one — measured on `cbo`, where the right-hand edge becomes a staircase.
+    /// A layered diagram reads as layers, and layers in a professional drawing are flush.
+    ///
+    /// Off by default: widening a band changes the page, and a caller who asked for content-sized bands should get
+    /// them.
+    /// </summary>
+    public bool EvenBands { get; init; }
 }
 
 /// <summary>

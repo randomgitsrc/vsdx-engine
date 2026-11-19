@@ -53,7 +53,7 @@ $ execute --ir checkout-sequence.ir.json
 | 场景 | 前后 | 尝试 |
 | --- | --- | --- |
 | cbo | 100 → 100 | 0 |
-| deploy-topology | 96 → 96 | 3（全部 `RolledBack`）|
+| deploy-topology | 94 → 94 | 3（全部 `RolledBack`）|
 | user-data-flow | 100 → 100 | 0 |
 | checkout-sequence | 88 → 88 | 3（全部 `RolledBack`）|
 

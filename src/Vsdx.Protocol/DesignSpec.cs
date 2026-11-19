@@ -68,6 +68,12 @@ public sealed class SpacingSpec
 {
     public double? NodeGapX { get; set; }
     public double? BandGapY { get; set; }
+
+    /// <summary>
+    /// Give every band the same width. Default true: a layered drawing whose bands end wherever their own members
+    /// do reads as assembled rather than designed. Set false for content-sized bands.
+    /// </summary>
+    public bool? EvenBands { get; set; }
 }
 
 public sealed class CanvasSpec
@@ -415,6 +421,11 @@ public static class DesignSpecApplier
             {
                 NodeGapX = spec.Spacing.NodeGapX ?? 0.55,
                 BandGapY = spec.Spacing.BandGapY ?? 0.85,
+
+                // Layers in a professional drawing are flush. A band sized by its own members turns the right
+                // edge into a staircase, which is the single strongest "assembled rather than designed" signal in
+                // the reference diagrams.
+                EvenBands = spec.Spacing.EvenBands ?? true,
                 // Unstated: layered structures read top to bottom, because bands are a vertical
                 // idea and turning them sideways spreads each one across the page. A container-less
                 // flow has no bands to stack, so it reads left to right.

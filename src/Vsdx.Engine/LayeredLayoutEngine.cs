@@ -47,7 +47,14 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
             double rowHeight = members.Max(n => n.Bounds.H);
             double rowWidth = members.Sum(n => n.Bounds.W) + options.NodeGapX * (members.Count - 1);
 
+            // With EvenBands every row is placed inside the same horizontal envelope, so the bands stack flush
+            // instead of each ending where its own members happen to stop. Rows with fewer or narrower members are
+            // centred in that envelope rather than left-aligned into it — a short row hugging the left edge reads
+            // as an omission, while a centred one reads as deliberate.
             double x = options.PageMargin + 0.30;
+            double slack = options.EvenBands ? Math.Max(0, (maxContentWidth - rowWidth) / 2) : 0;
+            x += slack;
+
             foreach (var node in members)
             {
                 node.Bounds.X = Round(x + node.Bounds.W / 2);
@@ -68,6 +75,10 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
 
         // Recompute containers from their members, then report the content box.
         DiagramLayout.Apply(new Diagram { Pages = { page } });
+
+        // Bands are derived from their members, so by now each has its own width. Widening them all to the widest
+        // makes the layer stack flush; the members stay where they are, centred in the new envelope.
+        if (options.EvenBands) MakeEvenBands(page);
 
         double width = maxContentWidth + options.PageMargin * 2 + 0.60;
         double height = y + options.PageMargin;
@@ -92,6 +103,32 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
     /// Groups nodes into bands. Explicit layer map wins, then container membership, then a rank
     /// derived from the longest path through the edge graph.
     /// </summary>
+    /// <summary>
+    /// Gives every container on the page the same width and the same left and right edges.
+    ///
+    /// A band is sized from its own members, so a row of circles and a row of rectangles produce different widths
+    /// and the stack ends in a staircase. This widens the narrower ones; nothing is narrowed, so no member can be
+    /// left outside its container.
+    /// </summary>
+    private static void MakeEvenBands(Page page)
+    {
+        var sized = page.Groups.Where(g => g.Bounds is not null).ToList();
+        if (sized.Count < 2) return;
+
+        double left = sized.Min(g => g.Bounds!.X - g.Bounds!.W / 2);
+        double right = sized.Max(g => g.Bounds!.X + g.Bounds!.W / 2);
+
+        foreach (var group in sized)
+        {
+            var b = group.Bounds!;
+            group.Bounds = new Bounds((left + right) / 2, b.Y, right - left, b.H);
+
+            // Pin it: `DiagramLayout.Apply` re-derives width from members, which would undo the alignment on the
+            // next pass — `execute` runs one after the layout engines have finished.
+            group.AutoSize = false;
+        }
+    }
+
     private static Dictionary<int, List<Node>> AssignBands(
         Page page, LayoutOptions options, List<string> notes)
     {

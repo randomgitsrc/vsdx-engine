@@ -33,7 +33,14 @@ public static class DiagramLayout
     /// Recomputes container bounds from member node geometry. Groups are processed
     /// outer-most first so nested groups inherit corrected child bounds.
     /// </summary>
-    public static void Apply(Diagram diagram)
+    /// <param name="keepContainerWidth">
+    /// Keep each container's current width and only recompute its vertical extent.
+    ///
+    /// The layout engine can deliberately make every band the same width. A plain re-derivation afterwards undoes
+    /// that, because width is derived from each band's own members — measured through `execute`, `cbo` came back
+    /// 7.11 / 5.60 / 5.60 after the engine had produced 7.70 / 7.70 / 7.70.
+    /// </param>
+    public static void Apply(Diagram diagram, bool keepContainerWidth = false)
     {
         foreach (var page in diagram.Pages)
         {
@@ -94,7 +101,14 @@ public static class DiagramLayout
                 // the heading is painted over its first row.
                 top += heading + HeadingClearance;
 
-                group.Bounds = new Bounds((left + right) / 2, (bottom + top) / 2, right - left, top - bottom);
+                if (keepContainerWidth && group.Bounds is not null)
+                {
+                    group.Bounds = new Bounds(group.Bounds.X, (bottom + top) / 2, group.Bounds.W, top - bottom);
+                }
+                else
+                {
+                    group.Bounds = new Bounds((left + right) / 2, (bottom + top) / 2, right - left, top - bottom);
+                }
             }
         }
     }
