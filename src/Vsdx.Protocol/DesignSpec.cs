@@ -804,6 +804,11 @@ public static class DesignSpecApplier
             }
         }
 
+        // Headings are re-centred here, after every path that can change the page size. Doing it earlier would
+        // centre against a page that is about to shrink.
+        if (DecorationLayout.CentreTitles(diagram) > 0)
+            applied.Add("title.centred");
+
         // --- Constraints ---------------------------------------------------
         var report = LayoutAnalyzer.Analyze(diagram);
         foreach (var constraint in spec.HardConstraints)

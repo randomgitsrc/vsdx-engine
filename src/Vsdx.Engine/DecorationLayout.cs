@@ -104,6 +104,50 @@ public static class DecorationLayout
     private static readonly double[] LabelSlots = { 0.25, 0.75, 0.15, 0.85 };
 
     /// <summary>
+    /// Re-centres page-level headings on the page they actually ended up on.
+    ///
+    /// A title is authored against the page the caller imagined. `canvas.shrinkToFit` then trims the page to the
+    /// content, and the title's absolute x no longer matches the middle of anything — measured, `cbo` sits 0.72"
+    /// right of centre and `user-data-flow` 0.74" left.
+    ///
+    /// `align: center` does not fix this: it centres the text inside its box, and the box is what moved.
+    ///
+    /// Only `title` and `subtitle` with a centred alignment are touched. A left-aligned heading keeps its x
+    /// because there the position is part of the request, and a heading wider than the page is left alone —
+    /// centring it would push part of it off each edge, which hides the overflow instead of showing it.
+    /// </summary>
+    public static int CentreTitles(Diagram diagram)
+    {
+        int moved = 0;
+
+        foreach (var page in diagram.Pages)
+        {
+            double width = page.Size?.Width ?? 0;
+            if (width <= 0) continue;
+
+            foreach (var text in page.TextBlocks)
+            {
+                if (text.Bounds.W > width) continue;
+                if (!string.Equals(text.Align, "center", StringComparison.OrdinalIgnoreCase)) continue;
+
+                bool heading = string.Equals(text.Role, "title", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(text.Role, "subtitle", StringComparison.OrdinalIgnoreCase);
+                if (!heading) continue;
+
+                // No snapping: rounding to 1/40" left `user-data-flow` 0.01" off centre, and a heading is the
+                // one element where a visible asymmetry is most obvious.
+                double centre = width / 2;
+                if (Math.Abs(text.Bounds.X - centre) < 0.01) continue;
+
+                text.Bounds.X = centre;
+                moved++;
+            }
+        }
+
+        return moved;
+    }
+
+    /// <summary>
     /// Lifts a text block clear of nodes it sits on top of.
     ///
     /// `AvoidContainers` handles band borders and `SpreadLabels` handles connector labels; neither looks at nodes,
