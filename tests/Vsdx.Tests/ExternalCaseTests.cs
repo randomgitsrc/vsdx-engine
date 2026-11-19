@@ -78,10 +78,14 @@ public sealed class ExternalCaseTests
     }
 
     [Fact]
-    public void TheTwoRegionsDoNotAgreeOnMemberOrder()
+    public void TwoSymmetricRegionsOrderTheirMembersIdentically()
     {
-        // The gap this case exists to expose. When it starts passing, the engine learned to make structurally
-        // identical containers order their members the same way.
+        // This started as a recorded defect and turned out to be my modelling. The first version of the IR gave
+        // `east` an edge `disc → evc` and omitted the matching one for `west`, so `evc-w` had no in-band
+        // predecessor, floated free, and sorted ahead of the chain. The engine was reading the graph correctly —
+        // two regions that are not the same graph do not get the same order.
+        //
+        // With the missing edge added they agree. The test now asserts the symmetry the example claims.
         var diagram = Load();
 
         DiagramLayoutEngine.Apply(diagram,
@@ -97,7 +101,11 @@ public sealed class ExternalCaseTests
         var west = Order(diagram.Pages[0], "west");
 
         Assert.Equal(east.Count, west.Count);
-        Assert.NotEqual(east, west);
+
+        // Same shape, same order — what a reader comparing the two regions needs.
+        Assert.Equal(
+            east.Select(t => t.Replace("-e", "", StringComparison.Ordinal)).ToList(),
+            west.Select(t => t.Replace("-w", "", StringComparison.Ordinal)).ToList());
     }
 
     /// <summary>Reads the IR again, since the runner converts it itself.</summary>

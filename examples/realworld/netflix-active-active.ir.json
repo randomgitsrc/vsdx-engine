@@ -159,6 +159,13 @@
       "to": "zuul-w",
       "label": "GeoDNS 西区",
       "relation": "calls"
+    },
+    {
+      "id": "e11",
+      "from": "disc-w",
+      "to": "evc-w",
+      "label": "读",
+      "relation": "reads"
     }
   ]
 }
