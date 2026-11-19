@@ -1,0 +1,71 @@
+using Vsdx.Engine;
+using Vsdx.Model;
+using Xunit;
+
+namespace Vsdx.Tests;
+
+/// <summary>
+/// A connector that passes through a container's heading band is not reported by anything.
+///
+/// `edge.through-node` walks `page.Nodes` only, so a line crossing a band's title band is invisible to it.
+/// `container.heading-collision` checks a *member* node overlapping the heading, not an edge.
+///
+/// Seen on the diagram the independent agent produced: two connectors from the service band run down into
+/// "数据与消息层 Data & Messaging", crossing its heading band at x=1.50 and x=2.72 while the title text spans
+/// x=0.65-2.95. Score 98, and the only issue reported was an unrelated `edge.crossing`.
+///
+/// **I checked `cbo` for the same thing and was wrong.** Its `index` connector does cross the data band's top
+/// edge, but at x=4.5-4.9, well to the right of the title at x=0.65-2.85. Looking at the render made it appear
+/// to cut the word; the coordinates say otherwise. Worth recording because "it looks like it crosses" and "it
+/// crosses" are different claims, and only the second is reportable.
+///
+/// The visual effect is worse than a crossing: a crossing looks like a route, text with a line through it looks
+/// like a mistake.
+/// </summary>
+public sealed class ConnectorOverHeadingTests
+{
+    private static Diagram EdgeThroughHeading()
+    {
+        var page = new Page { Name = "p", Size = new PageSize { Width = 10, Height = 8 } };
+
+        page.Groups.Add(new Group { Id = "band", Name = "数据层", Kind = "layer", Order = 1, Members = { "in" } });
+        page.Nodes.Add(new Node { Id = "in", Text = "成员", GroupId = "band", Bounds = new Bounds(5, 2, 1.6, 0.6) });
+        page.Nodes.Add(new Node { Id = "above", Text = "上方", Bounds = new Bounds(1.5, 6, 1.6, 0.6) });
+
+        // A straight edge from above, entering the band's heading band from the left.
+        page.Edges.Add(new Edge { Id = "cut", From = "above", To = "in" });
+
+        return new Diagram { Id = "t", Type = "architecture", Pages = { page } };
+    }
+
+    [Fact]
+    public void ACutThroughAHeadingIsNotReported()
+    {
+        // Recording the gap. When this starts failing, a check was added and the document should say so.
+        var diagram = EdgeThroughHeading();
+
+        DiagramLayout.Apply(diagram);
+        var report = LayoutAnalyzer.Analyze(diagram);
+
+        // The node is not cut, so `edge.through-node` stays quiet.
+        Assert.DoesNotContain(report.Issues, i => i.Code == "edge.through-node");
+
+        // And no other code covers a line crossing a band's title.
+        Assert.DoesNotContain(report.Issues, i => i.Targets.Contains("band") && i.Code.StartsWith("edge.", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void TheHeadingBandIsWhereTheTitleIsDrawn()
+    {
+        // Establishes the geometry the missing check would need: heading height, measured from the container top.
+        var diagram = EdgeThroughHeading();
+        DiagramLayout.Apply(diagram);
+
+        var band = diagram.Pages[0].Groups.Single();
+        double top = band.Bounds!.Y + band.Bounds.H / 2;
+        double headingBottom = top - DiagramLayout.ContainerHeading;
+
+        Assert.True(headingBottom < top);
+        Assert.Equal(0.46, DiagramLayout.ContainerHeading, 3);
+    }
+}
