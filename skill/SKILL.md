@@ -18,8 +18,8 @@ Never hand-write VSDX XML, and never deliver an SVG or PNG with a `.vsdx` extens
 ## Before you start: what this file does not cover
 
 This skill teaches the CLI. It does **not** teach what a professional architecture diagram looks like, how big
-things should be, or which layout to choose. Those live in four documents, and a trial run of this skill by an agent
-that had only this file spent roughly 40% of its time reading engine source to recover them.
+things should be, or which layout to choose. Those live in four documents. An agent given only this file has had to read engine
+source to recover them — see `docs/research/experiments/` for the trial record and its measurements.
 
 | Question | Read |
 | --- | --- |
@@ -113,7 +113,7 @@ Minimal but complete example:
   "id": "order-platform",
   "name": "订单平台架构图",
   "type": "architecture",
-  "pageSize": { "width": 6.0, "height": 9.0, "unit": "inches" },
+  "pageSize": { "width": 8.27, "height": 11.69, "unit": "inches" },   // A4, in inches
   "background": "#FFFFFF",
   "style": { "font": "Microsoft YaHei", "fontSize": 11 },
   "pages": [{
@@ -204,6 +204,16 @@ scattering members — grouping always wins over the nominal strategy.
 Prefer authoring the model with only ids, text, `groupId` and edges, then let `--layout auto
 --fit-text --fit-page` derive all geometry. Hand-writing coordinates is what makes a diagram
 look assembled rather than designed.
+
+**`auto` is a good default, not an unconditional one.** It does not know which node should sit beside which, so it
+can produce a reading order that contradicts the architecture. When the diagram has a strong shape — a pipeline
+where X must precede Y, two units that must read as peers — place those nodes yourself and let `auto` handle the
+rest, or hand-place and use `--fit-text --fit-page` to keep the spacing tight.
+
+The trade is measurable: an agent that hand-placed a 10-node diagram scored 96 with 84% page use, while
+`--layout auto` on the same content scored 84 with 54% use and two text collisions. Hand-placing is not
+automatically better either — the same trial found layouts that only worked because `auto` was left alone. Decide by
+whether the topology carries meaning the engine cannot see.
 
 **But the canvas mode decides more than the layout does.** Measured on a real three-band diagram with a title:
 
@@ -341,6 +351,9 @@ layout engine.
 | `kind` | `container` `lane` `layer` |
 | `order` | **Containers sharing an `order` sit side by side**; different orders stack. This is how you draw parallel units |
 | `status` | Same as a node's |
+
+`create` **honours `pageSize` as given** — there is no need to post-process the file to get A4. Express it in
+inches: A4 is `8.27 × 11.69`, A3 is `11.69 × 16.54`.
 
 **There is no `shape` field on a node.** Shape follows from `role`. If you need a specific shape, the IR is the wrong
 tool and you want the model format in §3.
