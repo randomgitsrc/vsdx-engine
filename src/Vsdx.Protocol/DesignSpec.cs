@@ -86,6 +86,12 @@ public sealed class CanvasSpec
 
     /// <summary>Shrink the page when the content is smaller than the requested size.</summary>
     public bool ShrinkToFit { get; set; } = true;
+
+    /// <summary>
+    /// Draw a legend describing the roles the diagram uses. Off by default: it adds objects to the page, and a
+    /// caller who laid out a tight drawing should get exactly that unless they asked otherwise.
+    /// </summary>
+    public bool Legend { get; set; }
 }
 
 public sealed class TypographySpec
@@ -515,6 +521,14 @@ public static class DesignSpecApplier
         // either helps or does nothing.
         if (DecorationLayout.SpreadLabels(diagram) > 0)
             applied.Add("label.spread");
+
+        // After the avoid passes: a legend is placed below the drawing, and running it earlier would let the
+        // clearance logic lift it back over the content it is describing.
+        if (spec.Canvas.Legend)
+        {
+            int rows = LegendLayout.Apply(diagram, spec.Theme?.Palette);
+            if (rows > 0) applied.Add($"legend.rows={rows}");
+        }
 
         // --- Container styling ---------------------------------------------
         // Containers previously inherited the writer's default fill, so every band rendered in

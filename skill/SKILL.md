@@ -508,6 +508,20 @@ Coordinates are **local to the box**. `MoveTo` must come first. `ArcTo`, `Spline
 other instruction are carried through verbatim — the engine does not compute the curve, but it
 will not drop or straighten it either.
 
+### Legend
+
+`"canvas": {"legend": true}` adds a key below the drawing: one swatch and label per role the diagram actually
+uses, in first-appearance order. Colours come from the palette, so the legend cannot drift from what is drawn.
+
+Off by default — it adds objects to the page, and a caller who laid out a tight drawing should get exactly that.
+
+Two behaviours worth knowing:
+
+- Roles that describe structure (`zone`, `boundary`, `container`, `layer`, `lane`) are **not** listed. They are the
+  bands around the boxes, not a kind of box to look for.
+- Shape is only shown when the diagram uses more than one master. A legend whose every row says "Rectangle" is
+  noise; the row exists to carry the colour-to-meaning mapping.
+
 ### Two rules worth knowing
 
 - **Decorations are not laid out.** A title stays where you put it even when the services move.
