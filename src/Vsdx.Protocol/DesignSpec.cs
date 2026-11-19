@@ -237,10 +237,12 @@ public static class DesignSpecApplier
         // raise the floor. Requiring baseSize or a font family made that a silent no-op — measured,
         // `{"typography":{"minReadableSize":20}}` returned succeeded with `unmet: []` and left every
         // size at its default.
-        if (spec.Typography.BaseSize is not null ||
-            spec.Typography.FontFamily is not null ||
-            spec.Typography.MinReadableSize > TypeScale.MinReadablePt)
+        // Always. Typography used to run only when the spec named a base size, a family or a raised floor, so a
+        // diagram that asked for nothing got no type hierarchy at all: nodes and edge labels both fell through to
+        // the writer's default and came out the same size and colour. Measured on `cbo`, a connector's label and
+        // the node it pointed at were indistinguishable in weight, which is what the fourth review called flat.
         {
+
             var family = spec.Typography.FontFamily;
             var baseSize = spec.Typography.BaseSize;
 
@@ -303,14 +305,18 @@ public static class DesignSpecApplier
                 foreach (var group in page.Groups)
                 {
                     group.Style ??= new ShapeStyle();
-                    group.Style.FontSize ??= Tier(defaults.RegionTitle);
+                    group.Style.FontSize ??= Tier(pageScale.RegionTitle);
                     ApplyFamily(group.Style);
                 }
 
                 foreach (var edge in page.Edges)
                 {
+                    // From the page's own scale, like nodes and containers. `defaults` is a bare `TypeScale` whose
+                    // NodeTitle is a fixed 11 while the nodes on a dense page derive theirs from the page; mixing
+                    // the two sources put edge labels within 0.5pt of node titles on `cbo` (11.97 against 11.45)
+                    // when the design calls for two points of separation.
                     if (edge.LabelFontSize is null)
-                        edge.LabelFontSize = Tier(defaults.EdgeLabel);
+                        edge.LabelFontSize = Tier(pageScale.EdgeLabel);
                     if (family is not null) edge.LabelFont ??= family;
                 }
 
