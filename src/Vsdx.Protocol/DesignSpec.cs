@@ -363,6 +363,11 @@ public static class DesignSpecApplier
         // 11pt request produced identical geometry — passing a spec was worse than passing none,
         // because the no-spec branch does size.
         DiagramSizer.Apply(diagram);
+
+        // Before any page sizing: a heading box wider than its text makes `FitPage` grow the sheet around blank
+        // paper. `cbo` authored 6.00" for eight characters and the page came out 11.00" with 4.41" empty.
+        if (DiagramSizer.FitTextBlocks(diagram) > 0)
+            applied.Add("text.fit");
         applied.Add("sizing");
 
         // --- Layout --------------------------------------------------------

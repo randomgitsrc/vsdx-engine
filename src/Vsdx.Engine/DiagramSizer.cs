@@ -162,6 +162,50 @@ public static class DiagramSizer
     /// Grows the page so the drawing fits with a consistent margin. Only ever enlarges: an
     /// author-supplied page that is already large enough is left alone.
     /// </summary>
+    /// <summary>
+    /// Narrows a heading's box to the width its text needs, keeping the box centred where it was.
+    ///
+    /// A page is sized to the widest element on it, and a heading is often authored with a generous box: `cbo` asks
+    /// for 6.00" around eight characters, the drawing ends at 6.59", and the sheet comes out 11.00" with 4.41" of
+    /// it empty. Fitting the box to the text removes the blank paper without touching the layout.
+    ///
+    /// Only `title` and `subtitle` are touched, and only when the box is wider than the text. A footnote's box is a
+    /// placement decision — narrowing it would move its left edge — and a box narrower than its label is a problem
+    /// the overflow check already reports, so growing is left to that.
+    /// </summary>
+    public static int FitTextBlocks(Diagram diagram)
+    {
+        int fitted = 0;
+
+        foreach (var page in diagram.Pages)
+        {
+            foreach (var text in page.TextBlocks)
+            {
+                if (string.IsNullOrWhiteSpace(text.Text)) continue;
+
+                bool heading = string.Equals(text.Role, "title", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(text.Role, "subtitle", StringComparison.OrdinalIgnoreCase);
+                if (!heading) continue;
+
+                double fontSize = text.Style?.FontSize ?? new TypeScale().DiagramTitle;
+                var measured = TextLayout.Measure(text.Text, fontSize, text.Style?.Bold ?? true);
+
+                // Padding so the glyphs do not touch the frame, and a floor so a one-character heading still has a
+                // body.
+                double wanted = Math.Max(measured.RequiredWidth + 0.30, 0.80);
+
+                if (wanted >= text.Bounds.W - 0.01) continue;
+
+                double centre = text.Bounds.X;
+                text.Bounds.W = Round(wanted);
+                text.Bounds.X = centre;
+                fitted++;
+            }
+        }
+
+        return fitted;
+    }
+
     public static PageFit FitPage(Page page, double margin = PageMargin, bool shrink = false)
     {
         // Containers count too: a band that extends past its members still has to fit.

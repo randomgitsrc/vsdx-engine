@@ -104,6 +104,39 @@ public static class DecorationLayout
     private static readonly double[] LabelSlots = { 0.25, 0.75, 0.15, 0.85 };
 
     /// <summary>
+    /// Horizontal centre of everything drawn on the page except the block being positioned.
+    ///
+    /// The exception matters: including the heading would make its own position part of the target, so moving it
+    /// would move the target and the next pass would move it again.
+    /// </summary>
+    private static double ContentCentreX(Page page, TextBlock except, double fallback)
+    {
+        double left = double.PositiveInfinity, right = double.NegativeInfinity;
+
+        foreach (var node in page.Nodes)
+        {
+            left = Math.Min(left, node.Bounds.X - node.Bounds.W / 2);
+            right = Math.Max(right, node.Bounds.X + node.Bounds.W / 2);
+        }
+
+        foreach (var group in page.Groups)
+        {
+            if (group.Bounds is null) continue;
+            left = Math.Min(left, group.Bounds.X - group.Bounds.W / 2);
+            right = Math.Max(right, group.Bounds.X + group.Bounds.W / 2);
+        }
+
+        foreach (var other in page.TextBlocks)
+        {
+            if (ReferenceEquals(other, except)) continue;
+            left = Math.Min(left, other.Bounds.X - other.Bounds.W / 2);
+            right = Math.Max(right, other.Bounds.X + other.Bounds.W / 2);
+        }
+
+        return right > left ? (left + right) / 2 : fallback;
+    }
+
+    /// <summary>
     /// Re-centres page-level headings on the page they actually ended up on.
     ///
     /// A title is authored against the page the caller imagined. `canvas.shrinkToFit` then trims the page to the
@@ -134,9 +167,15 @@ public static class DecorationLayout
                             || string.Equals(text.Role, "subtitle", StringComparison.OrdinalIgnoreCase);
                 if (!heading) continue;
 
-                // No snapping: rounding to 1/40" left `user-data-flow` 0.01" off centre, and a heading is the
-                // one element where a visible asymmetry is most obvious.
-                double centre = width / 2;
+                // Centred over the drawing, not over the sheet.
+                //
+                // A page can be much wider than what is drawn on it: `cbo` renders 4.41" of blank paper to the
+                // right, so a heading at the page centre sits 1.92" away from everything it describes. A reader
+                // looks at the drawing. When the two centres coincide — the common case — this changes nothing.
+                //
+                // No snapping: rounding to 1/40" left `user-data-flow` 0.01" off centre, and a heading is the one
+                // element where a visible asymmetry is most obvious.
+                double centre = ContentCentreX(page, except: text, fallback: width / 2);
                 if (Math.Abs(text.Bounds.X - centre) < 0.01) continue;
 
                 text.Bounds.X = centre;

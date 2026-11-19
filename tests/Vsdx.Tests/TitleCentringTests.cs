@@ -36,15 +36,19 @@ public sealed class TitleCentringTests
     }
 
     [Fact]
-    public void ACentredTitleIsCentredOnThePage()
+    public void ACentredTitleIsCentredOverTheDrawing()
     {
+        // The rule changed: a heading belongs over the content, not over the sheet. When the drawing fills the
+        // page the two coincide, which is why the old assertion passed — see `TitleOverContentTests` for the case
+        // where they do not.
         var diagram = PageWithTitle(pageWidth: 8.55, titleX: 5.0, titleWidth: 6, align: "center");
 
         DecorationLayout.CentreTitles(diagram);
 
         var title = diagram.Pages[0].TextBlocks.Single();
+        var node = diagram.Pages[0].Nodes.Single();
 
-        Assert.Equal(8.55 / 2, title.Bounds.X, 3);
+        Assert.Equal(node.Bounds.X, title.Bounds.X, 3);
     }
 
     [Fact]
@@ -90,7 +94,7 @@ public sealed class TitleCentringTests
     }
 
     [Fact]
-    public void TheSubtitleFollowsTheTitle()
+    public void TheSubtitleFollowsTheDrawing()
     {
         var page = new Page { Name = "p", Size = new PageSize { Width = 8.55, Height = 10 } };
         page.Nodes.Add(new Node { Id = "a", Text = "A", Bounds = new Bounds(4, 5, 1.4, 0.6) });
@@ -100,6 +104,6 @@ public sealed class TitleCentringTests
 
         DecorationLayout.CentreTitles(diagram);
 
-        Assert.Equal(8.55 / 2, page.TextBlocks.Single().Bounds.X, 3);
+        Assert.Equal(page.Nodes.Single().Bounds.X, page.TextBlocks.Single().Bounds.X, 3);
     }
 }
