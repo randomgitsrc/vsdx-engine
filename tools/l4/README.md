@@ -20,7 +20,7 @@ L1（包结构）、L2（后端重载）、L3（第三方渲染）都不能证�
 | 操作系统 | Windows（或 WSL + 可用的 Windows 侧 Visio） |
 | 软件 | Microsoft Visio（桌面版，非查看器） |
 | PowerShell | 5.1+，允许执行脚本 |
-| 待测文件 | 能被 Windows 进程读到 |
+| 待测文件 | 能被 Windows 进程读到，**且包含下表列出的对象**（见「用例要求」）|
 
 ---
 
@@ -37,6 +37,20 @@ powershell -ExecutionPolicy Bypass -File verify-visio.ps1 `
 
 ---
 
+## 用例要求
+
+脚本的检查针对**具体对象**，用例缺哪一类，对应检查就会失败或跳过。合格的用例应包含：
+
+| 对象 | 为什么需要 | 怎么产出 |
+| --- | --- | --- |
+| 至少 2 个**字号不同**的文本块 | 验证字号层级 | `textBlocks` 里放一个 `role=title`、一个 `role=note` |
+| 至少 1 个**容器** | 验证 `msvStructureType` 写入 | 节点设 `groupId` |
+| 至少 1 条**自由路径** | 验证自定义几何 | 模型里加 `paths[]` |
+| 至少 2 个节点 + 1 条连线 | 验证 Z-order 与连线 | 常规内容 |
+
+引擎自身的 `examples/realworld/*.vsdx` 缺自由路径，需要另外构造。用 `create` 时加
+`--layout auto --fit-text --fit-page` 可让四个场景的分数与 `check-layout` 一致。
+
 ## 检查内容
 
 | # | 检查 | 判据 |
@@ -47,9 +61,9 @@ powershell -ExecutionPolicy Bypass -File verify-visio.ps1 `
 | 4 | 文本块存在 | 存在 `NameU = TextBlock` 的形状 |
 | 5 | **字号层级** | ≥ 2 种不同字号（标题应明显大于注释） |
 | 6 | 文本非空 | 每个文本块都有内容 |
-| 7 | 自定义几何 | 统计几何行数 > 5 的形状（矩形恰好 5 行） |
+| 7 | 自定义几何 | 自由路径至少 2 行几何（`RowCount(10) -ge 2`；两点的路径就是 MoveTo + LineTo）|
 | 8 | Z-order | 能按文档顺序枚举形状 |
-| 9 | 容器存在 | 存在 `msvStructureType = Container` |
+| 9 | 容器存在 | 存在 `msvStructureType = Container`；**用例无容器时此项会失败** |
 | 10 | 保存后重开 | 形状数不变 |
 
 ---
