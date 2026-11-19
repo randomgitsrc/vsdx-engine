@@ -39,6 +39,12 @@ public static class OrthogonalRouter
         var channels = ComputeChannels(page, nodes.Values);
         int count = 0;
 
+        // Fan-outs first: three or more connectors leaving one node for targets that sit side by side are routed as
+        // one bus. Routed independently they take different shapes — measured on `slack-cellular`, one path
+        // detouring twice while the other two were straight diagonals — and a reader cannot tell they are the same
+        // decision. A bus gives every branch the same shape by construction.
+        count += RouteFanOuts(page, nodes);
+
         foreach (var edge in page.Edges)
         {
             if (edge.From is null || edge.To is null) continue;
@@ -619,6 +625,78 @@ public static class OrthogonalRouter
             return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// Routes every fan-out on the page as a bus, and returns how many edges it handled.
+    ///
+    /// A fan-out is three or more connectors leaving one node whose targets sit side by side. Routed one at a time
+    /// they diverge: the middle target gets a straight line, the outer ones get diagonal or detouring paths, and the
+    /// set stops reading as one decision. Measured on `slack-cellular`, the connector to the leftmost cell went out
+    /// to (6.15, 4.38), across to (2.4, 4.38), then down — while the other two were straight.
+    ///
+    /// The bus gives every branch the same shape: one horizontal run at a shared height, then a vertical drop into
+    /// each target. Edges that already carry waypoints are left alone; a route the caller supplied is authoritative.
+    /// </summary>
+    private static int RouteFanOuts(Page page, Dictionary<string, Node> nodes)
+    {
+        int routed = 0;
+
+        var groups = page.Edges
+            .Where(e => e.From is not null && e.To is not null)
+            .Where(e => e.Waypoints is null or { Count: 0 })
+            .Where(e => nodes.ContainsKey(e.From!) && nodes.ContainsKey(e.To!))
+            .GroupBy(e => e.From!, StringComparer.Ordinal)
+            .Where(g => g.Count() >= 3)
+            .ToList();
+
+        foreach (var group in groups)
+        {
+            var source = nodes[group.Key];
+            var targets = group.Select(e => nodes[e.To!]).ToList();
+
+            // Only a horizontal fan-out: the targets must form a row below (or above) the source. A cluster of
+            // targets in different rows is a different picture and the bus would cut through them.
+            double targetY = targets.Average(t => t.Bounds.Y);
+            bool sameRow = targets.All(t => Math.Abs(t.Bounds.Y - targetY) < 0.30);
+            if (!sameRow) continue;
+
+            bool below = targetY < source.Bounds.Y;
+            if (!below && targetY <= source.Bounds.Y) continue;
+
+            // Bus height: just outside the source, on the way to the targets.
+            double busY = below
+                ? source.Bounds.Y - source.Bounds.H / 2 - 0.30
+                : source.Bounds.Y + source.Bounds.H / 2 + 0.30;
+
+            foreach (var edge in group)
+            {
+                var target = nodes[edge.To!];
+
+                // Drop vertically into the target's near edge, from the bus. The horizontal run is implied by the
+                // source's stub plus this segment, so only one waypoint is needed per branch.
+                double entryY = below
+                    ? target.Bounds.Y + target.Bounds.H / 2 + Clearance
+                    : target.Bounds.Y - target.Bounds.H / 2 - Clearance;
+
+                var path = new List<Point>
+                {
+                    new(source.Bounds.X, busY),
+                    new(target.Bounds.X, busY),
+                    new(target.Bounds.X, entryY)
+                };
+
+                // Never overwrite a route that would cut through a node: fall back to the normal pass for this one.
+                var others = nodes.Values.Where(n => n.Id != source.Id && n.Id != target.Id).ToList();
+                if (PathHitsShapes(path, others)) continue;
+
+                edge.Waypoints = Simplify(path);
+                edge.Kind = "rightAngle";
+                routed++;
+            }
+        }
+
+        return routed;
     }
 
     /// <summary>
