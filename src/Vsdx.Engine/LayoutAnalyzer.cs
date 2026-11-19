@@ -160,6 +160,10 @@ public static class LayoutAnalyzer
             foreach (var node in nodes)
             {
                 if (node.Id == from.Id || node.Id == to.Id) continue;
+
+                // Junction marks sit on the connectors by design: they are annotations, not shapes a line can
+                // "pass through". Counting them made every bus report six errors after they were added.
+                if (node.Id.StartsWith("junction-", StringComparison.Ordinal)) continue;
                 if (SegmentIntersectsRect(path, node.Bounds, options.NodeClearance))
                 {
                     report.Add(new LayoutIssue
@@ -266,6 +270,11 @@ public static class LayoutAnalyzer
             foreach (var node in nodes)
             {
                 if (node.Id == from.Id || node.Id == to.Id) continue;
+
+                // Junction marks are annotations on the connectors; a label landing on one is not a collision
+                // between two pieces of content. Same exemption as the through-node check.
+                if (node.Id.StartsWith("junction-", StringComparison.Ordinal)) continue;
+
                 if (RectOverlapsRect(labelBox, node.Bounds, 0.02))
                 {
                     report.Add(new LayoutIssue

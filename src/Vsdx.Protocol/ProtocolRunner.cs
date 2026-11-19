@@ -102,6 +102,15 @@ public sealed class ProtocolRunner
             OrthogonalRouter.Route(diagram);
             result.StagesCompleted.Add("route");
 
+            // After routing, because a junction only exists where the routes actually run. Before the write, so the
+            // marks are part of the file rather than something a renderer draws.
+            int junctions = JunctionMarks.Apply(diagram);
+            if (junctions > 0)
+            {
+                result.AppliedDesignNotes.Add($"junction.marks={junctions}");
+                result.StagesCompleted.Add("junction.marks");
+            }
+
             // ---- 4. Write VSDX -------------------------------------------
             var write = _engine.Create(diagram, outputVsdxPath, new WriteOptions
             {
