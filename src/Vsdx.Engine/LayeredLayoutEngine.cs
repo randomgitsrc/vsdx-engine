@@ -255,10 +255,17 @@ public sealed class LayeredLayoutEngine : ILayoutEngine
                 i = runEnd + 1;
             }
 
-            // Nodes outside any container go in the band above the topmost container.
+            // Nodes outside any container go in a band of their own, above every container.
+            //
+            // The layer number has to exceed the highest one used, not be derived from where the loop finished.
+            // `layer + 2` looked right and was not: with two container groups the loop ends at 0, so loose nodes
+            // landed on layer 2 — the same layer as the topmost container. Measured on `slack-cellular`, a client
+            // with no `containerId` was drawn inside the "边缘层（跨区）" band, telling the reader it lives there.
             var placed = bands.Values.SelectMany(x => x).Select(n => n.Id).ToHashSet(StringComparer.Ordinal);
+            int aboveAll = bands.Count == 0 ? 1 : bands.Keys.Max() + 1;
+
             foreach (var node in nodes.Where(n => !placed.Contains(n.Id)))
-                Add(bands, layer + 2, node);   // above the topmost container layer
+                Add(bands, aboveAll, node);
 
             notes.Add($"分层由 {containers.Count} 个容器决定（同 order 的容器共享一层，可并排）");
             return bands;
