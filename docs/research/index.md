@@ -68,6 +68,7 @@
 | E8 | [`experiments/E8-label-position.md`](experiments/E8-label-position.md) | `LabelPosition` 写入产物但**渲染器不读**，标签切边框无法修（同 E4 的依赖限制）|
 | E9 | [`experiments/E9-fanout.md`](experiments/E9-fanout.md) | 容器并排已修，但扇出路由三条线走法不一，仍读不出「平行」；成因是 `Envoy` 偏右 3.07″ |
 | E10 | [`experiments/E10-fanout-bus.md`](experiments/E10-fanout-bus.md) | 扇出改走总线，三条线形态一致；**代价是分数降 4 分**（竖线穿标题带，E7），判断为值得 |
+| E11 | [`experiments/E11-style-boundary.md`](experiments/E11-style-boundary.md) | 四个「不支持」样式字段不可达的原因是 **IR 不暴露逐节点样式**（有意约束），非 Writer 缺陷 |
 | **AT-1** | [`experiments/agent-trial-01/`](experiments/agent-trial-01/) | **独立 Agent 自主制图**：96 分、3 轮内完成，但 40% 时间在读源码补指南缺口；发现 2 个引擎缺陷 |
 
 ### 3.1 建议的下一批实验（按 Goal §8.5 的要求设计）
