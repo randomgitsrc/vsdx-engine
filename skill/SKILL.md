@@ -15,6 +15,25 @@ Never hand-write VSDX XML, and never deliver an SVG or PNG with a `.vsdx` extens
 
 ---
 
+## Before you start: what this file does not cover
+
+This skill teaches the CLI. It does **not** teach what a professional architecture diagram looks like, how big
+things should be, or which layout to choose. Those live in four documents, and a trial run of this skill by an agent
+that had only this file spent roughly 40% of its time reading engine source to recover them.
+
+| Question | Read |
+| --- | --- |
+| What makes an architecture diagram professional? What must it contain? | [`docs/diagram-knowledge/architecture-diagrams.md`](../docs/diagram-knowledge/architecture-diagrams.md) |
+| How complex a diagram fits on which paper, at what font size? | [`docs/diagram-knowledge/output-profiles.md`](../docs/diagram-knowledge/output-profiles.md) |
+| How tall is a container, how much padding, where does the heading sit? | [`docs/diagram-knowledge/container-geometry.md`](../docs/diagram-knowledge/container-geometry.md) |
+| What can this engine actually draw, and what does it refuse? | [`docs/capability-boundaries.md`](../docs/capability-boundaries.md) |
+
+**The container geometry constants are the ones most often needed and least guessable.** A container's height is
+`tallest member + heading + clearance + bottom padding`; the three constants are documented, and inventing them
+produces overlapping bands that the checker reports but cannot explain.
+
+---
+
 ## 0. Prerequisites
 
 ```bash
@@ -281,6 +300,50 @@ Then **open the PNG and look at it**. Ask yourself:
 5. Is the page mostly filled, or is there a large empty region?
 
 Iterate until it looks right. "The file was produced" is not acceptance.
+
+---
+
+## 5a. The IR is a different format from the model
+
+The JSON in §3 is the **model** format — every coordinate, style and shape spelled out. `execute` takes a different
+input: a short **IR** describing intent, which the engine lays out. Confusing the two is the most common way to get a
+file that validates and looks nothing like what you meant.
+
+The IR has far fewer fields than the model, on purpose: shape and colour come from `role`, position comes from the
+layout engine.
+
+### Node
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Stable identifier, unique in the IR |
+| `label` | Display text |
+| `role` | `service` `database` `gateway` `queue` `client` `actor` `decision` `storage` `monitor` `external` — drives shape and colour |
+| `containerId` | Which container it belongs to |
+| `status` | `live` `drained` `degraded` — drained draws dashed and faded |
+| `attributes` | Free-form key/value, preserved as shape data |
+| `anchor` | Optional `{x, y, mode}` to pin a node's position. Omit it and the engine places the node |
+
+### Edge
+
+| Field | Meaning |
+| --- | --- |
+| `id` `from` `to` | Identifiers |
+| `label` | Text on the connector |
+| `relation` | `calls` `reads` `writes` `publishes` `consumes` `contains` — `publishes`/`consumes` draw dashed, `contains` draws no arrowheads |
+| `bidirectional` | Arrowheads at both ends |
+
+### Container
+
+| Field | Meaning |
+| --- | --- |
+| `id` `label` | Identifier and heading |
+| `kind` | `container` `lane` `layer` |
+| `order` | **Containers sharing an `order` sit side by side**; different orders stack. This is how you draw parallel units |
+| `status` | Same as a node's |
+
+**There is no `shape` field on a node.** Shape follows from `role`. If you need a specific shape, the IR is the wrong
+tool and you want the model format in §3.
 
 ---
 
