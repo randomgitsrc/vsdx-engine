@@ -679,9 +679,16 @@ public static class OrthogonalRouter
                     ? target.Bounds.Y + target.Bounds.H / 2 + Clearance
                     : target.Bounds.Y - target.Bounds.H / 2 - Clearance;
 
+                // Branches leave the source at different points along its edge. `SpreadOffset` already exists for
+                // this — it is what keeps three connectors from drawing a knot at one pixel — but this method wrote
+                // waypoints directly and never consulted it. Measured on `slack-cellular`: all three branches out of
+                // `Envoy` began at (7.05, 2.65).
+                double stemX = source.Bounds.X
+                             + SpreadOffset(source, below ? "bottom" : "top") * source.Bounds.W;
+
                 var path = new List<Point>
                 {
-                    new(source.Bounds.X, busY),
+                    new(stemX, busY),
                     new(target.Bounds.X, busY),
                     new(target.Bounds.X, entryY)
                 };
