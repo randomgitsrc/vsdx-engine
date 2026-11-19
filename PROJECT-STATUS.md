@@ -92,7 +92,7 @@ $ diff     --before a.vsdx --after a2.vsdx                               exit 0 
 | 能力 | 状态 | 说明 |
 | --- | --- | --- |
 | **L4 Microsoft Visio 原生** | ⬜ **未执行** | 本机无 Visio；`/mnt/c` 只读；`tools/l4/verify-visio.ps1` 已写未跑 |
-| Visio 中的嵌套组层级 | ⚠️ 已知扁平化 | 后端限制 L7，写入兄弟容器 + 警告 |
+| Visio 中的嵌套组层级 | ⚠️ 已知扁平化 | 后端限制 R7，写入兄弟容器 + 警告 |
 | 主题/StyleSheet 沿 JSON 编辑 | ⚠️ 仅保留不改 | 见 `docs/limitations.md` §3 |
 | 渐变/阴影/Data Graphics 渲染 | ⚠️ 与 Visio 可能有差异 | 渲染器非 Visio 引擎 |
 

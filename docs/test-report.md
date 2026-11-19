@@ -197,7 +197,7 @@ $ vsdx-tool check-layout --input demo/architecture_v2.vsdx --json
 | Microsoft Visio 原生打开 | 环境无 Visio（见 `docs/limitations.md` 第 7 节验收清单） |
 | 大型文件（>1000 形状）性能 | 超出第一阶段范围，未做基准 |
 | .vsdm 宏启用包 | 不在范围 |
-| 嵌套组在 Visio 中的真实层级 | 已知限制 L7，渲染正确但 Visio 内为兄弟容器 |
+| 嵌套组在 Visio 中的真实层级 | 已知限制 R7，渲染正确但 Visio 内为兄弟容器 |
 | 极端字体/排版差异 | 渲染为近似，需 Visio 对照 |
 
 ---

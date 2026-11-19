@@ -20,16 +20,20 @@
 
 ## 2. 后端限制（OfficeIMO.Visio 3.6.1）
 
+> 编号用 **R**(Restriction)，与验证层级的 **L1–L4**（L1 包结构 / L2 读回 / L3 渲染 / L4 Visio 原生）
+> 区分开。两者曾共用 `L` 前缀，同一份文档里 `L4` 既是"`VisioConnector.From/To` 只读"又是
+> "Visio 原生验证未执行"。
+
 | 编号 | 限制 | 表现 | 本项目的处置 |
 | --- | --- | --- | --- |
-| L1 | `VsdxPackageValidator` 对 `pages.xml` 误报；`FixFile` 会写入重复 content type | `ValidateFile` 对合法包返回 False | 不使用该验证器；`VsdxPackageValidatorService` 替代，并显式检测重复声明 |
-| L2 | PNG 缺省字体无 CJK 覆盖 | 中文渲染成 `□` | `FontResolver` 自动注入字体文件；找不到时给 `render.cjk-no-font` 警告 |
-| L3 | `AddToContainer` 默认按成员重算容器包围盒 | 显式 bounds 被覆盖，色带错位 | 传 `AutoResize=false`；`DiagramLayout.Apply` 在模型层先算一致 bounds |
-| L4 | `VisioConnector.From/To` 为 `internal set` | 直接赋值编译失败 | 统一用 `VisioPage.ReconnectConnector` |
-| L5 | 无稳定 ID 概念 | 重命名变成删除+新增 | 写入 `User.VsdxModelId` 单元格，读取时恢复 |
-| L6 | 无自定义文档属性 API | 模型历史无处存放 | `VisioMetadataBridge` 后置 patch `docProps/custom.xml` |
-| L7 | 嵌套组按兄弟容器写入 | Visio 内非真正层级嵌套 | 保留 `ParentId` 并发出 `write.nested-group` 警告；渲染与结构正确 |
-| L8 | 连接线路由为直线/折线近似 | 密集区域可能穿过节点 | `OrthogonalRouter` 自动避障；`check-layout` 检出残留问题 |
+| R1 | `VsdxPackageValidator` 对 `pages.xml` 误报；`FixFile` 会写入重复 content type | `ValidateFile` 对合法包返回 False | 不使用该验证器；`VsdxPackageValidatorService` 替代，并显式检测重复声明 |
+| R2 | PNG 缺省字体无 CJK 覆盖 | 中文渲染成 `□` | `FontResolver` 自动注入字体文件；找不到时给 `render.cjk-no-font` 警告 |
+| R3 | `AddToContainer` 默认按成员重算容器包围盒 | 显式 bounds 被覆盖，色带错位 | 传 `AutoResize=false`；`DiagramLayout.Apply` 在模型层先算一致 bounds |
+| R4 | `VisioConnector.From/To` 为 `internal set` | 直接赋值编译失败 | 统一用 `VisioPage.ReconnectConnector` |
+| R5 | 无稳定 ID 概念 | 重命名变成删除+新增 | 写入 `User.VsdxModelId` 单元格，读取时恢复 |
+| R6 | 无自定义文档属性 API | 模型历史无处存放 | `VisioMetadataBridge` 后置 patch `docProps/custom.xml` |
+| R7 | 嵌套组按兄弟容器写入 | Visio 内非真正层级嵌套 | 保留 `ParentId` 并发出 `write.nested-group` 警告；渲染与结构正确 |
+| R8 | 连接线路由为直线/折线近似 | 密集区域可能穿过节点 | `OrthogonalRouter` 自动避障；`check-layout` 检出残留问题 |
 
 ---
 
@@ -68,7 +72,7 @@ JSON 模型**不是** VSDX 的等价表示。以下内容无法完整映射：
 - 仅支持修改：节点增删改、属性、样式、Shape Data、连接线增删改、分组、图层、页面尺寸
 - **不支持**在保留原文件其它内容的前提下修改：母版定义、主题、页面模板
 - `--delete-missing` 会删除模型中不存在的对象；不加此参数时保留并报告
-- 嵌套组层级会扁平化（L7）
+- 嵌套组层级会扁平化（R7）
 
 ---
 
@@ -155,7 +159,7 @@ JSON 模型**不是** VSDX 的等价表示。以下内容无法完整映射：
 | `read.no-nodes` | 页面有形状但无一能映射为节点 |
 | `write.master-unknown` | 未知 shape 类型，回退为 Rectangle |
 | `write.group-bounds` | 组既无 bounds 也无成员可推导 |
-| `write.nested-group` | 嵌套组按兄弟容器写入（L7） |
+| `write.nested-group` | 嵌套组按兄弟容器写入（R7） |
 | `write.container-attach` | 成员未能加入容器 |
 | `write.edge-*` | 连线端缺失或写入失败 |
 | `update.retained-unmodelled` | 包内对象不在模型中，已保留 |
