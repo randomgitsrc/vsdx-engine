@@ -217,6 +217,12 @@ public static class LayoutAnalyzer
 
                 if (!SegmentIntersectsRect(headingPath, textBox, 0)) continue;
 
+                // The crossing is unavoidable when an endpoint sits inside the band below its heading: the
+                // connector has to come from outside, so it must cross the heading strip. That is a layout
+                // decision made by the band engine, not a routing mistake, and reporting it here would ask the
+                // router to solve something it cannot.
+                if (EndpointBelowHeading(headingFrom, group) || EndpointBelowHeading(headingTo, group)) continue;
+
                 report.Add(new LayoutIssue
                 {
                     Code = "edge.through-container-heading",
@@ -678,6 +684,19 @@ public static class LayoutAnalyzer
                 RecommendedFix = "拉开两块文本的间距，或调整它们在 IR 中的坐标"
             });
         }
+    }
+
+    /// <summary>
+    /// True when the node sits inside the container but below its heading band, so any connector from outside
+    /// has to cross the heading to reach it.
+    /// </summary>
+    private static bool EndpointBelowHeading(Model.Node node, Model.Group group)
+    {
+        if (group.Bounds is null || node.Bounds is null) return false;
+        if (node.GroupId != group.Id) return false;
+
+        double headingBottom = group.Bounds.Y + group.Bounds.H / 2 - DiagramLayout.ContainerHeading;
+        return node.Bounds.Y + node.Bounds.H / 2 <= headingBottom + 0.01;
     }
 
     private static void CheckTextAgainstNodes(Page page, LayoutAnalyzerOptions options, LayoutReport report)

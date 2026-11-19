@@ -29,6 +29,8 @@ public static class OrthogonalRouter
 
     private static int RoutePage(Page page)
     {
+        _currentPage = page;
+
         var nodes = page.Nodes.ToDictionary(n => n.Id, StringComparer.Ordinal);
         if (nodes.Count == 0) return 0;
 
@@ -272,6 +274,10 @@ public static class OrthogonalRouter
             full = Simplify(full);
             if (PathHitsShapes(full, others)) continue;
 
+            // A container's heading is ink: routing through it draws a line over the band's title. The node list
+            // `others` does not contain containers, so the heading band has to be tested separately.
+            if (CrossesHeading(from, to, full)) continue;
+
             double length = 0;
             for (int i = 0; i < path.Count - 1; i++) length += Distance(path[i], path[i + 1]);
             double cost = length + (path.Count - 2) * 0.35;
@@ -416,7 +422,29 @@ public static class OrthogonalRouter
         foreach (var lane in candidates)
         {
             var path = new List<Point> { start, new(start.X, lane), new(end.X, lane), end };
-            if (!PathHitsShapes(path, others)) return lane;
+
+            // The fallback is the last resort, so it must not be blind to headings — otherwise "no clear
+            // candidate" quietly produces the very crossing the search was avoiding.
+            if (PathHitsShapes(path, others)) continue;
+            if (_currentPage is not null && CrossesHeading(_currentPage, path)) continue;
+
+            return lane;
+        }
+
+        // Nothing between or near the two rows is clear of ink. Route outside the drawing instead of accepting a
+        // path through a heading: leaving the page margin and coming back is ugly, a line through a band title is
+        // wrong.
+        if (_currentPage is not null)
+        {
+            var page = _currentPage;
+            double top = page.Nodes.Max(n => n.Bounds.Y + n.Bounds.H / 2) + 0.45;
+            double bottom = page.Nodes.Min(n => n.Bounds.Y - n.Bounds.H / 2) - 0.45;
+
+            foreach (var outside in new[] { top, bottom, (fromY + toY) / 2 })
+            {
+                var path = new List<Point> { start, new(start.X, outside), new(end.X, outside), end };
+                if (!PathHitsShapes(path, others) && !CrossesHeading(page, path)) return outside;
+            }
         }
 
         return candidates.FirstOrDefault((fromY + toY) / 2);
@@ -471,6 +499,86 @@ public static class OrthogonalRouter
         }
         return false;
     }
+
+    /// <summary>
+    /// True when a candidate path passes through a container heading band on the page.
+    ///
+    /// The heading occupies the top `ContainerHeading` inches of a container. Text is drawn there, so a route
+    /// through it puts a line across the title. `PathHitsShapes` cannot catch this: it iterates nodes, and a
+    /// container is not a node.
+    ///
+    /// Only containers that have a name are considered — an unnamed container draws no heading, so its top strip
+    /// is empty and blocking it would push routes around nothing.
+    /// </summary>
+    /// <summary>True when any segment of <paramref name="path"/> intersects the box.</summary>
+    private static bool PathCrossesBox(List<Point> path, Bounds box)
+    {
+        double x1 = box.X - box.W / 2, x2 = box.X + box.W / 2;
+        double y1 = box.Y - box.H / 2, y2 = box.Y + box.H / 2;
+
+        for (int i = 0; i < path.Count - 1; i++)
+            if (SegmentIntersectsRect(path[i], path[i + 1], x1, y1, x2, y2)) return true;
+
+        return false;
+    }
+
+    public static bool CrossesHeading(Page page, List<Point> path)
+    {
+        foreach (var group in page.Groups)
+        {
+            if (group.Bounds is null || string.IsNullOrWhiteSpace(group.Name)) continue;
+
+            var g = group.Bounds;
+            double top = g.Y + g.H / 2;
+            double bottom = top - DiagramLayout.ContainerHeading;
+
+            // The heading text runs from the container's left padding for its measured width.
+            double left = g.X - g.W / 2 + DiagramLayout.ContainerPaddingX;
+            var measured = TextLayout.Measure(group.Name, 12, bold: true);
+            double right = Math.Min(g.X + g.W / 2, left + measured.RequiredWidth);
+
+            if (right <= left) continue;
+
+            var box = new Bounds((left + right) / 2, (top + bottom) / 2, right - left, top - bottom);
+            if (PathCrossesBox(path, box)) return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The router only knows the two nodes it is connecting, so it reads the page from them.
+    /// </summary>
+    private static bool CrossesHeading(Node from, Node to, List<Point> path)
+    {
+        var page = _currentPage;
+        if (page is null) return false;
+
+        foreach (var group in page.Groups)
+        {
+            if (group.Bounds is null || string.IsNullOrWhiteSpace(group.Name)) continue;
+
+            // A heading only matters if the route could plausibly touch it.
+            var g = group.Bounds;
+            double top = g.Y + g.H / 2;
+            double bottom = top - DiagramLayout.ContainerHeading;
+
+            if (path.All(p => p.Y < bottom || p.Y > top)) continue;
+
+            double left = g.X - g.W / 2 + DiagramLayout.ContainerPaddingX;
+            var measured = TextLayout.Measure(group.Name, 12, bold: true);
+            double right = Math.Min(g.X + g.W / 2, left + measured.RequiredWidth);
+            if (right <= left) continue;
+
+            var box = new Bounds((left + right) / 2, (top + bottom) / 2, right - left, top - bottom);
+            if (PathCrossesBox(path, box)) return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>The page currently being routed, set by <see cref="RoutePage"/> for the duration.</summary>
+    [ThreadStatic] private static Page? _currentPage;
 
     private static bool PathHitsShapes(List<Point> path, List<Node> others)
     {

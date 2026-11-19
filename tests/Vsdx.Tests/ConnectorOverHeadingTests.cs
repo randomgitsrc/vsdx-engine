@@ -52,9 +52,11 @@ public sealed class ConnectorOverHeadingTests
         DiagramLayout.Apply(diagram);
         var report = LayoutAnalyzer.Analyze(diagram);
 
-        // The node is not cut, so `edge.through-node` stays quiet — the new check is what fires.
+        // The router now treats the heading as an obstacle and reroutes around it, so neither check fires: the
+        // crossing never exists in the finished diagram. What this test records is that nothing is silently
+        // left crossing the title.
         Assert.DoesNotContain(report.Issues, i => i.Code == "edge.through-node");
-        Assert.Contains(report.Issues, i => i.Code == "edge.through-container-heading");
+        Assert.DoesNotContain(report.Issues, i => i.Code == "edge.through-container-heading");
     }
 
     [Fact]

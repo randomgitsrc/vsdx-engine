@@ -69,10 +69,26 @@ public sealed class RareCheckTests
         page.Nodes.Add(new Node { Id = "b", Text = "B", GroupId = "right", Bounds = new Bounds(11, 3, 1.2, 0.5) });
 
         // No waypoints, different containers, diagonal, and the straight line crosses `middle`.
+        //
+        // The crossing must be through the *text*, not merely through the container. Measured: with the
+        // containers as declared, this line passes at x=5.72 while the heading text starts at 5.80 — it clips the
+        // band's left edge, not its title. The fixture now nudges `middle` left so the line genuinely crosses the
+        // words, because the check measures text rather than box width.
+        page.Groups.RemoveAll(g => g.Id == "middle");
+        page.Groups.Add(new Group { Id = "middle", Name = "Middle", Bounds = new Bounds(6.0, 5.5, 3, 2) });
+
         page.Edges.Add(new Edge { Id = "e", From = "a", To = "b" });
 
+        // This check looks at *authored* straight edges — the ones the router was allowed to leave alone. Since
+        // the router now treats a heading as an obstacle, it reroutes this edge itself: `e` comes back with
+        // `Kind = "rightAngle"` and waypoints, and `edge.diagonal-across-band` skips exactly those. So the
+        // crossing never reaches the report, because it never survives routing.
+        //
+        // The check is still reachable for an edge the caller pinned with `waypoints` — see the test below.
         var report = LayoutAnalyzer.Analyze(new Diagram { Id = "t", Pages = { page } });
 
+        // The fixture is analysed before routing, which is how the check sees an authored straight edge. Routing
+        // would replace it with a waypointed `rightAngle` and the check skips those by design.
         Assert.Contains(report.Issues, i => i.Code == "edge.diagonal-across-band");
     }
 

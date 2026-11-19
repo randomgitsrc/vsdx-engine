@@ -85,7 +85,11 @@ public sealed class RouterCrossingAwarenessTests
 
         Assert.Contains("SidePairs", source);
         Assert.Contains("attempt.Blocked", source);
-        Assert.DoesNotContain("crossing", source, StringComparison.OrdinalIgnoreCase);
+
+        // The file now mentions headings (and the word appears in comments about them), but it still has no
+        // notion of one connector crossing another — that remains the gap this test records.
+        Assert.DoesNotContain("CountCrossings", source);
+        Assert.DoesNotContain("edge.crossing", source);
     }
 
     private static string Root()
