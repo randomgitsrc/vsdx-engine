@@ -699,6 +699,7 @@ public static class OrthogonalRouter
 
                 edge.Waypoints = Simplify(path);
                 edge.Kind = "rightAngle";
+
                 routed++;
             }
         }
