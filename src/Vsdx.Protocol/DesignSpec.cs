@@ -281,13 +281,20 @@ public static class DesignSpecApplier
 
             foreach (var page in diagram.Pages)
             {
+                // A page's type scale follows its own density, so decorations must use the same scale the nodes
+                // do. They used to take their size from a bare `new TypeScale()`, whose `NodeCaption` is a fixed
+                // 10.0 no matter how packed the drawing is — measured on `netflix-active-active`, the legend came
+                // out at 10.0pt while node titles were 8.4pt, so the key was larger than what it keyed.
+                var pageScale = TypeScale.ForCanvas(
+                    page.Size?.Width ?? 11, page.Size?.Height ?? 8.5, page.Nodes.Count);
+
                 foreach (var node in page.Nodes)
                 {
                     node.Style ??= new ShapeStyle();
                     // Always go through Tier: it returns the tier size unchanged when no base size
                     // was given, and raises it to the floor when one was. Guarding on baseSize here
                     // meant a floor-only request set no size at all.
-                    node.Style.FontSize ??= Tier(defaults.NodeTitle);
+                    node.Style.FontSize ??= Tier(pageScale.NodeTitle);
                     ApplyFamily(node.Style);
                 }
 
@@ -313,7 +320,7 @@ public static class DesignSpecApplier
                     // Unconditional, like nodes and containers: Tier returns the tier size when no
                     // base size was given and raises it to the floor when one was. Measured with
                     // `minReadableSize: 30`, a note stayed at the bridge's hardcoded 8pt.
-                    text.Style.FontSize ??= Tier(DesignSpecApplier.TierForRole(text.Role, defaults));
+                    text.Style.FontSize ??= Tier(DesignSpecApplier.TierForRole(text.Role, pageScale));
                     ApplyFamily(text.Style);
                 }
             }
