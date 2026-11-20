@@ -346,6 +346,39 @@ file that validates and looks nothing like what you meant.
 The IR has far fewer fields than the model, on purpose: shape and colour come from `role`, position comes from the
 layout engine.
 
+### A complete, runnable IR
+
+Ten lines, one layer of two services over one database. This is the whole envelope — there is no hidden required
+field.
+
+```json
+{
+  "irVersion": "1.0",
+  "id": "orders",
+  "kind": "architecture",
+  "containers": [
+    { "id": "svc",  "label": "服务层", "order": 2 },
+    { "id": "data", "label": "数据层", "order": 1 }
+  ],
+  "nodes": [
+    { "id": "api",   "label": "订单 API", "role": "service",  "containerId": "svc" },
+    { "id": "pg",    "label": "PostgreSQL", "role": "database", "containerId": "data" }
+  ],
+  "edges": [
+    { "id": "e1", "from": "api", "to": "pg", "label": "SQL", "relation": "reads" }
+  ]
+}
+```
+
+Save it and run:
+
+```bash
+vsdx-tool execute --ir orders.json --spec spec.json --output orders.vsdx --render
+```
+
+`irVersion` must be `"1.0"`. `kind` selects the diagram family (§1). Everything else is optional except `id` on each
+element.
+
 ### Node
 
 | Field | Meaning |
@@ -378,6 +411,19 @@ layout engine.
 
 `create` **honours `pageSize` as given** — there is no need to post-process the file to get A4. Express it in
 inches: A4 is `8.27 × 11.69`, A3 is `11.69 × 16.54`.
+
+### You cannot control left-to-right order by reordering the array
+
+Within a layer, node order is derived from the **edge topology** by `OrderWithinBands` and `MinimiseCrossings`, not
+from the order you list nodes in. Reordering the `nodes` array is at most a tie-breaker: it can change which node
+sits at which position when two arrangements cross equally often, and it will not fix a layout you dislike.
+
+Measured on a five-node service layer: reversing the array moved `mq` from x=5.8 to 4.0 and `underwrite` the other
+way, but `claim` stayed leftmost and the reading order of the chain did not change.
+
+If you need a specific order, the lever is the **edges**: what connects to what decides the sequence. Adding a
+node to shift a crossing usually costs a hard-constraint failure somewhere else — one trial removed a node to clear
+`edge.through-node` and lost the storage tier with it.
 
 **There is no `shape` field on a node.** Shape follows from `role`. If you need a specific shape, the IR is the wrong
 tool and you want the model format in §3.
