@@ -188,8 +188,20 @@ E 和 D 是正交的，不能互相补偿。因此不存在"Level 1 < Level 2 < 
 | 跨层路由避障 | 无 `edge.through-node` | ✅ |
 | **多对多交叉控制** | **3 处 `edge.crossing`** | ❌ |
 
-**总分 94/100，硬约束通过。** 所以「差在 D2」这个判断**成立，且原因是第三项**——
-不是猜测，是测出来的。
+**硬约束通过。** 所以「差在 D2」这个判断**成立，且原因是第三项**——不是猜测，是测出来的。
+
+**分数的变化需要说明。** 首次实测记为 94 分；当前为 82 分。差别不是引擎退步：
+`edge.through-container-heading` 检测器在那之后才加入，现在额外报出 3 处连线穿过容器标题带。
+**交叉数始终是 3 处，没有变化。**
+
+这与 `cbo` 从 98 降到 92 是同一模式：**报告变诚实，分数下降。**
+
+复跑方式：
+
+```
+grep -n "AFourBandDiagramIsDeliverable" tests/Vsdx.Tests/LevelOneCapabilityTests.cs
+dotnet test tests/Vsdx.Tests/Vsdx.Tests.csproj -c Release --filter "FullyQualifiedName~LevelOneCapability"
+```
 
 **E1 也成立**：扁平容器、单行标签、单一关系样式，全部可用。
 
@@ -197,7 +209,12 @@ E 和 D 是正交的，不能互相补偿。因此不存在"Level 1 < Level 2 < 
 但项目自己的渲染器不读它，**无法在 L4 之前验证**。这决定了 Level 2 的推进顺序——
 必须先补渲染能力，再做模型字段。
 
-**一个观察**：`client` 角色的圆形节点尺寸达 **1.85×1.85 英寸**（`service` 只有 1.30×0.55）。
+**关于形状权重**：`client` 角色曾用圆形、尺寸达 1.85×1.85 英寸，是 `service`（1.30×0.55）面积的 4.8 倍，
+视觉上把客户端压过了它调用的服务。现改为矩形，与其它角色同尺寸。
+
+形状的**视觉权重差异是真实的**，见
+[`architecture-diagrams.md`](architecture-diagrams.md) 的严重度量级一节——圆形在同宽度下面积是矩形的 2 倍。
+选形状时不只看语义，也看它会不会让某个角色喧宾夺主。
 不是缺陷——低密度时 `TypeScale` 给出 14pt，加圆形「直径 70% 可用」的 1.43 倍放大，
 数学上就该这么大。但视觉上圆形会显著压过矩形，**选 `client` 角色时要意识到这一点**。
 
