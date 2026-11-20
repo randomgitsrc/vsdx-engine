@@ -127,7 +127,8 @@ public sealed class RareCheckTests
             "group.overlap", "label.overlaps-label", "label.overlaps-node", "node.out-of-page",
             "node.overlap", "page.margins", "page.underused", "row.misaligned", "row.size-jitter",
             "spacing.too-tight", "text.overflow-horizontal", "text.overflow-vertical",
-            "text.overlaps-container", "text.overlaps-node", "text.overlaps-text"
+            "text.overlaps-container", "text.overlaps-node", "text.overlaps-text",
+            "edge.bypasses-service-tier"
         };
 
         var source = File.ReadAllText(

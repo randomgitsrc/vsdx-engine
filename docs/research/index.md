@@ -73,6 +73,7 @@
 | E13 | [`experiments/E13-junction-dots.md`](experiments/E13-junction-dots.md) | 总线分叉点标记；注释节点会被 `edge.through-node` 当成主体，靠前缀豁免 |
 | E14 | [`experiments/E14-branch-labels.md`](experiments/E14-branch-labels.md) | 共享干线标签改贴自己分支，偏差 2.41/1.67/0.44 → 0.00/0.00/0.00 |
 | E15 | [`experiments/E15-semantic-blindness.md`](experiments/E15-semantic-blindness.md) | **检测器对语义错误完全失明**：绕过应用层的图能拿 90 分；20 个检测项全是几何的 |
+| E16 | [`experiments/E16-first-semantic-check.md`](experiments/E16-first-semantic-check.md) | 第一个语义检测项 `edge.bypasses-service-tier`；第一版「跨两层」规则误报 6 处 |
 | **AT-3** | [`experiments/agent-trial-03/`](experiments/agent-trial-03/) | 第三轮**完成**，92 分；把「选哪种格式」提到文档最前是关键改动 |
 | **AT-2** | [`experiments/agent-trial-02/`](experiments/agent-trial-02/) | 第二轮 Agent 实验**未完成**：只做了探测未画图；倾向先验证而非先设计 |
 | **AT-1** | [`experiments/agent-trial-01/`](experiments/agent-trial-01/) | **独立 Agent 自主制图**：96 分、3 轮内完成，但 40% 时间在读源码补指南缺口；发现 2 个引擎缺陷 |

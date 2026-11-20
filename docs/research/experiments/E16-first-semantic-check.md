@@ -1,0 +1,80 @@
+# 实验 E16：第一个语义检测项
+
+**日期：** 2026-11-20
+**状态：** 完成（已实施）
+**依据：** E15 证明检测器对语义错误完全失明；本实验是第一个反例
+
+---
+
+## 一、目标
+
+给 `LayoutAnalyzer` 加一条**不依赖几何**的检查，让 E15 那类图被扣分。
+
+## 二、第一版规则是错的
+
+我最初写的是「跨两层以上的边」。
+
+**在已发布的 9 个案例上误报 6 处**：
+
+| 误报 | 为什么正常 |
+| --- | --- |
+| `client → service` | 前端调后端 |
+| `service → external` | 调外部 API |
+| `database → gateway` | CDC 采集 |
+| `database → external` | BI 读数仓 |
+
+**层间距不是「错误」的代理指标。** 一个 client 直连 service 跨了 1 层，完全正常；
+而 client 直连 database 才是错的。
+
+## 三、收紧到角色组合
+
+规则改为：**`client`/`actor` → `database`/`storage`**。
+
+理由：没有任何架构里，终端用户的设备直接对数据存储说 SQL。
+在部署图里，这意味着服务层被绕过了。
+
+**这条规则窄到可以在所有真实案例上零误报**——`TheRuleStaysSilentOnEveryShippedCase`
+把它固定下来：如果哪天它在某个案例上触发了，规则就是错的。
+
+## 四、实现
+
+`LayoutAnalyzer.CheckSemantics`，在几何检查之后运行：
+
+```
+| edge.bypasses-service-tier | client/actor 直连 database/storage | warning |
+```
+
+实测 E15 的图：**90 → 86 分**，且报出
+
+> 连线 'e1' 从 client 直连 database，绕过了服务层
+
+（CLI 的文本输出只显示前几条，`--json` 才看得到全部。这是输出格式的限制，不是检查没生效。）
+
+## 五、项目的自我约束起了作用
+
+加入后两个测试立即失败：
+
+| 测试 | 要求 |
+| --- | --- |
+| `EveryEmittedCodeIsDocumented` | 每个检测码必须写进 `capability-boundaries.md` |
+| `EveryCheckHasNowBeenObservedFiring` | 每个检测项必须有过实测触发 |
+
+**这两条防止「加了检查但没人知道它存在」和「加了检查但它从不触发」。**
+补齐文档与观测记录后才通过。
+
+## 六、这条规则的边界
+
+- **只覆盖一种错误**。E15 列了三类语义问题，这是第一类
+- 依赖 `Node.Type` 存角色。手工 model 格式若没设 `type`，规则静默跳过
+- 不做「服务层是否真的缺失」的判断——只看端点角色
+
+## 七、下一步可加什么
+
+| 候选规则 | 能否只靠 role 判断 |
+| --- | --- |
+| 数据存储之间互连（`database → database`）| ✅ 可以 |
+| 队列没有消费者 | ⚠️ 需要图结构 |
+| `drained` 单元没有承接者 | ⚠️ 需要理解权重语义 |
+
+第一条最容易，但**必须先在所有真实案例上验证零误报**——`cbo` 的 Redis 与 PostgreSQL 之间若有边，
+那可能是正常的缓存回源。

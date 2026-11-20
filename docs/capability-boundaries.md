@@ -116,6 +116,19 @@ label.overlaps-label (4)
 | `edge.detour` | 连线绕行过长 | warning |
 | `edge.fan-in` / `edge.fan-out` | 扇入/扇出过多 | warning |
 
+### 语义（非几何）
+
+**这一类检查「这条边在架构上是否成立」，而不是它画在哪。** 规则刻意保持少而窄——
+一条会在正确图上误报的规则比没有规则更糟，因为它教人忽略报告。
+
+| 代码 | 含义 | 级别 |
+| --- | --- | --- |
+| `edge.bypasses-service-tier` | `client`/`actor` 直连 `database`/`storage`，绕过服务层 | warning |
+
+**为什么只有这一条**：第一版规则是「跨两层以上的边」，在已发布的案例上误报 6 处——
+`client → service`、`service → external`、`database → gateway`、`database → external` 全都是正常的。
+层间距不是「错误」的代理指标，角色组合才是。
+
 ### 排布与页面
 
 | 代码 | 含义 |

@@ -553,6 +553,11 @@ public static class LayoutAnalyzer
         // ---- 8. Spacing ------------------------------------------------------
         CheckSpacing(nodes, options, page, report);
 
+        // ---- 8b. Meaning -----------------------------------------------------
+        // After the geometric checks, because they need geometry that has already been derived, and because a reader
+        // should see "this line crosses a heading" before "this line should not exist".
+        CheckSemantics(page, report);
+
         // ---- 9. Page utilisation ---------------------------------------------
         if (pw > 0 && ph > 0)
         {
@@ -1042,6 +1047,52 @@ public static class LayoutAnalyzer
                     Page = page.Name,
                     Targets = new[] { a.Id, b.Id },
                     Message = $"'{a.Id}' 与 '{b.Id}' 垂直间距仅 {gapY:F2}\"（建议 ≥ {options.MinNodeGap:F2}\"）"
+                });
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks that look at what an edge *means* rather than where it runs.
+    ///
+    /// Everything above this point is geometry: overlaps, crossings, margins. E15 showed what that misses — a diagram
+    /// where the client writes straight to the database scores 90 and is told a connector crosses a band heading.
+    ///
+    /// **The rules here are deliberately few and narrow.** A rule that fires on a correct drawing is worse than no
+    /// rule: it teaches the reader to ignore the report. Each one is checked against `examples/realworld/`, which is
+    /// the reference for "ordinary".
+    /// </summary>
+    private static void CheckSemantics(Page page, LayoutReport report)
+    {
+        var roles = page.Nodes
+            .Where(n => !string.IsNullOrWhiteSpace(n.Type))
+            .ToDictionary(n => n.Id, n => n.Type!.Trim().ToLowerInvariant(), StringComparer.Ordinal);
+
+        if (roles.Count == 0) return;
+
+        static bool IsEndUser(string role) => role is "client" or "actor";
+
+        static bool IsDatastore(string role) => role is "database" or "storage";
+
+        foreach (var edge in page.Edges)
+        {
+            if (edge.From is null || edge.To is null) continue;
+            if (!roles.TryGetValue(edge.From, out var fromRole)) continue;
+            if (!roles.TryGetValue(edge.To, out var toRole)) continue;
+
+            // An end user's device speaking SQL to the datastore. There is no architecture in which that is the
+            // intended reading, and in a deployment diagram it means the service tier has been routed around.
+            if (IsEndUser(fromRole) && IsDatastore(toRole))
+            {
+                report.Add(new LayoutIssue
+                {
+                    Code = "edge.bypasses-service-tier",
+                    Severity = "warning",
+                    Page = page.Name,
+                    Targets = new[] { edge.Id, edge.From, edge.To },
+                    Message = $"连线 '{edge.Id}' 从 {fromRole} 直连 {toRole}，绕过了服务层",
+                    RootCause = "客户端直接访问数据存储，中间没有服务层",
+                    RecommendedFix = "插入一个 service 节点承接该访问；或若确为数据导出，改用 external 角色表示"
                 });
             }
         }
