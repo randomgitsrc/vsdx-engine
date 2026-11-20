@@ -308,6 +308,15 @@
             "null"
           ],
           "description": "堆叠顺序；数值小的在上方"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "live",
+            "drained",
+            "degraded"
+          ],
+          "description": "Lifecycle state. Absent means live. Drained draws dashed and faded."
         }
       }
     },
@@ -398,6 +407,15 @@
             "null"
           ],
           "description": "读入时记录的原始 Master 名"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "live",
+            "drained",
+            "degraded"
+          ],
+          "description": "Lifecycle state. Absent means live. Drained draws dashed and faded."
         }
       }
     },

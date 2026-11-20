@@ -555,6 +555,7 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
             Kind = "container",
             Bounds = new Bounds(shape.PinX.ToInches(), shape.PinY.ToInches(), shape.Width.ToInches(), shape.Height.ToInches()),
             Layers = shape.LayerNames.Count > 0 ? shape.LayerNames.ToList() : null,
+            Status = UserCellOf(shape, "VsdxStatus"),
             Style = ReadStyle(shape),
 
             // Written by `WriteGroup`; absent on packages the engine did not produce.
@@ -589,6 +590,7 @@ public sealed class OfficeImoDocumentReader : IDocumentReader
             // Restored from the cell the writer sets. Absent or blank means the node never had a
             // role, which is a normal state rather than an error.
             Type = UserCellOf(shape, "VsdxRole"),
+            Status = UserCellOf(shape, "VsdxStatus"),
             Bounds = new Bounds(shape.PinX.ToInches(), shape.PinY.ToInches(), shape.Width.ToInches(), shape.Height.ToInches()),
             Style = ReadStyle(shape),
             Layers = shape.LayerNames.Count > 0 ? shape.LayerNames.ToList() : null,

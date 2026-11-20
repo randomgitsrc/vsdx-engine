@@ -163,6 +163,9 @@ public sealed class PathRow
 
 public sealed class Group
 {
+    /// <summary>Lifecycle state: live | drained | degraded. Absent means live.</summary>
+    public string? Status { get; set; }
+
     public string Id { get; set; } = "grp";
     public string? Name { get; set; }
     public string? NameU { get; set; }
@@ -205,6 +208,15 @@ public sealed class Node
     public string? VisioShapeId { get; set; }
     public Bounds Bounds { get; set; } = new();
     public string? GroupId { get; set; }
+
+    /// <summary>
+    /// Lifecycle state: live | drained | degraded. Absent means live.
+    ///
+    /// Carried on the model, not only in its visual result, so a reader can tell a drained component from a live one.
+    /// Without it the state existed only as a dashed border: the picture said something the data could not.
+    /// </summary>
+    public string? Status { get; set; }
+
     public ShapeStyle? Style { get; set; }
     public Dictionary<string, string>? ShapeData { get; set; }
     /// <summary>Shape Data labels, keyed by row name.</summary>

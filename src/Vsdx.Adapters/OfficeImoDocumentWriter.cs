@@ -263,6 +263,9 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
                 container.SetUserCell("VsdxGroupOrder", order.ToString(
                     System.Globalization.CultureInfo.InvariantCulture), prompt: "Agent VSDX Engine band order");
 
+            if (!string.IsNullOrWhiteSpace(group.Status))
+                container.SetUserCell("VsdxStatus", group.Status!, prompt: "Agent VSDX Engine lifecycle state");
+
             return container;
         }
         catch (Exception ex)
@@ -331,6 +334,11 @@ public sealed class OfficeImoDocumentWriter : IDocumentWriter
         // Persist the stable model id so a later load can recover the agent-facing identifier
         // even when the Visio shape id differs (for example after a rename).
         shape.SetUserCell("VsdxModelId", node.Id, prompt: "Agent VSDX Engine stable node id");
+
+        // State travels with the file, not only in its appearance. Without this a reader can see a dashed border and
+        // nothing else — it cannot tell a drained component from one that happens to be styled that way.
+        if (!string.IsNullOrWhiteSpace(node.Status))
+            shape.SetUserCell("VsdxStatus", node.Status!, prompt: "Agent VSDX Engine lifecycle state");
 
         // The semantic role drives roleColors and palette lookup. Without persisting it, a model
         // read back from the file has no roles left, so it can never be re-styled — the fill

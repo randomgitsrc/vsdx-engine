@@ -339,6 +339,7 @@ public static class DiagramIrConverter
 
                 // A container carries the same lifecycle idea as a node: a cell taken out of service is still drawn,
                 // faded and dashed, so the reader sees that it exists and is idle.
+                group.Status = container.Status;
                 var state = container.Status?.Trim().ToLowerInvariant();
                 if (state is "drained" or "degraded")
                 {
@@ -381,6 +382,7 @@ public static class DiagramIrConverter
                 if (node.Attributes is { Count: > 0 })
                     model.ShapeData = new Dictionary<string, string>(node.Attributes, StringComparer.Ordinal);
 
+                model.Status = node.Status;
                 ApplyStatus(model, node.Status);
 
                 // A fixed anchor is honoured; otherwise the engine places the node.
@@ -500,6 +502,11 @@ public static class DiagramIrConverter
         {
             case "drained":
                 node.Style.StrokePattern ??= 2;   // dashed
+
+                // The writer emits a line pattern only when a stroke colour is present, so a drained *node* came
+                // out solid while a drained *container* came out dashed — the container path had this line and this
+                // one did not.
+                node.Style.Stroke ??= "#9E9E9E";
                 node.Style.Opacity ??= 0.75;
                 break;
 
