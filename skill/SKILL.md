@@ -49,6 +49,27 @@ fc-list :lang=zh | head -3
 
 ---
 
+## 0b. Two input formats — pick one before you start
+
+There are two ways to feed this tool, and they are not interchangeable. Choosing wrongly is the single most
+expensive mistake in this guide, because everything downstream depends on it.
+
+| | **IR** (short) | **Model** (full) |
+| --- | --- | --- |
+| Command | `execute` | `create` |
+| What you write | ids, labels, roles, edges, container membership | every coordinate, shape and colour |
+| Who decides layout | the engine | you |
+| Fields | §5a | §3 |
+| Good when | the topology has a shape the engine can infer | you need exact positions, or a shape `role` cannot express |
+
+**Start with the IR** unless you have a specific reason not to. It is a fifth the size, and the engine's layout is
+better than coordinates typed by hand for the common cases.
+
+Put another way: if you have not yet decided whether you are placing nodes yourself, you want the IR. §3 is the
+manual path and is much longer for a reason.
+
+---
+
 ## 1. Decide the diagram family first
 
 Do not draw every system the same way. Pick the family from what the user is describing:
@@ -105,6 +126,9 @@ diagram is expected; one family for everything looks like a checklist.
 ---
 
 ## 3. Write the model
+
+**This is the manual path** — you supply every coordinate. If you have not decided you need that, use the IR
+instead (§0b, §5a). The rest of this section assumes the decision is made.
 
 Minimal but complete example:
 

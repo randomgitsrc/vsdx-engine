@@ -1,0 +1,132 @@
+{
+  "resultVersion": "1.0",
+  "irVersion": "1.0",
+  "designSpecVersion": "1.0",
+  "status": "succeeded",
+  "message": "执行完成，硬约束全部满足",
+  "stagesCompleted": [
+    "ir.validate",
+    "ir.toModel",
+    "design.apply",
+    "route",
+    "label.branch",
+    "junction.marks",
+    "vsdx.write",
+    "quality.check"
+  ],
+  "appliedDesignNotes": [
+    "typography",
+    "theme.palette=enterprise",
+    "text.fit",
+    "sizing",
+    "layout=Layered, direction=topToBottom",
+    "label.spread",
+    "container.bands",
+    "theme.background",
+    "canvas.paper=A4",
+    "legend.rows=5",
+    "title.centred",
+    "label.branch=3",
+    "junction.marks=4"
+  ],
+  "unmetConstraints": [
+    {
+      "code": "typography.min_size",
+      "reason": "8.5pt 档按 11pt 基准缩放后为 8.5pt，低于可读下限 9pt，已提升",
+      "isHard": false
+    },
+    {
+      "code": "typography.min_size",
+      "reason": "7pt 档按 11pt 基准缩放后为 7pt，低于可读下限 9pt，已提升",
+      "isHard": false
+    }
+  ],
+  "warnings": [
+    {
+      "code": "write.free-path",
+      "message": "写入了 5 个自定义几何形状（原始指令逐行保留）",
+      "target": "Page-1",
+      "severity": "info"
+    },
+    {
+      "code": "write.text-block",
+      "message": "写入了 6 个独立文本块",
+      "target": "Page-1",
+      "severity": "info"
+    },
+    {
+      "code": "write.background",
+      "message": "写入了 1 个页面背景色",
+      "severity": "info"
+    },
+    {
+      "code": "layout.edge.through-container-heading",
+      "message": "连线 'e8' 穿过容器 'data' 的标题文字",
+      "target": "e8",
+      "severity": "warning"
+    },
+    {
+      "code": "layout.edge.crossing",
+      "message": "连线 'e3' 与 'e5' 交叉",
+      "target": "e3",
+      "severity": "warning"
+    },
+    {
+      "code": "layout.page.margins",
+      "message": "内容边距偏大 左1.19 下0.44 右1.19 上0.85",
+      "severity": "info"
+    }
+  ],
+  "errors": [],
+  "quality": {
+    "hardConstraintsPassed": true,
+    "hardViolations": 0,
+    "softViolations": 2,
+    "score": 92,
+    "issueCodes": [
+      "edge.crossing",
+      "edge.through-container-heading",
+      "page.margins"
+    ],
+    "pageUtilisation": {
+      "Page-1": 0.6714572237456337
+    },
+    "nodeUtilisation": {
+      "Page-1": 0.4600791507329098
+    },
+    "requiresVisualReview": true
+  },
+  "objectMapping": {
+    "mobile": "mobile",
+    "lb": "lb",
+    "web": "web",
+    "claim": "claim",
+    "underwrite": "underwrite",
+    "payment": "payment",
+    "mq": "mq",
+    "notify": "notify",
+    "pg": "pg",
+    "redis": "redis",
+    "es": "es",
+    "access": "access",
+    "service": "service",
+    "data": "data",
+    "e1": "e1",
+    "e2": "e2",
+    "e3": "e3",
+    "e4": "e4",
+    "e5": "e5",
+    "e6": "e6",
+    "e7": "e7",
+    "e8": "e8",
+    "e9": "e9",
+    "e10": "e10",
+    "title": "title"
+  },
+  "renders": [],
+  "outputFiles": [
+    "/home/kity/oclab/vsdx-engine/.at3/diagram.v2.vsdx"
+  ],
+  "durationMs": 506,
+  "completedUtc": "2026-11-20T00:05:26.7666633+00:00"
+}

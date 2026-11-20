@@ -1,0 +1,9 @@
+{
+  "specVersion": "1.0",
+  "layout": "auto",
+  "direction": "topToBottom",
+  "theme": { "palette": "enterprise", "background": "#FFFFFF" },
+  "typography": { "baseSize": 11, "minReadableSize": 9, "fontFamily": "Noto Sans CJK SC" },
+  "canvas": { "mode": "paper" },
+  "hardConstraints": [{ "code": "require_title" }]
+}

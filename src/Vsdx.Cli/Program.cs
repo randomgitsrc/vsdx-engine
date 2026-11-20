@@ -1025,7 +1025,7 @@ public static class Help
                               --input <file.vsdx> [--json]
 
               execute       Run Diagram IR (+ DesignSpec) through the protocol path
-                              --ir <model.json> --output <file.vsdx>
+                              --ir <ir.json> --output <file.vsdx>
                               [--spec <design.json>] [--render] [--format png|svg]
                               [--dpi <n>] [--json]
 

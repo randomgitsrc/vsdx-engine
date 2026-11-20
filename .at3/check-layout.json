@@ -1,0 +1,69 @@
+{
+  "ok": true,
+  "command": "check-layout",
+  "input": "/home/kity/oclab/vsdx-engine/.at3/diagram.v2.vsdx",
+  "hardConstraintsPassed": true,
+  "score": 92,
+  "clean": false,
+  "counts": {
+    "errors": 0,
+    "warnings": 2,
+    "infos": 1
+  },
+  "byCode": {
+    "edge.through-container-heading": 1,
+    "edge.crossing": 1,
+    "page.margins": 1
+  },
+  "utilisation": {
+    "Page-1": 0.6714572237456337
+  },
+  "edgeDetourRatio": {
+    "e1": 1.2206488330045764,
+    "e2": 1,
+    "e3": 1.460584037560161,
+    "e4": 1,
+    "e5": 1.1466704892765271,
+    "e6": 1.1840963461671394,
+    "e7": 1.1840963461671394,
+    "e8": 1,
+    "e9": 1.4119102814269127,
+    "e10": 1.5796875779839177
+  },
+  "issues": [
+    {
+      "code": "edge.through-container-heading",
+      "severity": "warning",
+      "page": "Page-1",
+      "targets": [
+        "e8",
+        "data"
+      ],
+      "message": "连线 'e8' 穿过容器 'data' 的标题文字",
+      "rootCause": "连线路由没有为容器标题预留不可通行区域",
+      "recommendedFix": "调整连线端口或插入 waypoints 绕开标题带；或把该容器下移",
+      "level": "RegionRelayout"
+    },
+    {
+      "code": "edge.crossing",
+      "severity": "warning",
+      "page": "Page-1",
+      "targets": [
+        "e3",
+        "e5"
+      ],
+      "message": "连线 'e3' 与 'e5' 交叉",
+      "rootCause": "列的排列顺序与连接方向不一致",
+      "recommendedFix": "调整节点列序，或对该连线显式指定 waypoints",
+      "level": "RegionRelayout"
+    },
+    {
+      "code": "page.margins",
+      "severity": "info",
+      "page": "Page-1",
+      "targets": [],
+      "message": "内容边距偏大 左1.19 下0.44 右1.19 上0.85",
+      "level": "Local"
+    }
+  ]
+}

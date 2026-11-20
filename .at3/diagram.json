@@ -1,0 +1,176 @@
+{
+  "irVersion": "1.0",
+  "id": "claims-arch",
+  "kind": "architecture",
+  "containers": [
+    {
+      "id": "access",
+      "label": "接入层 Access Layer",
+      "kind": "layer",
+      "order": 3
+    },
+    {
+      "id": "service",
+      "label": "业务服务层 Service Layer",
+      "kind": "layer",
+      "order": 2
+    },
+    {
+      "id": "data",
+      "label": "数据层 Data Layer",
+      "kind": "layer",
+      "order": 1
+    }
+  ],
+  "nodes": [
+    {
+      "id": "mobile",
+      "label": "移动端\nMobile App",
+      "role": "client",
+      "containerId": "access"
+    },
+    {
+      "id": "lb",
+      "label": "负载均衡\nNginx",
+      "role": "gateway",
+      "containerId": "access"
+    },
+    {
+      "id": "web",
+      "label": "网页\nWeb H5",
+      "role": "client",
+      "containerId": "access"
+    },
+    {
+      "id": "claim",
+      "label": "理赔申请\nClaim",
+      "role": "service",
+      "containerId": "service"
+    },
+    {
+      "id": "underwrite",
+      "label": "核保\nUnderwriting",
+      "role": "service",
+      "containerId": "service"
+    },
+    {
+      "id": "payment",
+      "label": "支付\nPayment",
+      "role": "service",
+      "containerId": "service"
+    },
+    {
+      "id": "mq",
+      "label": "消息队列\nMQ",
+      "role": "queue",
+      "containerId": "service"
+    },
+    {
+      "id": "notify",
+      "label": "通知服务\nNotification",
+      "role": "service",
+      "containerId": "service"
+    },
+    {
+      "id": "pg",
+      "label": "PostgreSQL\n保单 / 理赔单",
+      "role": "database",
+      "containerId": "data"
+    },
+    {
+      "id": "redis",
+      "label": "Redis\n会话 / 缓存",
+      "role": "database",
+      "containerId": "data"
+    },
+    {
+      "id": "es",
+      "label": "Elasticsearch\n理赔报表索引",
+      "role": "database",
+      "containerId": "data"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "mobile",
+      "to": "lb",
+      "label": "HTTPS"
+    },
+    {
+      "id": "e2",
+      "from": "web",
+      "to": "lb",
+      "label": "HTTPS"
+    },
+    {
+      "id": "e3",
+      "from": "lb",
+      "to": "claim",
+      "label": "路由"
+    },
+    {
+      "id": "e4",
+      "from": "claim",
+      "to": "underwrite",
+      "label": "核保请求",
+      "relation": "calls"
+    },
+    {
+      "id": "e5",
+      "from": "underwrite",
+      "to": "payment",
+      "label": "核保通过",
+      "relation": "calls"
+    },
+    {
+      "id": "e6",
+      "from": "claim",
+      "to": "mq",
+      "label": "理赔通过",
+      "relation": "publishes"
+    },
+    {
+      "id": "e7",
+      "from": "mq",
+      "to": "notify",
+      "label": "订阅通知",
+      "relation": "consumes"
+    },
+    {
+      "id": "e8",
+      "from": "claim",
+      "to": "pg",
+      "label": "SQL",
+      "relation": "reads"
+    },
+    {
+      "id": "e9",
+      "from": "claim",
+      "to": "redis",
+      "label": "缓存",
+      "relation": "reads"
+    },
+    {
+      "id": "e10",
+      "from": "notify",
+      "to": "es",
+      "label": "归档",
+      "relation": "writes"
+    }
+  ],
+  "textBlocks": [
+    {
+      "id": "title",
+      "text": "保险理赔系统架构图  Insurance Claims System",
+      "role": "title",
+      "box": {
+        "x": 4.6,
+        "y": 8.1,
+        "width": 8.6,
+        "height": 0.5
+      },
+      "align": "center"
+    }
+  ]
+}
